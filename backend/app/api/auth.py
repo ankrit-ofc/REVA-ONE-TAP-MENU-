@@ -9,12 +9,14 @@ from app.core.deps import get_current_user, get_db
 from app.core.limiter import limiter
 from app.models.restaurant import Restaurant
 from app.models.user import User
+from app.realtime import tickets
 from app.schemas.auth import (
     ForgotPasswordRequest,
     LoginRequest,
     MessageResponse,
     ResetPasswordRequest,
     TokenResponse,
+    WsTicketResponse,
 )
 from app.services import auth_service
 
@@ -114,6 +116,19 @@ def me(
         "restaurant_id": str(user.restaurant_id),
         "restaurant_name": restaurant.name if restaurant else None,
     }
+
+
+@router.post("/ws-ticket", response_model=WsTicketResponse)
+def create_ws_ticket(
+    user: Annotated[User, Depends(get_current_user)],
+) -> WsTicketResponse:
+    """
+    Mint a short-lived, single-use ticket for /ws/staff. The WebSocket accepts
+    ONLY these tickets — raw access tokens in the query string are rejected
+    (they would leak into proxy logs; HANDOVER §8 #7).
+    """
+    ticket = tickets.issue_ticket("staff", user.id, user.restaurant_id)
+    return WsTicketResponse(ticket=ticket, expires_in=tickets.WS_TICKET_TTL_SECONDS)
 
 
 @router.post("/logout")
