@@ -1,0 +1,5 @@
+# Dev/test-only dependencies — never installed in production images.
+# httpx is already pinned in requirements.txt (runtime); re-listed here at the
+# same version because the test suite (fastapi.testclient) depends on it.
+pytest==9.1.1
+httpx==0.27.2

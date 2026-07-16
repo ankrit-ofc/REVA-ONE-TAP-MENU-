@@ -67,6 +67,59 @@ jobs:
           QR_SECRET: ci-test-qr-secret-do-not-use-in-production-xx
         run: alembic upgrade head
 
+  # ── Backend: security acceptance tests (CLAUDE.md §9) ──────────────────────
+  tests:
+    name: Backend — security acceptance tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ci_postgres_pass
+          POSTGRES_DB: appdb_ci
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            backend/requirements.txt
+            backend/requirements-dev.txt
+
+      - name: Install backend + dev deps
+        working-directory: backend
+        run: pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Create restricted DB role (mirrors db/init/01_roles.sql)
+        env:
+          PGPASSWORD: ci_postgres_pass
+        run: |
+          psql -h localhost -U postgres -d appdb_ci \
+            -c "CREATE ROLE tenant_app_user WITH LOGIN PASSWORD 'ci_app_pass' NOSUPERUSER NOCREATEDB NOCREATEROLE;"
+
+      - name: Run security acceptance tests
+        working-directory: backend
+        env:
+          # conftest rewrites this to appdb_ci_test and rebuilds it from scratch
+          DATABASE_URL: postgresql+psycopg://tenant_app_user:ci_app_pass@localhost:5432/appdb_ci
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ci_postgres_pass
+          SECRET_KEY: ci-test-secret-key-do-not-use-in-production-x
+          QR_SECRET: ci-test-qr-secret-do-not-use-in-production-xx
+        run: python -m pytest tests -v
+
   # ── Frontend: type-check + lint + build + npm audit ────────────────────────
   frontend:
     name: Frontend — tsc + lint + build + npm audit
