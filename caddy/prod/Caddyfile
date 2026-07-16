@@ -19,6 +19,10 @@
 	# browser redirects to /webhooks/* (which arrive as text/html navigations and
 	# MUST reach the API), WebSockets, uploaded media, the KOT print worker
 	# (POST /printworker/kot/get|ack from the on-prem device), and the health check.
+	# NOTE: Caddy's reverse_proxy sets X-Forwarded-For automatically (appending
+	# the real client to any inbound value). uvicorn is started with
+	# --proxy-headers --forwarded-allow-ips=172.16.0.0/12, so it trusts that
+	# header only from the Docker network — per-client rate limiting depends on it.
 	@always_api path /webhooks/* /ws/* /media/* /printworker/* /health /health/*
 	handle @always_api {
 		reverse_proxy backend:8000

@@ -56,6 +56,11 @@ class Settings(BaseSettings):
     # Generous: slowapi keys on IP and a venue's diners share one public IP; the
     # real anti-spam guard is the per-device cooldown in the customer UI.
     RATE_LIMIT_CALL_WAITER: str = "20/minute"
+    # Proxy IPs/CIDRs (comma-separated) whose X-Forwarded-For is trusted when
+    # resolving the client IP for rate limiting. Default covers Docker's
+    # private address pool, where Caddy lives. Empty string = trust no proxy.
+    # Keep in sync with uvicorn's --forwarded-allow-ips (compose + Dockerfile).
+    TRUSTED_PROXY_IPS: str = "172.16.0.0/12"
 
     # ── AR / 3D model providers ──────────────────────────────────────────────────
     # Provider adapters are selected by name so generation/marking can move from the
