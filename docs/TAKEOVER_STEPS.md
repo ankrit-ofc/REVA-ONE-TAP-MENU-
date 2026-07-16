@@ -142,12 +142,22 @@ Everything follows `docs/DEPLOY.md` (a full copy-paste runbook). Summary:
    CASH/CARD/manual only (supported). Before enabling Fonepay, confirm the
    signature field order against their merchant docs (`payments/fonepay.py`
    has a warning about this).
-2. **Fix before prod** (details in `HANDOVER.md` §8):
-   - eSewa sandbox key is the code default — make it fail fast in production
-   - Rate limiting is per-proxy, not per-client, behind Caddy
-   - Staff hard-delete violates the soft-delete invariant
-3. **Add tests** — there are none. pytest + httpx for auth, cross-tenant
-   isolation, payment idempotency. This is your safety net for every future
+2. **Fix before prod** — ✅ ALL DONE in the 2026-07-16 hardening pass
+   (details + commits in `HANDOVER.md` §8):
+   - eSewa sandbox key default — fixed: gateways default to disabled and
+     production refuses to boot on unsafe config (`fix/prod-config-guard`)
+   - Per-client rate limiting behind Caddy — fixed (`fix/rate-limit-proxy`)
+   - Staff hard-delete — fixed: soft-delete + partial unique email index,
+     migration `0019` (`fix/staff-soft-delete`)
+   Also hardened beyond the original list: JWT tenant-claim verification and
+   single-use WebSocket tickets (`fix/auth-hardening`).
+   Still open before real payments: confirm the Fonepay signature field order
+   (`payments/fonepay.py`) against merchant docs.
+3. **Tests** — ✅ DONE: 38-test pytest + httpx suite in `backend/tests/`
+   (auth, cross-tenant isolation, rate limiting, config guard, WS tickets,
+   payment idempotency, webhook replay, money integrity, snapshots), running
+   in CI against postgres:17 with a dedicated test database. See
+   `HANDOVER.md` §8 "Current test suite". Keep extending it with every
    feature.
 
 ---

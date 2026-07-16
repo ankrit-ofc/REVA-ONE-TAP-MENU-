@@ -122,38 +122,73 @@ of these as compromised and rotate before/at next deploy:
 
 Never commit `.env`. Update `.env.example` (names only) when adding new vars.
 
-## 8. Known issues to fix (priority order)
+## 8. Known issues (July 2026 code review) — status
 
-From the July 2026 code review — verified against source:
+Hardening pass completed 2026-07-16. FIXED items name the branch and commit
+that resolved them.
 
-1. **No automated tests** despite `CLAUDE.md` §9 mandating security acceptance.
-   Add pytest + httpx suites (auth, cross-tenant 404, payment idempotency,
-   illegal transitions) and wire into CI. Do this before feature work — it's
-   your safety net for everything else.
-2. **Rate limiting is broken behind the proxy**: `limiter.py` keys on direct
-   remote address and uvicorn runs without `--proxy-headers`, so behind Caddy
-   all clients share one bucket. Fix: uvicorn `--proxy-headers
-   --forwarded-allow-ips` (backend network) or key off `X-Forwarded-For` from
-   trusted proxy only.
-3. **Staff hard-delete** (`staff_service.py:149`) violates the soft-delete
-   invariant. Switch to `is_active=False`; free the email with a partial unique
-   index on active rows.
-4. **eSewa sandbox key is the code default** (`config.py:36`). Make it empty and
-   fail fast at startup when `ENVIRONMENT=production` and gateway keys are unset.
+1. **No automated tests** — ✅ FIXED (`chore/tests` @ `917ef5b` baseline;
+   `test/payments-and-transitions` @ `8435d43` payments). pytest + httpx suite
+   against a dedicated `<dbname>_test` database, wired into CI (`tests` job,
+   postgres:17 service). See "Current test suite" below.
+2. **Rate limiting broken behind the proxy** — ✅ FIXED
+   (`fix/rate-limit-proxy` @ `8ccbfce`). uvicorn runs `--proxy-headers
+   --forwarded-allow-ips 172.16.0.0/12` (dev compose + prod Dockerfile), and
+   `limiter.py` keys on the real client IP: X-Forwarded-For is honoured only
+   from trusted proxy peers (`TRUSTED_PROXY_IPS`), rightmost entry; spoofed
+   headers on direct connections are ignored.
+3. **Staff hard-delete** — ✅ FIXED (`fix/staff-soft-delete` @ `6847fac`).
+   Deletion is now `is_active=False` for every role, audited
+   (`STAFF_DEACTIVATED`); migration `0019` replaces the users unique
+   constraint with a partial unique index on active rows so the email frees up.
+4. **eSewa sandbox key as code default** — ✅ FIXED (`fix/prod-config-guard`
+   @ `022ad81`). Gateway defaults are empty (empty = disabled); with
+   `ENVIRONMENT=production` the app refuses to boot on partial gateway config,
+   the known eSewa sandbox credentials, missing SECRET_KEY/QR_SECRET, or
+   localhost in ALLOWED_ORIGINS.
 5. **Fonepay signature field order unconfirmed** (`payments/fonepay.py`) —
-   verify against merchant docs + golden-vector test before taking prod payments.
+   ⚠️ STILL OPEN: verify against merchant docs + golden-vector test before
+   taking prod payments.
 6. **Customer AR is still the pizza-model spike** (`features/ar/modelPrefetch.ts`)
-   and the referenced `public/models/*` assets are missing.
-7. **WS tokens ride in query strings** (`api/ws.py`) — move to first-message
-   auth or short-lived tickets when convenient.
-8. **`deps.py:62` loads users by PK alone** — add a `restaurant_id` cross-check
-   after JWT decode.
-9. **Docs drift**: `docs/SCHEMA.md` is behind migrations 0004–0018 (stale
+   — ⚠️ STILL OPEN.
+7. **WS tokens in query strings** — ✅ FIXED (`fix/auth-hardening` @
+   `dd1a72d`). WebSockets accept only 60-second single-use tickets
+   (`POST /auth/ws-ticket` / `POST /session/ws-ticket`); raw
+   `?token=`/`?session_token=` params are rejected with close code 1008.
+8. **`deps.py` loads users by PK alone** — ✅ FIXED (`fix/auth-hardening` @
+   `dd1a72d`). `get_current_user` cross-checks the JWT's `restaurant_id`
+   claim against the loaded user's tenant; mismatch or missing claim → 401.
+9. **Docs drift**: `docs/SCHEMA.md` is behind migrations 0004–0019 (stale
    banner added; still needs regeneration). Postgres-16 references, root
    `README.md`, and root `package.json` were fixed/removed in the repo
-   cleanup (2026-07-16).
+   cleanup (2026-07-16). ⚠️ SCHEMA.md regeneration still open.
 10. **Split the mega-services** (`order_service.py` 1056 lines,
-    `menu_service.py` 1007, `payment_service.py` 972) before they grow further.
+    `menu_service.py` 1007, `payment_service.py` 972) — ⚠️ STILL OPEN.
+
+### Current test suite (38 tests, `backend/tests/`)
+
+Runs via `python -m pytest tests` in the backend container (deps in
+`requirements-dev.txt`) and in CI against a postgres:17 service. Fixtures
+rebuild a dedicated `<dbname>_test` database from the full migration chain —
+the dev database is never touched. Coverage:
+
+- `test_security_baseline.py` (7) — missing/tampered/expired JWT → 401,
+  cross-tenant fetch → 404 without leaking, extra fields → 422, login rate
+  limit → 429, customer endpoints demand X-Session-Token.
+- `test_rate_limit_proxy.py` (2) — independent buckets per X-Forwarded-For
+  client behind a trusted proxy; spoofed headers on direct connections don't
+  mint fresh buckets.
+- `test_staff_soft_delete.py` (2) — deactivate → login + old JWT fail → email
+  reusable → audit row; self-deletion blocked.
+- `test_prod_config_guard.py` (9) — production boot refusals (missing/partial/
+  sandbox gateway config, localhost origins, blank secrets); dev unaffected.
+- `test_ws_tickets.py` (8) — ticket connect + tenant bucket isolation;
+  expired/reused/garbage/legacy-token connections rejected; JWT tenant-claim
+  checks.
+- `test_payments_and_transitions.py` (10) — payment idempotency, illegal
+  state transitions (with audit rows verified for every legal transition),
+  eSewa/Fonepay/Khalti webhook replay without double-credit, Decimal-only
+  money end-to-end, order-item snapshot immutability.
 
 ---
 
