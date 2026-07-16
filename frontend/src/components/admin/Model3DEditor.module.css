@@ -1,0 +1,336 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.modal {
+  background: var(--color-surface, #fff);
+  border-radius: 0.8rem;
+  width: 960px;
+  max-width: 100%;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.8rem 1rem;
+  border-bottom: 1px solid var(--color-border, #e5e7eb);
+}
+
+.title { margin: 0; font-size: 1rem; font-weight: 700; }
+
+.close {
+  border: none;
+  background: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.banner {
+  margin: 0;
+  padding: 0.5rem 1rem;
+  background: #fee2e2;
+  color: #991b1b;
+  font-size: 0.8rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+@media (max-width: 720px) {
+  .grid { grid-template-columns: 1fr; }
+}
+
+.viewerCol {
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem;
+  border-right: 1px solid var(--color-border, #e5e7eb);
+}
+
+.viewer {
+  width: 100%;
+  height: 360px;
+  background: #f1f5f9;
+  border-radius: 0.6rem;
+}
+
+.viewerLoading {
+  width: 100%;
+  height: 360px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  border-radius: 0.6rem;
+  color: var(--color-text-muted, #6b7280);
+  font-size: 0.85rem;
+}
+
+.hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.72rem;
+  color: var(--color-text-muted, #6b7280);
+}
+
+/* Radial callouts. model-viewer positions each button at the component's projected
+   point; the button is a zero-size anchor, so the dot sits exactly on the point while a
+   straight leader runs out to a label placed at this tag's own angle (--lx/--ly/--len/
+   --ang, set per index in the component) — so no two labels share a direction. */
+.callout {
+  position: relative;
+  width: 0;
+  height: 0;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  color: #16a34a; /* accent for dot/line/label; overridden by the trust classes */
+}
+
+.dot {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 9999px;
+  background: currentColor;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  transform: translate(-50%, -50%);
+}
+
+.leader {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--len, 112px);
+  height: 2px;
+  background: currentColor;
+  transform-origin: 0 50%;
+  transform: rotate(var(--ang, 0deg)); /* straight line from the dot out to the label */
+  pointer-events: none; /* let model clicks through; only dot/label select */
+}
+
+.labelChip {
+  position: absolute;
+  left: var(--lx, 0);
+  top: var(--ly, 0);
+  transform: translate(-50%, -50%); /* centre the chip on the radial end point */
+  white-space: nowrap;
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 0.12rem 0.4rem;
+  border-radius: 0.35rem;
+  border: 1.5px solid currentColor;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+/* AI-estimated tags read WHITE (dark line/border for legibility on a light model);
+   admin verification turns them green. Color is the only state indicator — the label
+   text is always just the food-part name. */
+.calloutAi { color: #334155; }
+.calloutAi .dot { background: #ffffff; }
+.calloutAi .labelChip { background: #ffffff; color: #1e293b; }
+
+.calloutVerified { color: #16a34a; }
+.calloutVerified .dot { background: #16a34a; }
+.calloutVerified .labelChip { background: #16a34a; color: #ffffff; border-color: #16a34a; }
+
+.calloutSel { z-index: 5; }
+.calloutSel .dot { outline: 3px solid #fde047; }
+.calloutSel .labelChip { outline: 2px solid #fde047; }
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem;
+  min-height: 0;
+}
+
+.panelHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.panelTitle { font-size: 0.9rem; font-weight: 700; }
+
+.addBtn {
+  padding: 0.35rem 0.7rem;
+  border-radius: 0.4rem;
+  border: 1.5px solid var(--color-primary, #4f46e5);
+  background: #fff;
+  color: var(--color-primary, #4f46e5);
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.legend {
+  margin: 0.35rem 0;
+  font-size: 0.68rem;
+  color: var(--color-text-muted, #6b7280);
+  display: flex;
+  align-items: center;
+}
+
+.trustDot {
+  display: inline-block;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 9999px;
+  margin-right: 0.25rem;
+  vertical-align: middle;
+}
+
+.trustGreen { background: #16a34a; }
+.trustAi { background: #ffffff; border: 1px solid #94a3b8; }
+
+.rows {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-right: 0.25rem;
+}
+
+.empty { font-size: 0.78rem; color: var(--color-text-muted, #6b7280); }
+
+.row {
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  cursor: pointer;
+}
+
+.rowSelected { border-color: var(--color-primary, #4f46e5); box-shadow: 0 0 0 1px var(--color-primary, #4f46e5); }
+
+.rowHead { display: flex; align-items: center; gap: 0.4rem; }
+
+.labelInput {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--color-border-strong, #d1d5db);
+  border-radius: 0.35rem;
+  padding: 0.3rem 0.45rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.nutrients {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.35rem;
+}
+
+.nutrients label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.6rem;
+  color: var(--color-text-muted, #6b7280);
+  gap: 0.15rem;
+}
+
+.nutrients input {
+  border: 1px solid var(--color-border-strong, #d1d5db);
+  border-radius: 0.35rem;
+  padding: 0.25rem 0.35rem;
+  font-size: 0.78rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.allergens {
+  border: 1px solid var(--color-border-strong, #d1d5db);
+  border-radius: 0.35rem;
+  padding: 0.3rem 0.45rem;
+  font-size: 0.75rem;
+}
+
+.err { font-size: 0.68rem; color: #dc2626; }
+
+.rowActions { display: flex; gap: 0.4rem; }
+
+.saveBtn {
+  padding: 0.35rem 0.7rem;
+  border-radius: 0.4rem;
+  border: none;
+  background: var(--color-primary, #4f46e5);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.saveBtn:disabled { opacity: 0.6; cursor: default; }
+
+.delBtn {
+  padding: 0.35rem 0.7rem;
+  border-radius: 0.4rem;
+  border: 1.5px solid #dc2626;
+  background: #fff;
+  color: #dc2626;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.publishBar {
+  margin-top: 0.6rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--color-border, #e5e7eb);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pubOn { font-size: 0.78rem; font-weight: 700; color: #16a34a; }
+.pubOff { font-size: 0.78rem; font-weight: 600; color: var(--color-text-muted, #6b7280); }
+
+.publishBtn {
+  padding: 0.45rem 1rem;
+  border-radius: 0.5rem;
+  border: none;
+  background: #16a34a;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.unpublishBtn {
+  padding: 0.45rem 1rem;
+  border-radius: 0.5rem;
+  border: 1.5px solid #d1d5db;
+  background: #fff;
+  color: var(--color-text-soft, #374151);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.publishBtn:disabled, .unpublishBtn:disabled { opacity: 0.6; cursor: default; }

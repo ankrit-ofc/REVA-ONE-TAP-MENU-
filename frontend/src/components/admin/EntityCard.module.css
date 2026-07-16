@@ -1,0 +1,98 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.625rem;
+  padding: 0.55rem 0.625rem;
+  min-width: 0;
+}
+
+.row {
+  display: flex;
+  gap: 0.6rem;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.image {
+  width: 56px;
+  height: 56px;
+  align-self: center;
+  object-fit: cover;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.placeholder {
+  width: 56px;
+  height: 56px;
+  align-self: center;
+  background: #f1f5f9;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.2rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.title {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #1e293b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.subtitle {
+  font-size: 0.75rem;
+  color: #64748b;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.pill {
+  align-self: flex-start;
+  padding: 0.1rem 0.45rem;
+  border-radius: 9999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.pillOk {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.pillWarn {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.pillMuted {
+  background: #f1f5f9;
+  color: #94a3b8;
+}
+
+/* Stacked icon actions on the far right, spread top-to-bottom of the card */
+.actions {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.3rem;
+  flex-shrink: 0;
+}

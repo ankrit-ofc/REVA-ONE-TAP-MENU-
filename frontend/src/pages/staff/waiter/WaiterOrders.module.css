@@ -1,0 +1,240 @@
+.root {
+  padding: 1rem;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.count {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.hint {
+  margin: 0 0 1rem;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.6rem;
+  background: #fff;
+}
+
+.rowRequested {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.rowPending {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.badgePending {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #92400e;
+  background: #fde68a;
+  padding: 0.15rem 0.45rem;
+  border-radius: 9999px;
+}
+
+.pendingBox {
+  flex-basis: 100%;
+  border-top: 1px dashed #fbbf24;
+  padding-top: 0.6rem;
+  margin-top: 0.35rem;
+}
+
+.pendingList {
+  list-style: none;
+  margin: 0 0 0.6rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.pendingItem {
+  display: flex;
+  gap: 0.4rem;
+  align-items: baseline;
+  font-size: 0.85rem;
+  color: #374151;
+}
+
+.pendingQty {
+  font-weight: 700;
+  color: #92400e;
+}
+
+.pendingNote {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.pendingActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.approveBtn {
+  padding: 0.5rem 1.1rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: #16a34a;
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.rejectBtn {
+  padding: 0.5rem 1.1rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: #dc2626;
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cancelBtn {
+  padding: 0.5rem 0.9rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  background: #fff;
+  color: #374151;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.approveBtn:disabled,
+.rejectBtn:disabled,
+.cancelBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.rejectConfirm {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.reasonInput {
+  flex: 1;
+  min-width: 10rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 0.82rem;
+}
+
+.pendingErr {
+  margin: 0.5rem 0 0;
+  font-size: 0.78rem;
+  color: #dc2626;
+}
+
+.table {
+  font-weight: 700;
+  color: #111827;
+  font-size: 0.95rem;
+}
+
+.num {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.items {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #92400e;
+  background: #fde68a;
+  padding: 0.15rem 0.45rem;
+  border-radius: 9999px;
+}
+
+.print {
+  margin-left: auto;
+  padding: 0.5rem 0.9rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: #0f766e;
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.print:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.printDone {
+  background: #16a34a;
+}
+
+.printErr {
+  background: #dc2626;
+}
+
+.state {
+  padding: 2rem;
+  text-align: center;
+  color: #64748b;
+}
+
+.stateError {
+  color: #dc2626;
+}
+
+.empty {
+  padding: 3rem 1rem;
+  text-align: center;
+  color: #64748b;
+}
+
+.emptyIcon {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}

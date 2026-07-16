@@ -1,0 +1,53 @@
+/* The full inline search bar is the mobile affordance; on desktop the header
+   shows an expandable search icon instead, so this is hidden there. */
+.wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  padding: 0.35rem 0.6rem;
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 768px) {
+  .wrap {
+    display: none;
+  }
+}
+
+.wrap:focus-within {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.15);
+}
+
+.icon {
+  font-size: 0.8rem;
+  line-height: 1;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 0.8125rem;
+  color: #1e293b;
+}
+
+.clear {
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0.15rem;
+}
+
+.clear:hover { color: #475569; }

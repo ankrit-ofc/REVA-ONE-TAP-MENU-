@@ -1,0 +1,119 @@
+Prerequisites
+Docker Desktop installed and running
+That's it — Python and Node are not needed locally (Docker handles everything)
+Step 1 — Fix the .env file
+The current backend/.env has placeholder passwords. Open it and replace the three REPLACE*WITH*\* values:
+
+backend/.env
+
+SECRET_KEY=9b9a9915a46ae8afdafe0c2e4f31b8181b35cdd42949da10b73c29e66c052083
+
+QR_SECRET=any-random-string-here-change-this
+
+ENVIRONMENT=development
+
+DATABASE_URL=postgresql+psycopg://app_user:myapppass123@db:5432/appdb
+
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=mypostgrespass123
+POSTGRES_DB=appdb
+
+APP_DB_PASSWORD=myapppass123
+The two passwords must match: APP_DB_PASSWORD in the URL and the standalone field must be identical. Use any password you like for local dev.
+
+Step 2 — Start all services
+From the project root (where docker-compose.yml lives):
+
+docker compose up --build
+This:
+
+Builds the FastAPI backend image (installs all Python deps)
+Pulls the PostgreSQL 17 image
+Starts the Node 20 container that runs the Vite dev server
+Runs the DB init SQL (db/init/01_roles.sql) which creates the app_user role
+First run takes ~2 minutes to download images and install packages.
+
+Step 3 — Run database migrations (first time only)
+Open a second terminal while the containers are running:
+
+docker compose exec backend alembic upgrade head
+You should see alembic printing each migration revision. This creates all tables, enums, constraints, and RLS policies.
+
+Step 4 — Access the app
+What URL
+Frontend (customer + staff UI) http://localhost:3000
+Backend API http://localhost:8000
+API docs (Swagger) http://localhost:8000/docs
+Health check http://localhost:8000/health
+
+Step 5 — Create your first restaurant + admin user
+Use the Swagger UI at http://localhost:8000/docs or curl. You need a SUPERADMIN user first.
+
+Create SUPERADMIN directly in the DB (one-time setup):
+
+docker compose exec db psql -U postgres -d appdb
+
+INSERT INTO restaurants (id, name, slug, is_active)
+VALUES (gen_random_uuid(), 'Platform', 'platform', true);
+
+-- Get the restaurant id just inserted
+-- Then insert the superadmin (replace the UUID and hash accordingly)
+Easier: use the /superadmin/restaurants endpoint after seeding a superadmin manually. Here's the full seed command:
+
+docker compose exec backend python -c "
+from app.db.session import SessionLocal
+from app.models.user import User
+from app.models.restaurant import Restaurant
+from app.models.settings import RestaurantSettings
+from app.core import security
+from app.models.enums import Role
+import uuid
+
+db = SessionLocal()
+r = Restaurant(name='Platform', slug='platform', is_active=True)
+db.add(r); db.flush()
+s = RestaurantSettings(restaurant_id=r.id)
+db.add(s)
+u = User(restaurant_id=r.id, email='super@admin.com',
+password_hash=security.hash_password('admin1234'),
+role=Role.SUPERADMIN)
+db.add(u); db.commit()
+print('SUPERADMIN created:', u.email)
+db.close()
+"
+Then log in at http://localhost:3000 with super@admin.com / admin1234, and use the Superadmin panel to create restaurants.
+
+Day-to-day commands
+
+# Start everything
+
+docker compose up
+
+# Start in background
+
+docker compose up -d
+
+# Stop
+
+docker compose down
+
+# View backend logs
+
+docker compose logs -f backend
+
+# Run migrations after a schema change
+
+docker compose exec backend alembic upgrade head
+
+# Open a DB shell
+
+docker compose exec db psql -U postgres -d appdb
+
+# Rebuild backend image (after adding a dependency)
+
+docker compose up --build backend
+Ports at a glance
+Service Port
+Frontend (Vite dev) 3000
+Backend (FastAPI) 8000
+PostgreSQL 5432

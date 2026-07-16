@@ -1,0 +1,68 @@
+:root {
+  /* ── Customer "REVA" green theme ───────────────────────────────────────── */
+  --color-primary: #1b4332; /* deep forest green */
+  --color-primary-dark: #14342a;
+  --color-primary-deep: #0f2a21;
+  --color-accent: #2d6a4f; /* lighter green for hovers/links */
+  --color-accent-soft: #40916c;
+
+  --color-bg: #faf7f2; /* warm cream page background */
+  --color-surface: #ffffff;
+  --color-tint: #e8f0ea; /* pale green (chef's special card, selected chips) */
+  --color-tint-strong: #d7e8dd;
+
+  --color-text: #1a1a1a;
+  --color-text-soft: #4b5563;
+  --color-text-muted: #6b7280;
+  --color-text-faint: #9ca3af;
+  --color-border: #ececec;
+  --color-border-strong: #e0e0e0;
+
+  /* Dietary indicators (unchanged, India-standard) + extra product tags */
+  --color-veg: #16a34a;
+  --color-nonveg: #dc2626;
+  --color-egg: #d97706;
+  --color-beverage: #2563eb;
+  --color-smoke: #6b7280;
+
+  /* Status accents */
+  --color-danger: #dc2626;
+  --color-gold: #d4a017;
+
+  /* Typography — single sans family across the whole customer surface */
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-serif: var(--font-sans); /* kept as an alias; headings now use Inter too */
+
+  /* Radius / shadow */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.875rem;
+  --radius-lg: 1.25rem;
+  --radius-pill: 9999px;
+  --shadow-sm: 0 1px 4px rgba(20, 52, 42, 0.08);
+  --shadow-md: 0 4px 16px rgba(20, 52, 42, 0.12);
+  --shadow-lg: 0 8px 28px rgba(20, 52, 42, 0.18);
+
+  /* Layout */
+  --app-max-width: 480px;
+}
+
+/* Tablet+: let the customer surface use more width */
+@media (min-width: 768px) {
+  :root {
+    --app-max-width: 760px;
+  }
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: var(--font-sans);
+  background: var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+}

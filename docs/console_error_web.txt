@@ -1,0 +1,8 @@
+The user sees POST /auth/refresh 401 (Unauthorized) in the browser console on /menu and on dashboards, even though the app works correctly. This is cosmetic console noise, not a bug — browsers log every 4xx/5xx network response to the console even when JS catches it.
+
+Root cause(s):
+
+Bootstrap probe (the common one). App.tsx:39-47 unconditionally fires POST /auth/refresh on every page load to restore a session from the HttpOnly refresh cookie. With no valid cookie (customer on /menu, fresh visit, logged-out/expired) the backend correctly returns 401; the .catch() handles it. The cookie is HttpOnly so JS can't pre-check it — hence the optimistic probe.
+Genuine expiry/revocation (dashboards). A /auth/refresh 401 in a logged-in context means the refresh cookie really ended — inactivity expiry or single-session displacement (same account logged in elsewhere). Correct behavior; must NOT be hidden.
+Inherent access-token cycle. The in-memory access token lives 5 min, so an active dashboard 401s on a data endpoint (~every 5 min) → silent refresh + retry. Inherent to the token design; out of scope.
+This change only addresses (1).

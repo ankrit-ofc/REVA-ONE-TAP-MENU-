@@ -1,0 +1,312 @@
+/* ── Mobile-first base ─────────────────────────────────────────────────────── */
+.root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #1a1a2e;
+  color: #e2e8f0;
+  padding: 0.625rem 0.875rem;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+
+.hamburger {
+  background: transparent;
+  border: 1px solid #4c1d95;
+  color: #e9d5ff;
+  font-size: 1.125rem;
+  line-height: 1;
+  padding: 0.35rem 0.6rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.topbarBrand {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #a78bfa;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* "Sound alerts" bell toggle (in the topbar on mobile, the nav footer on desktop). */
+.alertToggle {
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid #4c1d95;
+  color: #a78bfa;
+  width: 1.875rem;
+  height: 1.875rem;
+  flex-shrink: 0;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.alertOff {
+  opacity: 0.5;
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 40;
+}
+
+.nav {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  width: 100%;
+  background: #1a1a2e;
+  color: #e2e8f0;
+  padding: 0.75rem 0;
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+}
+
+.navOpen {
+  display: flex;
+}
+
+.navTop {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.navHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 0 0.875rem 0.5rem;
+}
+
+.brand {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #a78bfa;
+  margin-bottom: 0.2rem;
+}
+
+.roleChip {
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.closeBtn {
+  background: transparent;
+  border: none;
+  color: #a78bfa;
+  font-size: 1.75rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0.25rem;
+}
+
+.closeBtn:hover { color: #f87171; }
+
+.navList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.navLink {
+  display: block;
+  padding: 0.5rem 0.875rem;
+  border-radius: 0;
+  color: #94a3b8;
+  text-decoration: none;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  transition: background 0.15s, color 0.15s;
+}
+
+.navLink:hover {
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+.navLinkActive {
+  background: #4c1d95;
+  color: #e9d5ff;
+}
+
+.userFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border-top: 1px solid #4c1d95;
+  padding: 0.625rem 0.875rem 0;
+  margin-top: 0.5rem;
+}
+
+.user {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.avatar {
+  width: 1.875rem;
+  height: 1.875rem;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  background: #4c1d95;
+  color: #e9d5ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.userName {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.logoutBtn {
+  background: transparent;
+  border: 1px solid #4c1d95;
+  color: #a78bfa;
+  width: 1.875rem;
+  height: 1.875rem;
+  flex-shrink: 0;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logoutBtn:hover {
+  border-color: #f87171;
+  color: #f87171;
+}
+
+.main {
+  flex: 1;
+  background: #f8fafc;
+  overflow-y: auto;
+  min-width: 0;
+  font-size: 0.8125rem;
+}
+
+/* ── Desktop (≥768px): static, full-height sidebar; no top bar ─────────────── */
+@media (min-width: 768px) {
+  .root {
+    flex-direction: row;
+    height: 100vh;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  .topbar,
+  .backdrop,
+  .closeBtn {
+    display: none;
+  }
+
+  .nav {
+    position: static;
+    inset: auto;
+    width: 184px;
+    height: 100vh;
+    flex-shrink: 0;
+    display: flex;
+  }
+
+  .navHeader {
+    padding-top: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .main {
+    height: 100vh;
+  }
+
+  /* Counter Display: collapsed to a floating hamburger on desktop. Clicking it
+     reveals the regular static left sidebar (push layout, not an overlay). The
+     root stays the desktop flex-row; only the nav/topbar behaviour changes. */
+  .collapsed .topbar {
+    display: flex;
+    position: fixed;
+    top: 0.5rem;
+    left: 0.5rem;
+    width: auto;
+    padding: 0;
+    background: transparent;
+    z-index: 60;
+  }
+
+  .collapsed .topbarBrand {
+    display: none;
+  }
+
+  /* Make the lone hamburger legible on the light board. */
+  .collapsed .hamburger {
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    color: #1a1a2e;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  }
+
+  /* Hide the floating hamburger once the sidebar is open (it has its own ✕). */
+  .collapsed.open .topbar {
+    display: none;
+  }
+
+  .collapsed .closeBtn {
+    display: block;
+  }
+
+  .collapsed .backdrop {
+    display: none;
+  }
+
+  /* Sidebar hidden until opened; when open it's the normal 184px static column. */
+  .collapsed .nav {
+    display: none;
+  }
+
+  .collapsed .navOpen {
+    display: flex;
+    position: static;
+    inset: auto;
+    width: 184px;
+    height: 100vh;
+  }
+}

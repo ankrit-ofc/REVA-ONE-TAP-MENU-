@@ -1,0 +1,133 @@
+# Start all containers and volumes
+docker compose up -d
+
+# See what's running
+docker compose ps
+
+# See live logs from all containers
+docker compose logs -f
+
+# See logs from just one
+docker compose logs -f backend
+
+# Stop everything (containers removed, data volume kept)
+docker compose down
+
+# Stop + wipe the database too (destructive!)
+docker compose down -v
+
+# Restart one service after a code change
+docker compose restart backend
+
+# Rebuild the backend image after changing requirements.txt
+docker compose up -d --build backend
+
+
+docker compose up -d
+        │
+        ├── reads docker-compose.yml
+        │
+        ├── sees backend needs building → reads backend/Dockerfile → builds image
+        │
+        ├── pulls postgres:17 and node:20-alpine from Docker Hub
+        │
+        └── starts all 3 containers on the same private network
+                db ←──── backend ←──── frontend
+              :5432       :8000         :3000
+                                          │
+                                     your browser
+
+
+Docker Compose Cheat Sheet
+
+| Command                                                           | What it does                                       |
+| ----------------------------------------------------------------- | -------------------------------------------------- |
+| docker compose up -d                                              | Start all containers in the background             |
+| docker compose down                                               | Stop and remove containers (named volumes survive) |
+| docker compose stop                                               | Stop containers without removing them              |
+| docker compose start                                              | Start previously stopped containers                |
+| docker compose restart backend                                    | Restart only the backend container                 |
+| docker compose restart frontend                                   | Restart only the frontend container                |
+| docker compose ps                                                 | Show the status of compose-managed containers      |
+| docker compose logs backend --tail=50                             | Show the last 50 backend logs                      |
+| docker compose logs frontend --tail=50                            | Show the last 50 frontend logs                     |
+| docker compose logs -f backend                                    | Follow backend logs live                           |
+| docker compose exec backend bash                                  | Open a shell inside the backend container          |
+| docker compose exec frontend sh                                   | Open a shell inside the frontend container         |
+| docker compose exec backend alembic upgrade head                  | Run Alembic migrations inside backend              |
+| docker compose exec db psql -U Blaze -d multi_tenant_qr_resturant | Open PostgreSQL shell                              |
+
+IMAGE COMMANDS
+
+| Command                               | What it does                                      |
+| ------------------------------------- | ------------------------------------------------- |
+| docker compose build                  | Build images for all services                     |
+| docker compose build backend          | Build only the backend image                      |
+| docker compose build frontend         | Build only the frontend image                     |
+| docker compose build --no-cache       | Rebuild images from scratch without using cache   |
+| docker compose up -d --build          | Build changed images and start containers         |
+| docker compose up -d --force-recreate | Recreate containers even if config hasn't changed |
+| docker image ls                       | List all Docker images                            |
+| docker image inspect IMAGE_ID         | View details of an image                          |
+| docker image rm IMAGE_ID              | Delete an image                                   |
+| docker image prune                    | Remove dangling (unused) images                   |
+| docker image prune -a                 | Remove all unused images                          |
+
+CONTAINER COMMANDS
+
+| Command                       | What it does                              |
+| ----------------------------- | ----------------------------------------- |
+| docker ps                     | List running containers                   |
+| docker ps -a                  | List all containers (running and stopped) |
+| docker stop CONTAINER_NAME    | Stop a container                          |
+| docker start CONTAINER_NAME   | Start a stopped container                 |
+| docker restart CONTAINER_NAME | Restart a container                       |
+| docker rm CONTAINER_NAME      | Remove a stopped container                |
+| docker rm -f CONTAINER_NAME   | Force remove a running container          |
+| docker inspect CONTAINER_NAME | View detailed container information       |
+
+VOLUME COMMANDS
+
+| Command                         | What it does                                              |
+| ------------------------------- | --------------------------------------------------------- |
+| docker volume ls                | List all volumes                                          |
+| docker volume create my_volume  | Create a named volume                                     |
+| docker volume inspect my_volume | View details about a volume                               |
+| docker volume rm my_volume      | Delete a specific volume                                  |
+| docker volume prune             | Delete all unused volumes                                 |
+| docker compose down -v          | Stop containers and remove compose-created volumes        |
+| docker compose up -d            | Automatically recreate missing volumes defined in compose |
+
+NETWORK COMMANDS
+
+| Command                             | What it does             |
+| ----------------------------------- | ------------------------ |
+| docker network ls                   | List Docker networks     |
+| docker network inspect NETWORK_NAME | View network details     |
+| docker network rm NETWORK_NAME      | Remove an unused network |
+| docker network prune                | Remove unused networks   |
+
+SYSTEM CLEANUP
+
+| Command                          | What it does                                            |
+| -------------------------------- | ------------------------------------------------------- |
+| docker system df                 | Show Docker disk usage                                  |
+| docker system prune              | Remove unused containers, networks, and dangling images |
+| docker system prune -a           | Remove all unused images and stopped containers         |
+| docker system prune -a --volumes | Remove everything unused including volumes              |
+| docker info                      | Show Docker system information                          |
+| docker version                   | Show Docker client/server versions                      |
+
+WHEN TO USE WHAT
+
+| Situation                             | Command                                          |
+| ------------------------------------- | ------------------------------------------------ |
+| Code changed and mounted via volumes  | Usually no command needed; auto-reloads          |
+| requirements.txt changed              | docker compose up -d --build backend             |
+| Dockerfile changed                    | docker compose build SERVICE                     |
+| docker-compose.yml env changed        | docker compose up -d --force-recreate SERVICE    |
+| Need fresh images                     | docker compose build --no-cache                  |
+| Database migration added              | docker compose exec backend alembic upgrade head |
+| Need complete reset but keep DB data  | docker compose down && docker compose up -d      |
+| Need complete reset including DB data | docker compose down -v && docker compose up -d   |
+| Need to free Docker disk space        | docker system prune -a                           |

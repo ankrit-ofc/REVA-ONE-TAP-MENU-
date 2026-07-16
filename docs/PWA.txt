@@ -1,0 +1,114 @@
+What a PWA actually requires
+Three things turn a normal web app into an installable PWA:
+
+HTTPS (served over TLS). localhost is exempt, so you can develop/test freely; production (order.yourrestaurant.com, etc.) must be HTTPS.
+A Web App Manifest — a JSON file declaring name, icons, colors, and display: standalone (so it opens chrome-less like a native app).
+A Service Worker — a background script that caches the app shell so it loads instantly/offline and enables installability (and later, push notifications).
+Meet those + a couple of icon sizes and the browser offers "Install app" / "Add to Home Screen."
+
+How it'd be done here (recommended path)
+Use vite-plugin-pwa (built on Google's Workbox). It's the standard for Vite and does the heavy lifting — generates the service worker, injects the manifest, handles cache-busting on each deploy. Roughly:
+
+One dev dependency: vite-plugin-pwa (note: this needs your approval per the repo's dependency rule).
+vite.config.ts: add the VitePWA({...}) plugin with your manifest inline — name, short_name, theme_color: '#1b4332' (your REVA green), background_color, display: 'standalone', start_url: '/', and the icon list.
+frontend/public/: add icons — at minimum 192×192, 512×512, a maskable 512 (for Android adaptive icons), and an apple-touch-icon (180×180) for iOS. You currently only have resturant.jpg there.
+index.html: add <meta name="theme-color">, apple-mobile-web-app-capable, and the apple-touch-icon link.
+SW registration: the plugin auto-injects it, or you call registerSW() from its virtual:pwa-register module in main.tsx — typically paired with a small "New version available — reload?" toast.
+That's essentially it for installability. A few hours of work.
+
+The part that needs real care for this app: caching strategy
+This is a live POS with money, orders, payments, and WebSocket real-time updates. The DB is the source of truth (per your CLAUDE.md invariants). So the caching rules matter:
+
+App shell (JS/CSS/HTML) → precache. This is the big win: instant repeat loads, offline-capable shell. Safe.
+API calls (/auth, /orders, /invoices, /counter, /kitchen, /waiter, /webhooks) → do not cache naively. Use NetworkOnly (or at most NetworkFirst with a very short TTL for read-only menu data). You must never show a stale order, invoice, or payment status from cache — that would violate "backend is the source of truth."
+Product images (/media/...) → CacheFirst is great here (immutable, UUID-named files).
+WebSockets aren't cacheable — offline simply means no live updates, which is expected.
+What PWA gives you vs. what it won't
+Gives: home-screen/desktop install, full-screen app-like feel, faster repeat loads, an icon, and a foundation for push notifications later (e.g., that bill-request alert could one day notify even when the tab's closed). Great for the always-on staff screens — kitchen display, counter, counter-display board — installed as a kiosk-style app on a tablet.
+Won't (meaningfully): enable offline ordering. A POS needs the server for stock, pricing, concurrency, and payments. Don't sell offline ordering as a feature; the realistic offline story is "the shell loads and tells you you're offline."
+Project-specific caveats
+Two audiences, one app: customers (QR → menu) and staff (dashboards). One manifest covers both; start_url: '/' lands on the role-appropriate redirect. You can tune name/icons toward whichever you care most about — I'd guess the staff/kitchen/counter screens benefit most from "install as app."
+Auth is unaffected: your in-memory access token + HttpOnly refresh cookie keep working as-is. (Offline can't refresh tokens — fine.)
+Stale-app risk after deploys: service workers can pin old code. Workbox handles versioning, but for a POS you want an explicit "update available → reload" prompt so staff don't run an outdated build. Important to include.
+Testing: the service worker doesn't run normally under vite dev (and your dev proxy's text/html bypass complicates it). Test with npm run build && npm run preview, or enable vite-plugin-pwa's devOptions.
+iOS/Safari: installable via "Add to Home Screen," but no install-prompt API (no custom button), push is more limited (improving), and iOS can evict storage. Android/desktop Chrome get the full experience.
+Docker/serving: your prod build serves static dist/ — just ensure the service worker and manifest.webmanifest are served from the root scope with correct content types (Workbox output handles this; the static server just needs to serve the files)
+
+
+================================================================================
+AS-BUILT (what was actually implemented) — online-only, dependency-free
+================================================================================
+
+We did NOT use vite-plugin-pwa/Workbox. Because the requirement was "installable +
+app-like, but always online (no offline)", we hand-rolled it with ZERO new
+dependencies. The app installs and runs full-screen, but every load/action needs
+the network (a live POS must never serve stale menu/order/payment data).
+
+Files added/changed:
+- frontend/public/manifest.webmanifest  — name, short_name, theme_color #1b4332,
+  display standalone, start_url '/', icons (192, 512, maskable 512).
+- frontend/public/icons/  — icon-192.png, icon-512.png, icon-maskable-512.png,
+  apple-touch-icon.png (generated; replace with real branded art anytime).
+- frontend/public/sw.js  — minimal ONLINE-ONLY service worker. Caches NOTHING
+  (pass-through fetch handler → satisfies installability without stale data) and
+  hosts the notificationclick handler. New deploys are picked up on reload.
+- frontend/index.html  — <link rel="manifest">, theme-color, apple-touch-icon +
+  apple-mobile-web-app-* meta tags.
+- frontend/src/main.tsx  — registers /sw.js on load (only in a secure context).
+
+Notifications (Level 1 — works while app is open or backgrounded):
+- frontend/src/lib/notify.ts  — primeNotificationPermission() asks on first user
+  gesture; showBillNotification() shows an OS banner via the SW registration
+  (falls back to a page Notification).
+- useBillAlertSound() now fires the chime AND the OS notification on
+  'bill.requested' (waiter ReadyItems + counter Billing), passing order #/table.
+- Closed-app push (Level 2, Web Push + VAPID + backend sender) is NOT built — it
+  needs a new backend dependency and is a separate task. On iOS, notifications
+  only work once the PWA is installed to the home screen.
+
+--------------------------------------------------------------------------------
+Installing the app (per platform)
+--------------------------------------------------------------------------------
+Desktop Chrome/Edge: install icon in the address bar (or ⋮/⋯ menu → Install /
+  Apps → Install this site as an app). Opens in its own window.
+Android Chrome: ⋮ → Add to Home screen / Install app (banner may auto-appear).
+Android Samsung Internet: ≡ → Add page to → Home screen.
+iPhone/iPad Safari (only Safari can install on iOS): Share → Add to Home Screen.
+Firefox desktop: does not install standalone PWAs; use Chrome/Edge.
+
+--------------------------------------------------------------------------------
+Testing with Docker (docker compose up -d)
+--------------------------------------------------------------------------------
+DESKTOP (your PC): just open http://localhost:3000 — localhost is a secure
+  context, so the service worker registers and the install button appears. No
+  extra setup.
+
+PHONE/TABLET on the same Wi-Fi: a LAN IP over http is NOT a secure context, so
+  the SW won't register. You need HTTPS. A Caddy service is included for this:
+   1. Find your PC's LAN IP (Windows: `ipconfig` → IPv4 Address, e.g. 192.168.1.50).
+   2. Start with that IP:  PWA_HOST=192.168.1.50 docker compose up -d
+      (Caddy serves HTTPS on :443 and reverse-proxies to the frontend.)
+   3. Install Caddy's local root CA on the phone so the cert is trusted (an
+      untrusted cert blocks the service worker):
+        docker compose cp caddy:/data/caddy/pki/authorities/local/root.crt ./caddy-root.crt
+      Transfer caddy-root.crt to the phone and install/trust it:
+        - iOS: AirDrop/email it → Settings → General → VPN & Device Management →
+          install profile → then Settings → General → About → Certificate Trust
+          Settings → enable full trust for the Caddy root.
+        - Android: Settings → Security → Encryption & credentials → Install a
+          certificate → CA certificate.
+   4. On the phone open  https://192.168.1.50  → install from the browser menu.
+
+EASIEST ALTERNATIVE (no cert install): a tunnel gives a real, trusted HTTPS URL.
+   cloudflared:  cloudflared tunnel --url http://localhost:3000
+   or ngrok:     ngrok http 3000
+   Open the printed https URL on the phone — SW + install work with zero device
+   config. (allowedHosts:true is already set in vite.config so tunneled hosts are
+   accepted.)
+
+Notes:
+- vite.config server.allowedHosts is true so the app is reachable via a LAN IP or
+  the Caddy/tunnel host, not just localhost.
+- HMR may not work over the Caddy/tunnel URL (HMR points at port 3000); that's
+  fine for install testing — use http://localhost:3000 for active development.
+- Production must be real HTTPS (you already set FRONTEND_BASE_URL to https).

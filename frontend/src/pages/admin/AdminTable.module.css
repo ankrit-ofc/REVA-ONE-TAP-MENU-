@@ -1,0 +1,633 @@
+.root {
+  padding: 1rem;
+}
+
+.title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0 0 1.25rem;
+}
+
+.addForm {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+.input {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  font-size: 0.9375rem;
+  flex: 1;
+  min-width: 180px;
+}
+
+.inputSm {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  font-size: 0.9375rem;
+  width: 80px;
+}
+
+.input:focus,
+.inputSm:focus {
+  outline: 2px solid #7c3aed;
+  outline-offset: 1px;
+}
+
+.btnAdd {
+  padding: 0.4rem 0.7rem;
+  background: #7c3aed;
+  color: #fff;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btnAdd:hover:not(:disabled) { background: #6d28d9; }
+.btnAdd:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.formErr {
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin: 0 0 0.75rem;
+}
+
+.tableWrap {
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.table th {
+  background: #f8fafc;
+  padding: 0.625rem 0.875rem;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.table td {
+  padding: 0.75rem 0.875rem;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.rowInactive td {
+  color: #94a3b8;
+}
+
+.badgeActive {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  background: #dcfce7;
+  color: #166534;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.badgeInactive {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  background: #f1f5f9;
+  color: #94a3b8;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/* Keep the actions cell a real table cell (so it stays aligned with the
+   ACTIONS header column); just right-align its inline icon buttons. */
+.actions {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.actions > button + button {
+  margin-left: 0.35rem;
+}
+
+/* Actions are the last column: shrink it to its content and pin it hard-right
+   so the remaining width is shared by the other columns (which spread evenly);
+   the first column stays hard-left. */
+.table th:last-child,
+.table td:last-child {
+  text-align: right;
+  width: 1px;
+  white-space: nowrap;
+}
+
+/* Compact "Show QR" button inside a mobile table card (below name/status). */
+.btnQrCard {
+  align-self: flex-start;
+  margin-top: 0.15rem;
+  padding: 0.25rem 0.6rem;
+  border: 1px solid #a5b4fc;
+  border-radius: 0.4rem;
+  background: #eef2ff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: #4338ca;
+}
+
+.btnQrCard:hover { background: #e0e7ff; border-color: #6366f1; }
+
+.btnEdit {
+  padding: 0.3rem 0.625rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.375rem;
+  background: transparent;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  color: #374151;
+}
+
+.btnEdit:hover:not(:disabled) { border-color: #7c3aed; color: #7c3aed; }
+.btnEdit:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.btnDelete {
+  padding: 0.3rem 0.625rem;
+  border: 1px solid #fca5a5;
+  border-radius: 0.375rem;
+  background: transparent;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  color: #dc2626;
+}
+
+.btnDelete:hover { background: #fee2e2; }
+
+.btnSave {
+  padding: 0.3rem 0.625rem;
+  background: #7c3aed;
+  color: #fff;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.btnCancel {
+  padding: 0.3rem 0.625rem;
+  background: transparent;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.375rem;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.inlineInput {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #7c3aed;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  width: 100%;
+}
+
+.emptyRow {
+  text-align: center;
+  color: #94a3b8;
+  padding: 2rem;
+}
+
+.state {
+  padding: 2rem;
+  color: #64748b;
+}
+
+/* Image preview used in Products */
+.imagePreview {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 0.375rem;
+  border: 1px solid #e2e8f0;
+}
+
+.imagePlaceholder {
+  width: 48px;
+  height: 48px;
+  background: #f1f5f9;
+  border-radius: 0.375rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  color: #94a3b8;
+}
+
+/* Shared page layout */
+.page {
+  padding: 1rem;
+  max-width: 900px;
+}
+
+.pageHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.pageTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+/* Right-side cluster in a page header: [search][page-size][add button] */
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.btnAddTop {
+  padding: 0.4rem 0.7rem;
+  background: #7c3aed;
+  color: #fff;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btnAddTop:hover { background: #6d28d9; }
+
+/* Create form */
+.createForm {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.createTitle {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #374151;
+  margin: 0 0 0.75rem;
+}
+
+.createRow {
+  display: flex;
+  gap: 0.625rem;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.createInput {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  font-size: 0.9375rem;
+  flex: 1;
+  min-width: 160px;
+  background: #fff;
+}
+
+.createInput:focus {
+  outline: 2px solid #7c3aed;
+  outline-offset: 1px;
+}
+
+.formError {
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin: 0.5rem 0 0;
+}
+
+.inlineError {
+  color: #dc2626;
+  font-size: 0.75rem;
+}
+
+.btnDeactivate {
+  padding: 0.3rem 0.625rem;
+  border: 1px solid #fca5a5;
+  border-radius: 0.375rem;
+  background: transparent;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  color: #dc2626;
+}
+
+.btnDeactivate:hover { background: #fee2e2; }
+
+.btnQr {
+  padding: 0.3rem 0.625rem;
+  border: 1px solid #a5b4fc;
+  border-radius: 0.375rem;
+  background: transparent;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  color: #4338ca;
+  font-weight: 500;
+}
+
+.btnQr:hover { background: #eef2ff; border-color: #6366f1; }
+
+.empty {
+  text-align: center;
+  color: #94a3b8;
+  padding: 2rem;
+  font-size: 0.875rem;
+}
+
+/* ── QR Modal ─────────────────────────────────────────────────────────── */
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal {
+  background: #fff;
+  border-radius: 1rem;
+  padding: 1.25rem;
+  width: 320px;
+  max-width: 100%;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modalTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0;
+  color: #1e1b4b;
+}
+
+.modalClose {
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #94a3b8;
+  padding: 0 0.25rem;
+}
+
+.modalClose:hover { color: #374151; }
+
+.qrWrap {
+  display: flex;
+  justify-content: center;
+  background: #f8fafc;
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+
+.qrImage {
+  width: 220px;
+  height: 220px;
+  display: block;
+}
+
+.qrPlaceholder {
+  width: 220px;
+  height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  font-size: 0.875rem;
+}
+
+.scanLinkSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.scanLinkLabel {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  margin: 0;
+}
+
+.scanLinkRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f1f5f9;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.scanLink {
+  flex: 1;
+  font-size: 0.75rem;
+  color: #4338ca;
+  word-break: break-all;
+  text-decoration: none;
+}
+
+.scanLink:hover { text-decoration: underline; }
+
+.btnCopy {
+  padding: 0.25rem 0.625rem;
+  background: #4338ca;
+  color: #fff;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.btnCopy:hover { background: #3730a3; }
+
+.btnExportPdf {
+  margin-top: 1rem;
+  width: 100%;
+  padding: 0.6rem 1rem;
+  background: #1e1b4b;
+  color: #fff;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btnExportPdf:hover { background: #312e81; }
+
+.btnExportPdf:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* ── Category modal form fields ───────────────────────────────────────────── */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.fieldLabel {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.checkRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #374151;
+  cursor: pointer;
+}
+
+.checkRow input {
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+}
+
+.modalForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.fieldHint {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.modalActions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  margin-top: 0.25rem;
+}
+
+/* Availability status badges (reuse colors close to active/inactive) */
+.badgeAvailable {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  background: #dcfce7;
+  color: #166534;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.badgeHidden {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  background: #fef3c7;
+  color: #92400e;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/* ── Responsive: card grid (mobile) ↔ data table (desktop) ─────────────────── */
+
+/* Mobile-first: the data table is hidden, the card grid shows. */
+.desktopOnly {
+  display: none;
+}
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  padding: 0 0.25rem;
+}
+
+/* Inline editor revealed inside a mobile card (staff role / table rename) */
+.cardEdit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .root,
+  .page {
+    padding: 1.5rem;
+  }
+
+  .title,
+  .pageTitle {
+    font-size: 1.0625rem;
+  }
+
+  .desktopOnly {
+    display: block;
+  }
+
+  .cardGrid {
+    display: none;
+  }
+
+  .btnAdd,
+  .btnAddTop {
+    padding: 0.5rem 1rem;
+    font-size: 0.9375rem;
+  }
+}
+
+/* Single column on very narrow phones so cards stay legible. */
+@media (max-width: 360px) {
+  .cardGrid {
+    grid-template-columns: 1fr;
+  }
+}

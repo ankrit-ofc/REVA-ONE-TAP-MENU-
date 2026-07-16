@@ -1,0 +1,329 @@
+.root {
+  max-width: var(--app-max-width);
+  margin: 0 auto;
+  min-height: 100vh;
+  background: var(--color-bg);
+  position: relative;
+  overflow-x: clip; /* clip horizontal overflow without breaking position: sticky */
+}
+
+/* ── Dark mode (scoped to the customer surface) ───────────────────────── */
+.root[data-theme='dark'] {
+  --color-bg: #0f1a16;
+  --color-surface: #16241e;
+  --color-tint: #1c3a2e;
+  --color-tint-strong: #244a3a;
+  --color-text: #f1f5f3;
+  --color-text-soft: #c5d2cc;
+  --color-text-muted: #9fb1a9;
+  --color-text-faint: #7d8f87;
+  --color-border: #233029;
+  --color-border-strong: #2f4339;
+  --color-primary: #2d6a4f;
+  --color-primary-dark: #235640;
+  --color-primary-deep: #14342a;
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 8px 28px rgba(0, 0, 0, 0.55);
+}
+
+/* ── Top app bar (fixed) ──────────────────────────────────────────────── */
+.appbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 1rem;
+  min-height: 3rem;
+  background: var(--color-primary-deep);
+  color: #fff;
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: var(--app-max-width);
+  z-index: 50;
+}
+
+.iconBtn {
+  position: relative;
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-pill);
+}
+
+.iconBtn:active {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.iconBtn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* Right-side icon cluster (call waiter + cart) so the brand stays centred. */
+.appbarRight {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* "Call waiter": vibration arcs pulse to suggest ringing. */
+.vibLeft,
+.vibRight {
+  transform-origin: center;
+  animation: vibPulse 1.6s ease-in-out infinite;
+}
+
+.vibRight {
+  animation-delay: 0.15s;
+}
+
+@keyframes vibPulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+/* Stronger shake on press. */
+.callRinging svg {
+  animation: callRing 0.55s ease-in-out;
+}
+
+@keyframes callRing {
+  0%, 100% { transform: rotate(0); }
+  20% { transform: rotate(-13deg); }
+  40% { transform: rotate(11deg); }
+  60% { transform: rotate(-8deg); }
+  80% { transform: rotate(6deg); }
+}
+
+/* Brief "Waiter notified ✓" confirmation under the app bar. */
+.waiterToast {
+  position: fixed;
+  top: 3.4rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+  background: var(--color-primary-deep);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-pill);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  animation: toastIn 0.2s ease-out;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translate(-50%, -6px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.brand {
+  font-family: var(--font-serif);
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #fff;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0;
+}
+
+.brandWave {
+  color: #fff;
+}
+
+.appbarBadge {
+  position: absolute;
+  top: -2px;
+  right: -4px;
+  min-width: 1rem;
+  height: 1rem;
+  padding: 0 0.25rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-gold);
+  color: #1a1a1a;
+  font-size: 0.625rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.main {
+  position: relative;
+  padding-top: 3rem; /* reserve space for the fixed app bar */
+  min-height: 100vh;
+}
+
+/* ── Floating "view cart" bar ─────────────────────────────────────────── */
+.cartBar {
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 2rem);
+  max-width: calc(var(--app-max-width) - 2rem);
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 0.8rem 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  cursor: pointer;
+  box-shadow: var(--shadow-lg);
+  z-index: 45;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: transform 0.15s ease;
+}
+
+.cartBar:active {
+  transform: translateX(-50%) scale(0.98);
+}
+
+.cartCount {
+  background: var(--color-gold);
+  color: #1a1a1a;
+  border-radius: var(--radius-pill);
+  min-width: 1.4rem;
+  height: 1.4rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 0 0.375rem;
+}
+
+.cartLabel {
+  flex: 1;
+  text-align: center;
+}
+
+.cartTotal {
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+/* ── Side drawer ──────────────────────────────────────────────────────── */
+.drawerOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 42, 33, 0.45);
+  z-index: 60;
+  display: flex;
+  justify-content: flex-start;
+}
+
+/* Mobile-first: full-screen drawer */
+.drawer {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  background: var(--color-surface);
+  color: var(--color-text);
+  padding: 1.5rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  box-shadow: var(--shadow-lg);
+  animation: slideIn 0.18s ease;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+.drawerHead {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.drawerRestaurant {
+  font-family: var(--font-serif);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.drawerTable {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.drawerLinks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.drawerLinks button {
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 0.75rem 0.5rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-text);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+
+.drawerLinks button:active {
+  background: var(--color-tint);
+}
+
+.endBtn {
+  margin-top: auto;
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.875rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.endBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.drawerClose {
+  background: none;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-text-soft);
+  cursor: pointer;
+}
+
+/* Tablet+: drawer becomes a side panel */
+@media (min-width: 768px) {
+  .drawer {
+    width: 360px;
+    max-width: 360px;
+  }
+}

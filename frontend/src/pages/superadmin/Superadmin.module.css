@@ -1,0 +1,479 @@
+.root {
+  width: 100%;
+  padding: 1rem;
+}
+
+.title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.notice {
+  background: #fef9c3;
+  border: 1px solid #fde68a;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.noticeIcon {
+  font-size: 2rem;
+}
+
+.noticeHeading {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #92400e;
+  margin: 0;
+}
+
+.noticeText {
+  font-size: 0.9375rem;
+  color: #78350f;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.noticeText code {
+  background: #fef3c7;
+  padding: 0.1em 0.35em;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+}
+
+/* Restaurant management */
+.pageHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.btnAddTop {
+  padding: 0.4rem 0.7rem;
+  background: #7c3aed;
+  color: #fff;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btnAddTop:hover { background: #6d28d9; }
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  .btnAddTop {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+}
+
+.createForm {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.createTitle {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #374151;
+  margin: 0 0 0.75rem;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.625rem;
+  margin-bottom: 0.75rem;
+}
+
+.formInput {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  font-size: 0.9375rem;
+  background: #fff;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.formInput:focus { outline: 2px solid #7c3aed; outline-offset: 1px; }
+
+.formError {
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin: 0 0 0.5rem;
+}
+
+.successBanner {
+  background: #dcfce7;
+  border: 1px solid #86efac;
+  border-radius: 0.5rem;
+  padding: 0.875rem 1rem;
+  color: #166534;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.btnSubmit {
+  padding: 0.625rem 1.25rem;
+  background: #7c3aed;
+  color: #fff;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btnSubmit:hover:not(:disabled) { background: #6d28d9; }
+.btnSubmit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.tableWrap {
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.table th {
+  background: #f8fafc;
+  padding: 0.625rem 0.875rem;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.table td {
+  padding: 0.75rem 0.875rem;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.table tr:last-child td { border-bottom: none; }
+
+.badgeActive {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  background: #dcfce7;
+  color: #166534;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.badgeInactive {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  background: #f1f5f9;
+  color: #94a3b8;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.slugChip {
+  font-family: monospace;
+  background: #f1f5f9;
+  padding: 0.15rem 0.4rem;
+  border-radius: 0.25rem;
+  font-size: 0.8125rem;
+  color: #475569;
+}
+
+.btnToggle {
+  padding: 0.3rem 0.625rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.375rem;
+  background: transparent;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  color: #374151;
+}
+
+.btnToggle:hover { border-color: #7c3aed; color: #7c3aed; }
+
+.empty {
+  text-align: center;
+  color: #94a3b8;
+  padding: 2rem;
+  font-size: 0.875rem;
+}
+
+.adminList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.adminEmail {
+  font-size: 0.8125rem;
+  color: #374151;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.noAdmin {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+/* Keep the actions cell a real table cell (so it stays aligned with the
+   ACTIONS header column); right-align its inline icon buttons. */
+.actions {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.actions > button + button {
+  margin-left: 0.35rem;
+}
+
+.table th:last-child,
+.table td:last-child {
+  text-align: right;
+  width: 1px;
+  white-space: nowrap;
+}
+
+/* Card toggle (mobile, inside EntityCard body) */
+.btnToggleCard {
+  align-self: flex-start;
+  margin-top: 0.15rem;
+  padding: 0.25rem 0.6rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.4rem;
+  background: #fff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: #374151;
+}
+
+.btnToggleCard:hover { border-color: #7c3aed; color: #7c3aed; }
+
+/* ── Responsive: card grid (mobile) ↔ data table (desktop) ─────────────────── */
+.desktopOnly {
+  display: none;
+}
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  padding: 0 0.25rem;
+}
+
+@media (max-width: 360px) {
+  .cardGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 768px) {
+  .root {
+    padding: 1.5rem;
+  }
+
+  .title {
+    font-size: 1.0625rem;
+  }
+
+  .desktopOnly {
+    display: block;
+  }
+
+  .cardGrid {
+    display: none;
+  }
+}
+
+/* ── Create modal ─────────────────────────────────────────────────────────── */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal {
+  background: #fff;
+  border-radius: 1rem;
+  padding: 1.25rem;
+  width: 460px;
+  max-width: 100%;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modalTitle {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  margin: 0;
+  color: #1e1b4b;
+}
+
+.modalClose {
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #94a3b8;
+  padding: 0 0.25rem;
+}
+
+.modalClose:hover { color: #374151; }
+
+.modalForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.modalWarn {
+  margin: 0;
+  background: #fef9c3;
+  border: 1px solid #fde68a;
+  border-radius: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: #92400e;
+}
+
+/* Labeled form field (create + edit modals) */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.fieldLabel {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.readonly {
+  font-size: 0.8125rem;
+  color: #475569;
+  background: #f1f5f9;
+  border-radius: 0.4rem;
+  padding: 0.45rem 0.6rem;
+  font-family: monospace;
+}
+
+.hint {
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+.inlineRow {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+.inlineRow .formInput {
+  flex: 1;
+}
+
+.inlineRow .btnSubmit {
+  flex-shrink: 0;
+  padding: 0.5rem 0.9rem;
+  font-size: 0.875rem;
+}
+
+.savedNote {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #166534;
+}
+
+.statusRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.btnDeactivate {
+  padding: 0.45rem 1rem;
+  background: transparent;
+  border: 1px solid #fca5a5;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #dc2626;
+  cursor: pointer;
+}
+
+.btnDeactivate:hover:not(:disabled) { background: #fef2f2; }
+.btnDeactivate:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.modalActions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.btnCancel {
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  color: #374151;
+}
+
+.btnCancel:hover { border-color: #94a3b8; }
+
+@media (max-width: 560px) {
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,243 @@
+.page {
+  min-height: 100vh;
+  background: var(--color-bg);
+  padding-bottom: 2rem;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.backBtn {
+  background: none;
+  border: none;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  cursor: pointer;
+  padding: 0;
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--color-text);
+}
+
+.waiting {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3rem 1.5rem;
+  text-align: center;
+}
+
+.waitingIcon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.waitingTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0 0 0.5rem;
+}
+
+.waitingText {
+  color: var(--color-text-muted);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Itemized estimate shown under the "Preparing your bill" message */
+.estList {
+  margin: 0 1rem 1rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0.5rem 1rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.estRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.estName {
+  font-size: 0.9rem;
+  color: var(--color-text);
+  font-weight: 600;
+  min-width: 0;
+}
+
+.estMeta {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: var(--color-text-muted);
+  margin-top: 0.15rem;
+}
+
+.estPrice {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
+.estTotalRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0 0.4rem;
+}
+
+.estTotalLabel {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.estTotalAmount {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--color-primary);
+}
+
+.estNote {
+  margin: 0 0 0.25rem;
+  font-size: 0.75rem;
+  color: var(--color-text-faint);
+}
+
+.invoiceSection {
+  padding: 1.25rem 1rem;
+}
+
+.invoiceNumber {
+  font-size: 0.875rem;
+  color: var(--color-text-faint);
+  margin: 0 0 0.75rem;
+}
+
+.status {
+  margin-top: 1.25rem;
+}
+
+.paidBadge {
+  background: #d1fae5;
+  color: #065f46;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  text-align: center;
+  font-size: 1.0625rem;
+  font-weight: 700;
+}
+
+.paymentOptions {
+  margin-top: 0.5rem;
+}
+
+.payLabel {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-soft);
+  margin: 0 0 0.625rem;
+}
+
+.gatewayBtns {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.cashNote {
+  font-size: 0.8125rem;
+  color: var(--color-text-faint);
+  margin-top: 0.75rem;
+  text-align: center;
+}
+
+.intentDebug {
+  font-size: 0.75rem;
+  background: var(--color-bg);
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  margin-top: 1rem;
+  overflow-x: auto;
+  color: var(--color-text-muted);
+}
+
+/* Terminal "Paid — Thank you" screen (dead-end after payment) */
+.thankYou {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  padding: 2rem 1.5rem;
+  text-align: center;
+}
+
+.thankIcon {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 9999px;
+  background: var(--color-tint);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+}
+
+.thankTitle {
+  font-family: var(--font-serif);
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  margin: 0 0 0.5rem;
+}
+
+.thankSub {
+  font-size: 0.9375rem;
+  color: var(--color-text-muted);
+  margin: 0 0 0.25rem;
+}
+
+.thankTotal {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--color-text);
+  margin: 0.25rem 0 1rem;
+}
+
+.thankNote {
+  font-size: 0.875rem;
+  color: var(--color-text-faint);
+  margin: 0;
+}

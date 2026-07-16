@@ -1,0 +1,83 @@
+.wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+/* Desktop-only expandable search; hidden on mobile (full SearchBar shows there). */
+.searchBox {
+  display: none;
+  align-items: center;
+  gap: 0.2rem;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+}
+
+.searchOpen {
+  border-color: #cbd5e1;
+  background: #fff;
+  padding-left: 0.5rem;
+}
+
+.input {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 0.8125rem;
+  width: 9rem;
+  color: #1e293b;
+}
+
+.iconBtn {
+  width: 1.9rem;
+  height: 1.9rem;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  background: #fff;
+  cursor: pointer;
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.iconBtn:hover {
+  border-color: #7c3aed;
+}
+
+.searchOpen .iconBtn {
+  border: none;
+  background: transparent;
+}
+
+.select {
+  padding: 0.3rem 0.35rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  background: #fff;
+  cursor: pointer;
+  color: #334155;
+}
+
+.select:focus {
+  outline: 2px solid #7c3aed;
+  outline-offset: 1px;
+}
+
+@media (min-width: 768px) {
+  .wrap {
+    gap: 0.4rem;
+  }
+
+  .searchBox {
+    display: flex;
+  }
+
+  .select {
+    padding: 0.35rem 0.5rem;
+    font-size: 0.8125rem;
+  }
+}

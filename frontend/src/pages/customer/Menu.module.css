@@ -1,0 +1,313 @@
+.page {
+  background: var(--color-bg);
+  padding-bottom: 5rem; /* clear the floating cart bar */
+}
+
+/* ── Hero (restaurant photo) ──────────────────────────────────────────── */
+.hero {
+  position: relative;
+  color: #fff;
+  min-height: calc(40vh - 3rem); /* navbar (3rem) + hero ≈ 40% of screen */
+  padding: 0.75rem 1.25rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end; /* name + tagline sit bottom-left */
+  /* Fade/blend overlay hidden for now — flat uniform tint (revertible).
+     Old fade:
+     linear-gradient(180deg, var(--color-primary-deep) 0%,
+       rgba(15,42,33,0.82) 32%, rgba(15,42,33,0.45) 100%) */
+  background:
+    linear-gradient(rgba(15, 42, 33, 0.5), rgba(15, 42, 33, 0.5)),
+    url('/resturant.jpg') center / cover no-repeat;
+}
+
+.themeToggle {
+  position: absolute;
+  top: 0.5rem;
+  right: 1rem;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.themeToggle:active {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.restaurantName {
+  font-family: var(--font-sans);
+  font-size: 1.4rem;
+  font-weight: 800;
+  line-height: 1.1;
+  margin: 0.1rem 0 0.15rem;
+  letter-spacing: 0.01em;
+}
+
+.tagline {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.82);
+  margin: 0;
+}
+
+/* ── Sticky band: categories + search + dietary filter ────────────────── */
+.stickyBand {
+  position: sticky;
+  top: 3rem; /* sticks right under the fixed app bar */
+  z-index: 20;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.catNav {
+  display: flex;
+  gap: 0.4rem;
+  overflow-x: auto;
+  padding: 0.55rem 0.75rem 0.4rem;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.catNav::-webkit-scrollbar { display: none; }
+
+.catChip {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.22rem;
+  width: 3.1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-soft);
+}
+
+.catIcon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-tint);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.catChipActive .catIcon {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.catLabel {
+  font-size: 0.6rem;
+  font-weight: 600;
+  white-space: nowrap;
+  max-width: 3.4rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.catChipActive .catLabel {
+  color: var(--color-primary);
+}
+
+/* Dark mode: inactive category glyphs are hard to read in green — make white */
+:global([data-theme='dark']) .catIcon {
+  color: #fff;
+}
+
+/* ── Cascading category chip rows (multilevel menu) ───────────────────────── */
+.chipRow {
+  display: flex;
+  gap: 0.4rem;
+  overflow-x: auto;
+  padding: 0.4rem 0.75rem;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.chipRow::-webkit-scrollbar { display: none; }
+
+/* Row 0 (primary nav) sits a touch bolder; deeper rows are lighter/smaller. */
+.chipRow0 {
+  padding-top: 0.55rem;
+  border-bottom: 1px dashed var(--color-border);
+}
+
+.chip {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.32rem;
+  padding: 0.3rem 0.8rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-bg);
+  color: var(--color-text-soft);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.chipRow0 .chip {
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.chipActive {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+.chipCount {
+  font-size: 0.62rem;
+  font-weight: 700;
+  opacity: 0.7;
+}
+
+.chipActive .chipCount {
+  opacity: 0.85;
+}
+
+.breadcrumb {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+.searchWrap {
+  margin: 0 0.75rem 0.45rem;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0 0.75rem;
+}
+
+.searchIcon {
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.searchInput {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: none;
+  padding: 0.5rem 0;
+  font-size: 0.8rem;
+  color: var(--color-text);
+  font-family: inherit;
+}
+
+.searchInput::placeholder {
+  color: var(--color-text-faint);
+}
+
+.selectionBar {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 0.75rem 0.65rem; /* extra breathing room above & below */
+  flex-wrap: wrap;
+}
+
+.selectedCat {
+  padding: 0.26rem 0.85rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.filterBtn {
+  padding: 0.26rem 0.8rem;
+  border-radius: var(--radius-pill);
+  border: none;
+  background: var(--color-tint);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-text-soft);
+  cursor: pointer;
+}
+
+.filterActive {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+/* ── Product area ─────────────────────────────────────────────────────── */
+.menuArea {
+  padding: 0.75rem;
+}
+
+.group + .group {
+  margin-top: 0.5rem;
+}
+
+.listTitle {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--color-text);
+  margin: 0.4rem 0 0.5rem;
+}
+
+.list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.6rem;
+}
+
+@media (min-width: 768px) {
+  .list {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ── States ───────────────────────────────────────────────────────────── */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4rem 1rem;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+.emptyIcon {
+  font-size: 3rem;
+  margin-bottom: 0.75rem;
+}
+
+.emptyCategory {
+  text-align: center;
+  color: var(--color-text-faint);
+  padding: 2rem 0;
+  font-size: 0.85rem;
+}
+
+.errorState {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}

@@ -1,0 +1,24 @@
+docker compose exec backend python -c "
+from app.db.session import SessionLocal
+from app.models.user import User
+from app.models.restaurant import Restaurant, RestaurantSettings
+from app.core import security
+from app.models.enums import Role
+
+db = SessionLocal()
+r = Restaurant(name='Platform', slug='platform', is_active=True)
+db.add(r)
+db.flush()
+s = RestaurantSettings(restaurant_id=r.id)
+db.add(s)
+u = User(
+    restaurant_id=r.id,
+    email='YOUR_EMAIL@example.com',
+    password_hash=security.hash_password('YOUR_STRONG_PASSWORD'),
+    role=Role.SUPERADMIN
+)
+db.add(u)
+db.commit()
+print('Done.')
+db.close()
+"

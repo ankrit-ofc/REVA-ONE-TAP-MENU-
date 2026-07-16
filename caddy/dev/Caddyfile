@@ -1,0 +1,24 @@
+# Local HTTPS for PWA testing on phones/tablets.
+#
+# Service workers + "install app" require a SECURE CONTEXT. localhost is exempt
+# (so desktop can use http://localhost:3000 directly), but a LAN IP over http is
+# NOT — phones need real HTTPS. Caddy terminates TLS using its own local CA
+# (`tls internal`) and reverse-proxies everything (pages, API, WebSockets) to the
+# Vite dev server, which already proxies /auth, /menu, /ws, … to the backend.
+#
+# Set PWA_HOST to your PC's LAN IP for phone testing, e.g.:
+#   PWA_HOST=192.168.1.50 docker compose up -d
+# (defaults to localhost). default_sni serves this cert even when the client sends
+# no SNI — browsers omit SNI for bare IP addresses.
+#
+# To avoid a cert warning on the device (which blocks the service worker), install
+# Caddy's local root CA on the test device — see docs/PWA.txt.
+
+{
+	default_sni {$PWA_HOST:localhost}
+}
+
+{$PWA_HOST:localhost} {
+	tls internal
+	reverse_proxy frontend:3000
+}

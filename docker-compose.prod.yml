@@ -1,0 +1,79 @@
+# Production stack. See docs/DEPLOY.md for the full runbook.
+#
+# Differences from docker-compose.yml (dev):
+#   - backend runs the image CMD (uvicorn, NO --reload) and has no source bind mount.
+#   - the frontend is pre-built to static files (frontend/dist) by deploy.sh and
+#     served by Caddy — there is no Node process in production.
+#   - Caddy terminates real HTTPS (Let's Encrypt) for ${DOMAIN}.
+#   - ONLY Caddy's ports 80/443 are published; the database and backend are reachable
+#     only on the internal Docker network (never exposed to the public internet).
+#   - uploaded product images live on the named volume `media_data` so they survive
+#     redeploys (the dev bind mount that previously held them is gone).
+#
+# ${DOMAIN} and ${ACME_EMAIL} are read from a root-level .env file (see .env.prod.example).
+
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5432:5432"
+    env_file: ./backend/.env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file: ./backend/.env
+    # No command override → the image CMD runs uvicorn WITHOUT --reload (production).
+    volumes:
+      - media_data:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # GLB → USDZ converter (headless Blender). Shares the media volume with the backend
+  # (reads .glb, writes .usdz alongside). Internal network only — no published port.
+  model-converter:
+    build:
+      context: ./model-converter
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    volumes:
+      - media_data:/media
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # Mount the DIRECTORY, not the single file: a single-file bind mount pins the
+      # file's inode, so `git pull` (atomic rename → new inode) leaves the container
+      # serving the old Caddyfile. A directory mount resolves the file by name each
+      # time, so edits are always picked up (recreate caddy to load them — deploy.sh).
+      - ./caddy/prod:/etc/caddy:ro
+      - ./frontend/dist:/srv:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  media_data:
+  caddy_data:
+  caddy_config:

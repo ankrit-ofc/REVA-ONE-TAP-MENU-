@@ -1,0 +1,82 @@
+# Production reverse proxy + static SPA server + automatic HTTPS.
+# Used by docker-compose.prod.yml. ${DOMAIN} and ${ACME_EMAIL} come from the
+# caddy service environment (set from the root .env file).
+#
+# Routing mirrors the dev Vite proxy (frontend/vite.config.ts): API/WS/media go to
+# the FastAPI backend; everything else is the React single-page app. Some paths
+# (e.g. /scan, /menu, /admin) exist as BOTH an API endpoint and a React route, so
+# for those we send real XHR/fetch calls (Accept: application/json) to the backend
+# but serve the SPA for browser navigations (Accept: text/html) — exactly what the
+# dev proxy's bypass() does.
+{
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN} {
+	encode zstd gzip
+
+	# Always the backend — these are never React routes. Includes payment-gateway
+	# browser redirects to /webhooks/* (which arrive as text/html navigations and
+	# MUST reach the API), WebSockets, uploaded media, the KOT print worker
+	# (POST /printworker/kot/get|ack from the on-prem device), and the health check.
+	@always_api path /webhooks/* /ws/* /media/* /printworker/* /health /health/*
+	handle @always_api {
+		reverse_proxy backend:8000
+	}
+
+	# Shared prefixes that exist as both API endpoints and React routes.
+	# XHR/fetch (Accept: application/json) → backend; browser navigation
+	# (Accept: text/html) → SPA fallback below.
+	@api {
+		path_regexp ^/(auth|scan|session|menu|orders|kitchen|waiter|counter|invoices|admin|superadmin)(/|$)
+		not header Accept *text/html*
+	}
+	handle @api {
+		# API/JSON responses must never be cached by the browser (live POS data,
+		# and so a cached JSON can't be mis-served to a navigation of the same URL).
+		reverse_proxy backend:8000 {
+			header_down Cache-Control "no-store"
+		}
+	}
+
+	# Default: the React SPA. Unknown paths fall back to index.html so client-side
+	# routes (/menu, /scan, /admin/...) load correctly on a hard refresh.
+	#
+	# NOTE: cache headers live INSIDE this handle. Top-level `header` directives do
+	# NOT apply to responses produced inside a `handle` block, which is why an
+	# earlier attempt (header @spa outside the handle) emitted nothing at the origin.
+	handle {
+		root * /srv
+
+		# Fingerprinted Vite assets never change content → cache hard.
+		@assets path /assets/*
+		header @assets Cache-Control "public, max-age=31536000, immutable"
+
+		# AR models (/models/*.glb, *.usdz): Caddy doesn't know these extensions, and
+		# iOS AR Quick Look needs the usdz MIME type. Short cache so the menu's prefetch
+		# isn't re-downloaded on every tap (excluded from no-store above).
+		@glb path /models/*.glb
+		header @glb {
+			Content-Type "model/gltf-binary"
+			Cache-Control "public, max-age=3600"
+		}
+		@usdz path /models/*.usdz
+		header @usdz {
+			Content-Type "model/vnd.usdz+zip"
+			Cache-Control "public, max-age=3600"
+		}
+
+		# The SPA shell + non-hashed entry files (the index.html served for EVERY
+		# route, plus sw.js / manifest) must NEVER be stored by the browser.
+		# Otherwise a navigation to /admin/categories caches that HTML under the URL,
+		# and the SPA's own JSON `GET /admin/categories` is answered from the cached
+		# HTML → Zod "Expected array, received string" → crash. We use `no-store`
+		# (not `Vary: Accept`) because the site is fronted by Cloudflare, which strips
+		# `Vary: Accept`; Cloudflare passes `Cache-Control` through unchanged.
+		@nostore not path /assets/* /models/*
+		header @nostore Cache-Control "no-store"
+
+		try_files {path} /index.html
+		file_server
+	}
+}

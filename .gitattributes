@@ -1,0 +1,6 @@
+# Force LF on shell scripts and server config so they run on the Linux VPS even
+# though they're committed from Windows (CRLF would break the bash shebang).
+*.sh        text eol=lf
+deploy.sh   text eol=lf
+Caddyfile*  text eol=lf
+*.yml       text eol=lf

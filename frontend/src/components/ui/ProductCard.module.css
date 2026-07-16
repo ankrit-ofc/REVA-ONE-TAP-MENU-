@@ -1,0 +1,290 @@
+.card {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+  height: 100%;
+  transition: transform 0.1s ease, box-shadow 0.15s ease;
+}
+
+.card:active {
+  transform: scale(0.99);
+}
+
+/* Tappable affordance in place of the old add/choose button. */
+.chevron {
+  flex-shrink: 0;
+  font-size: 1.25rem;
+  line-height: 1;
+  color: var(--color-text-faint);
+  font-weight: 400;
+}
+
+.row {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  min-height: 92px; /* fits name + 2-line description + price row */
+}
+
+/* Wrapper owns the 30% width (resolves against the row's real width — no circular
+   sizing). The image just fills it. */
+.thumbWrap {
+  flex: 0 0 30%;
+  min-width: 90px;
+  max-width: 130px;
+  align-self: stretch;
+}
+
+.thumb,
+.thumbPlaceholder {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+  object-fit: cover; /* crops any source to fill the box */
+  background: #f3f4f6;
+  display: block;
+}
+
+.thumbPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  background: linear-gradient(135deg, var(--color-tint) 0%, var(--color-tint-strong) 100%);
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* center block → consistent alignment across cards */
+  gap: 0.1rem;
+  padding: 0.4rem 0.55rem;
+}
+
+.nameRow {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.name {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.15;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.description {
+  font-size: 0.58rem;
+  color: var(--color-text-muted);
+  line-height: 1.15;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Price (left) + action button (right) */
+.priceRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  padding-top: 0.15rem;
+  min-width: 0;
+}
+
+.price {
+  font-size: 0.72rem;
+  color: var(--color-primary);
+  font-weight: 800;
+  white-space: nowrap;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Veg / Non-veg / Egg square indicator (India-standard) */
+.veg {
+  width: 0.72rem;
+  height: 0.72rem;
+  border: 2px solid;
+  border-radius: 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.vegDot {
+  width: 0.32rem;
+  height: 0.32rem;
+  border-radius: var(--radius-pill);
+}
+
+.vegVeg { border-color: var(--color-veg); }
+.vegVeg .vegDot { background: var(--color-veg); }
+.vegNonVeg { border-color: var(--color-nonveg); }
+.vegNonVeg .vegDot { background: var(--color-nonveg); }
+.vegEgg { border-color: var(--color-egg); }
+.vegEgg .vegDot { background: var(--color-egg); }
+.vegBeverage { border-color: var(--color-beverage); }
+.vegBeverage .vegDot { background: var(--color-beverage); }
+.vegSmoke { border-color: var(--color-smoke); }
+.vegSmoke .vegDot { background: var(--color-smoke); }
+
+/* Action buttons */
+.addBtn {
+  flex-shrink: 0;
+  width: 1.45rem;
+  height: 1.45rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.addBtn:active { background: var(--color-primary-dark); }
+
+.chooseBtn {
+  flex-shrink: 0;
+  height: 1.45rem;
+  min-width: 48px;
+  padding: 0 0.55rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  border: 1.5px solid var(--color-primary);
+  font-size: 0.6rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chooseBtn:active { background: var(--color-tint); }
+
+/* Inline expansion panel */
+.panel {
+  border-top: 1px solid var(--color-border);
+  padding: 0.7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  background: var(--color-bg);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.sectionTitle {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.opt {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.32rem 0.55rem;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--color-border-strong);
+  background: var(--color-surface);
+  font-size: 0.7rem;
+  color: var(--color-text-soft);
+  cursor: pointer;
+}
+
+.optSel {
+  border-color: var(--color-primary);
+  background: var(--color-tint);
+  color: var(--color-primary-dark);
+  font-weight: 600;
+}
+
+.optPrice {
+  font-weight: 700;
+  font-size: 0.68rem;
+}
+
+.panelFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.qty {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.qtyBtn {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--color-border-strong);
+  background: var(--color-surface);
+  font-size: 1rem;
+  cursor: pointer;
+  color: var(--color-text-soft);
+}
+
+.qtyNum {
+  min-width: 1.1rem;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.addConfirm {
+  flex: 1;
+  padding: 0.55rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.addConfirm:disabled {
+  background: var(--color-accent-soft);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.hint {
+  font-size: 0.7rem;
+  color: var(--color-danger);
+}

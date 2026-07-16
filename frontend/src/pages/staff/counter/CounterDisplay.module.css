@@ -1,0 +1,190 @@
+.board {
+  padding: 1rem;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.title {
+  font-size: 1.375rem;
+  font-weight: 800;
+  margin: 0 0 1.25rem;
+  text-align: center;
+  color: #0f172a;
+}
+
+@media (min-width: 768px) {
+  .board {
+    padding: 1.5rem;
+  }
+
+  .title {
+    font-size: 1.75rem;
+  }
+}
+
+.hint {
+  text-align: center;
+  color: #64748b;
+  font-size: 1.125rem;
+  padding: 2rem 0;
+}
+
+/* Single-column list of full-width cards. Each card has two stacked fields on
+   the left (order# + item) and two stacked on the right (table + status). */
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  gap: 0.75rem;
+  padding: 0.75rem 0.875rem;
+  border-radius: 0.625rem;
+  border: 1px solid #e2e8f0;
+  border-left: 5px solid #e2e8f0;
+  background: #fff;
+}
+
+.rowNew {
+  border-left-color: #f59e0b;
+}
+
+.rowPreparing {
+  border-left-color: #3b82f6;
+}
+
+.rowReady {
+  border-left-color: #16a34a;
+}
+
+.rowServed {
+  border-left-color: #94a3b8;
+  background: #f8fafc;
+  opacity: 0.85;
+}
+
+.left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.25rem;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.order {
+  font-weight: 800;
+  color: #0f172a;
+  font-size: 0.95rem;
+}
+
+.product {
+  color: #0f172a;
+  font-weight: 600;
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+
+.table {
+  color: #475569;
+  font-weight: 600;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.qty {
+  color: #7c3aed;
+  font-weight: 800;
+}
+
+.variant {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.status {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.25rem 0.6rem;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+.statusNew {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.statusPreparing {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.statusReady {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.statusServed {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+/* Desktop: flatten the left/right groups into one horizontal line — all four
+   fields side by side (order# · table · item · status), like the wall board. */
+@media (min-width: 768px) {
+  .row {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem 1rem;
+    padding: 1rem 1.25rem;
+    border-left-width: 6px;
+  }
+
+  .left,
+  .right {
+    display: contents;
+  }
+
+  .order {
+    order: 1;
+    min-width: 3.5rem;
+    font-size: 1.125rem;
+  }
+
+  .table {
+    order: 2;
+    min-width: 5rem;
+    font-size: 0.95rem;
+  }
+
+  .product {
+    order: 3;
+    flex: 1;
+    font-size: 1.0625rem;
+  }
+
+  .status {
+    order: 4;
+    font-size: 0.9375rem;
+    padding: 0.3rem 0.75rem;
+  }
+}

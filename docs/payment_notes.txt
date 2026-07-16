@@ -1,0 +1,177 @@
+Good. I have confirmed the gateway signing schemes from live docs. Here's what I found:
+
+eSewa ePay v2: HMAC-SHA256 over "total_amount=X,transaction_uuid=Y,product_code=Z", Base64-encoded. Callback comes as Base64-decoded JSON with a signature field to verify.
+
+Khalti: No local HMAC — requires server-side POST to https://khalti.com/api/v2/epayment/lookup/ with Authorization: Key <secret> and {pidx} body. httpx is required.
+
+Fonepay: HMAC-SHA512 over |-joined parameters, uppercase hex. The DV field in the callback is verified.
+
+Two mandatory confirmations before proceeding:
+
+httpx dependency: Khalti's server-side lookup requires an HTTP client. Phase prompt lists it. CLAUDE.md §6 requires approval before adding. Proposed pinned version: httpx==0.27.2.
+
+eSewa callback structure: eSewa uses a redirect (not a direct server webhook). The browser redirects to your success URL with a data query param (Base64 JSON). For /webhooks/esewa to work as a POST endpoint, the frontend must forward this data value to our backend. Is that the intended flow, or do you want the eSewa success URL to hit our backend directly (GET with ?data=...)?
+
+For everything else (Khalti pidx flow, Fonepay DV-SHA512, invoice state machine, counter payment, idempotency, order close + table reset) I have enough to implement immediately.
+
+Approve to proceed with:
+
+Add httpx==0.27.2 to requirements.txt
+eSewa webhook handled as frontend-forwarded POST (body: {"data": "<base64>"})
+Or let me know if you want a different eSewa callback approach
+
+add httpx==0.27.2 to requirements. for esewa url hits our backend directly if possible. Also consider this 
+Security Concerns and Mitigations for Payment Integration
+
+1. Secret Leakage
+   Issue:
+   Payment gateway secrets (eSewa, Khalti, Fonepay) may be exposed by placing them in frontend code, committing `.env` files to version control, logging them, or returning them in API responses. Exposure of these secrets allows attackers to forge signatures, impersonate the backend, and bypass payment verification.
+
+Mitigation:
+
+* Store all gateway secrets only on the backend using environment variables or a secure secret manager.
+* Never expose secrets through frontend environment variables (e.g., VITE_*).
+* Exclude `.env` files from version control using `.gitignore`.
+* Redact secrets from logs and error messages.
+* Restrict access to production secrets to authorized personnel only.
+
+2. Missing Signature/Verification Checks
+   Issue:
+   Trusting payment status values received from the frontend or callback payloads without verification can allow attackers to mark invoices as paid without completing a legitimate transaction.
+
+Mitigation:
+
+* Verify all gateway signatures exactly as defined by official documentation.
+* For Khalti, always perform server-side lookup using the secret API key and confirm the payment status from Khalti before updating invoice status.
+* Reject any callback or payment update that fails verification.
+* Treat the frontend as an untrusted source of information.
+
+3. Replay Attacks
+   Issue:
+   Attackers may resend previously valid callbacks or reuse old payment responses to trigger duplicate payment processing.
+
+Mitigation:
+
+* Enforce unique constraints on `transaction_uuid`, gateway transaction IDs, and invoice-payment mappings.
+* Store processing metadata such as `processed_at`.
+* Reject callbacks for payments that have already been finalized.
+* Ensure payment state transitions are allowed only once.
+
+4. Race Conditions and Concurrent Processing
+   Issue:
+   Simultaneous callbacks, duplicate requests, or multiple user actions may attempt to process the same invoice at the same time, leading to inconsistent states or duplicate side effects.
+
+Mitigation:
+
+* Wrap payment processing in database transactions.
+* Lock affected records using mechanisms such as `SELECT ... FOR UPDATE`.
+* Use unique database constraints to prevent duplicate records.
+* Recheck invoice status within the transaction before committing changes.
+
+5. Trusting Frontend Actions
+   Issue:
+   Allowing frontend events (success page visits, query parameter manipulation, JavaScript modifications, etc.) to directly mark orders as paid, close invoices, reset tables, or trigger business actions enables users to bypass payment requirements.
+
+Mitigation:
+
+* The backend must be the sole authority for payment validation and state transitions.
+* Update invoice status, close orders, free tables, issue receipts, and trigger downstream actions only after successful backend verification.
+* Use frontend components only to display payment status and initiate requests, never to determine payment outcomes.
+* Prefer direct gateway-to-backend verification flows whenever supported.
+
+add httpx==0.27.2 to requirements. for esewa url hits our backend directly if possible. Also consider this 
+Security Concerns and Mitigations for Payment Integration
+
+1. Secret Leakage
+   Issue:
+   Payment gateway secrets (eSewa, Khalti, Fonepay) may be exposed by placing them in frontend code, committing `.env` files to version control, logging them, or returning them in API responses. Exposure of these secrets allows attackers to forge signatures, impersonate the backend, and bypass payment verification.
+
+Mitigation:
+
+* Store all gateway secrets only on the backend using environment variables or a secure secret manager.
+* Never expose secrets through frontend environment variables (e.g., VITE_*).
+* Exclude `.env` files from version control using `.gitignore`.
+* Redact secrets from logs and error messages.
+* Restrict access to production secrets to authorized personnel only.
+
+2. Missing Signature/Verification Checks
+   Issue:
+   Trusting payment status values received from the frontend or callback payloads without verification can allow attackers to mark invoices as paid without completing a legitimate transaction.
+
+Mitigation:
+
+* Verify all gateway signatures exactly as defined by official documentation.
+* For Khalti, always perform server-side lookup using the secret API key and confirm the payment status from Khalti before updating invoice status.
+* Reject any callback or payment update that fails verification.
+* Treat the frontend as an untrusted source of information.
+
+3. Replay Attacks
+   Issue:
+   Attackers may resend previously valid callbacks or reuse old payment responses to trigger duplicate payment processing.
+
+Mitigation:
+
+* Enforce unique constraints on `transaction_uuid`, gateway transaction IDs, and invoice-payment mappings.
+* Store processing metadata such as `processed_at`.
+* Reject callbacks for payments that have already been finalized.
+* Ensure payment state transitions are allowed only once.
+
+4. Race Conditions and Concurrent Processing
+   Issue:
+   Simultaneous callbacks, duplicate requests, or multiple user actions may attempt to process the same invoice at the same time, leading to inconsistent states or duplicate side effects.
+
+Mitigation:
+
+* Wrap payment processing in database transactions.
+* Lock affected records using mechanisms such as `SELECT ... FOR UPDATE`.
+* Use unique database constraints to prevent duplicate records.
+* Recheck invoice status within the transaction before committing changes.
+
+5. Trusting Frontend Actions
+   Issue:
+   Allowing frontend events (success page visits, query parameter manipulation, JavaScript modifications, etc.) to directly mark orders as paid, close invoices, reset tables, or trigger business actions enables users to bypass payment requirements.
+
+Mitigation:
+
+* The backend must be the sole authority for payment validation and state transitions.
+* Update invoice status, close orders, free tables, issue receipts, and trigger downstream actions only after successful backend verification.
+* Use frontend components only to display payment status and initiate requests, never to determine payment outcomes.
+* Prefer direct gateway-to-backend verification flows whenever supported.
+
+
+PHASE 7 
+
+Phase 7 is done. Full acceptance output:
+
+Files created (in scope only)
+
+File	Role
+services/payment_state.py	Invoice state machine + InvoiceError
+payments/base.py	PaymentGateway ABC + WebhookPayload
+payments/esewa.py	HMAC-SHA256 signing/verification
+payments/khalti.py	httpx server-side Khalti lookup
+payments/fonepay.py	HMAC-SHA512 DV verification
+services/invoice_service.py	generate_invoice with snapshot math
+services/payment_service.py	record_counter_payment, handle_webhook, manual_override, create_payment_intent
+schemas/invoice.py	Request/response schemas, all extra="forbid"
+api/invoices.py	6 invoice/payment endpoints
+api/webhooks.py	GET /webhooks/esewa, GET /webhooks/khalti, POST /webhooks/fonepay
+Functional tests (all passed)
+
+#	Test	Result
+1	POST /invoices on MEAL_FINISHED → DRAFT, subtotal=1130, tax=146.90, total=1276.90	✅
+1b	10% discount: 180 × 10% = 18, total = 185.40	✅
+2	POST /invoices/{id}/pay CASH → PAID, order CLOSED, sessions INVALIDATED, audit row	✅
+2b	Valid eSewa webhook → invoice PAID via QR_GATEWAY, order CLOSED	✅
+Security tests (all passed)
+
+#	Test	Result
+1	Forged eSewa signature → redirect to /payment/failure?reason=eSewa: signature verification failed	✅
+2	Replay same valid webhook → idempotent; exactly 1 PAID row	✅
+3	Webhook with amount 999 ≠ invoice total 203.40 → failure redirect, invoice stays DRAFT	✅
+4	Two concurrent /pay calls → first PAID, second "Invoice is already paid" (409); never two credits	✅
+5	Invoice for OPEN order → 409 "expected MEAL_FINISHED"	✅
+6	override with no reason → 422; 2-char reason → 422	✅
+6b	Override with valid reason → PAID, MANUAL_OVERRIDE, reason in audit log	✅
+7	WAITER pay while waiter_can_accept_payment=false → 403	✅
+Regression: /health ✅ · /menu 1 category ✅ · alembic upgrade head clean ✅

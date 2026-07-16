@@ -1,0 +1,244 @@
+.page {
+  min-height: 100vh;
+  background: var(--color-bg);
+  padding-bottom: 5rem;
+}
+
+.backBtn {
+  position: absolute;
+  /* Sit below the fixed 3rem app bar (CustomerLayout) so it isn't hidden behind it. */
+  top: 3.75rem;
+  left: 1rem;
+  background: rgba(255, 255, 255, 0.85);
+  border: none;
+  border-radius: 9999px;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-soft);
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  z-index: 10;
+}
+
+.image {
+  width: 100%;
+  height: 30vh;
+  object-fit: cover;
+}
+
+.body {
+  padding: 1.25rem 1rem;
+  text-align: center;
+}
+
+.name {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0 0 0.25rem;
+}
+
+.basePrice {
+  font-size: 0.9rem;
+  color: var(--color-primary);
+  font-weight: 600;
+  margin: 0 0 1rem;
+}
+
+.section {
+  margin-bottom: 1.5rem;
+}
+
+.sectionTitle {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--color-text-soft);
+  margin: 0 0 0.625rem;
+}
+
+.required {
+  color: var(--color-danger);
+}
+
+.optionGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.optionBtn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border: 1.5px solid var(--color-border-strong);
+  border-radius: 0.625rem;
+  background: var(--color-surface);
+  font-size: 0.9375rem;
+  color: var(--color-text-soft);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.optionSelected {
+  border-color: var(--color-primary);
+  background: var(--color-tint);
+  color: var(--color-primary-dark);
+  font-weight: 600;
+}
+
+.optionPrice {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.optionSelected .optionPrice {
+  color: var(--color-primary-dark);
+}
+
+.qtyRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+}
+
+/* Expanded "Add to Order" state: quantity stepper + confirm tick on the right. */
+.orderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.35rem 0.5rem;
+  border: 1.5px solid var(--color-primary);
+  border-radius: 0.7rem;
+  background: var(--color-surface);
+}
+
+.confirmBtn {
+  width: 3rem;
+  height: 3rem;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 0.6rem;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 1.35rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.confirmBtn:active {
+  background: var(--color-primary-dark);
+}
+
+.qtyBtn {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 2px solid var(--color-border-strong);
+  border-radius: 50%;
+  background: var(--color-surface);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text-soft);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qtyNum {
+  font-size: 1.25rem;
+  font-weight: 700;
+  min-width: 2rem;
+  text-align: center;
+}
+
+.textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1.5px solid var(--color-border-strong);
+  border-radius: 0.625rem;
+  font-size: 0.9375rem;
+  color: var(--color-text-soft);
+  resize: none;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.charCount {
+  font-size: 0.75rem;
+  color: var(--color-text-faint);
+  text-align: right;
+  margin: 0.25rem 0 0;
+}
+
+.error {
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 0.875rem 1rem;
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border-strong);
+  display: flex;
+  gap: 0.75rem;
+  max-width: var(--app-max-width);
+  margin: 0 auto;
+}
+
+.errorState {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+.description {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--color-text-soft);
+  margin: 0 0 1.5rem;
+}
+
+/* Stacked full-width actions in the body flow (replaces the old sticky footer). */
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.tableBtn {
+  width: 100%;
+  padding: 0.9rem;
+  font-size: 1rem;
+  font-weight: 700;
+  border-radius: 0.7rem;
+  border: 1.5px solid var(--color-primary);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  cursor: pointer;
+}
+
+.tableBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

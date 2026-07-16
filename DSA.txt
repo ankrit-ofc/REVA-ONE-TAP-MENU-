@@ -1,0 +1,23 @@
+Must Know (70–80% of OA questions)
+Strings
+isdigit()
+isalpha()
+isalnum()
+slicing
+counting characters
+reversing strings
+frequency dictionaries
+pattern validation
+Arrays/Lists
+traversal
+finding max/min
+removing duplicates
+sorting
+two pointers
+prefix sums
+Hash Maps (dict)
+frequency counting
+lookup problems
+Sets
+duplicate detection
+membership checking

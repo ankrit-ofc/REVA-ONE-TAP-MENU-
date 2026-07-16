@@ -1,0 +1,349 @@
+/* Shared styling for the staff auth screens: Login, Forgot Password, Reset Password.
+   Uses the app's green REVA design tokens (see src/index.css). */
+
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg);
+  padding: 1.5rem;
+  box-sizing: border-box;
+}
+
+/* Two-pane card (Login). Desktop: side-by-side; mobile: stacked. */
+.card {
+  display: flex;
+  width: 100%;
+  max-width: 860px;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+/* Single-pane card (Forgot / Reset). */
+.cardSingle {
+  width: 100%;
+  max-width: 420px;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 2.25rem 2rem;
+  box-sizing: border-box;
+}
+
+/* ── Decorative left panel ─────────────────────────────────────────────────── */
+.panel {
+  position: relative;
+  flex: 1 1 45%;
+  min-height: 420px;
+  background: linear-gradient(150deg, var(--color-accent) 0%, var(--color-primary) 55%, var(--color-primary-deep) 100%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  padding: 2.5rem;
+  overflow: hidden;
+}
+
+/* Big translucent ring, echoing the mockup's circular motif. */
+.panel::before {
+  content: '';
+  position: absolute;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  border: 60px solid rgba(255, 255, 255, 0.12);
+  left: -120px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.panelText {
+  position: relative;
+  z-index: 1;
+}
+
+.panelTitle {
+  font-size: 2.25rem;
+  font-weight: 800;
+  line-height: 1.15;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.panelSub {
+  margin: 1rem 0 0;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.85);
+  max-width: 26ch;
+}
+
+/* ── Form side ─────────────────────────────────────────────────────────────── */
+.form {
+  flex: 1 1 55%;
+  padding: 2.5rem 2.25rem;
+  box-sizing: border-box;
+}
+
+.title {
+  margin: 0 0 0.25rem;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--color-text);
+}
+
+.subtitle {
+  margin: 0 0 1.5rem;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+}
+
+.field {
+  margin-bottom: 1rem;
+}
+
+.label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-soft);
+  margin-bottom: 0.35rem;
+}
+
+.inputWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input {
+  width: 100%;
+  padding: 0.7rem 0.85rem;
+  border: 1.5px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  color: var(--color-text);
+  background: var(--color-surface);
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease;
+}
+
+/* Room for a trailing icon button (eye / user glyph). */
+.inputWithIcon {
+  padding-right: 2.75rem;
+}
+
+.input:focus {
+  border-color: var(--color-primary);
+}
+
+.inputError {
+  border-color: var(--color-danger);
+}
+
+.iconBtn {
+  position: absolute;
+  right: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  border-radius: var(--radius-pill);
+}
+
+.iconBtn:hover {
+  color: var(--color-text-soft);
+}
+
+/* Non-interactive trailing glyph (e.g. user icon in the email field). */
+.iconStatic {
+  position: absolute;
+  right: 0.85rem;
+  display: inline-flex;
+  color: var(--color-text-faint);
+  pointer-events: none;
+}
+
+.fieldError {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: 0.8rem;
+  color: var(--color-danger);
+}
+
+.optionsRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin: 0.25rem 0 1.25rem;
+}
+
+.remember {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.85rem;
+  color: var(--color-text-soft);
+  cursor: pointer;
+  user-select: none;
+}
+
+.remember input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-accent);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+.submit {
+  width: 100%;
+  padding: 0.8rem;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.submit:hover:not(:disabled) {
+  background: var(--color-primary-dark);
+}
+
+.submit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ── "or" divider + social placeholders ────────────────────────────────────── */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.25rem 0;
+  color: var(--color-text-faint);
+  font-size: 0.8rem;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-border-strong);
+}
+
+.social {
+  display: flex;
+  justify-content: center;
+  gap: 0.85rem;
+}
+
+.socialBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border: 1.5px solid var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.socialBtn:hover {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ── Notices ───────────────────────────────────────────────────────────────── */
+.notice {
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 0.85rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: var(--radius-md);
+  margin-bottom: 1.25rem;
+}
+
+.error {
+  color: var(--color-danger);
+  font-size: 0.85rem;
+  margin: 0 0 1rem;
+}
+
+.success {
+  background: var(--color-tint);
+  color: var(--color-primary-dark);
+  font-size: 0.9rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-md);
+  margin-bottom: 1.25rem;
+  line-height: 1.45;
+}
+
+.backLink {
+  display: block;
+  margin-top: 1.25rem;
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+/* ── Responsive: stack the two-pane card on small screens ──────────────────── */
+@media (max-width: 720px) {
+  .card {
+    flex-direction: column;
+    max-width: 420px;
+  }
+
+  .panel {
+    flex-basis: auto;
+    min-height: 150px;
+    padding: 1.75rem;
+  }
+
+  .panel::before {
+    width: 180px;
+    height: 180px;
+    border-width: 36px;
+    left: -70px;
+  }
+
+  .panelTitle {
+    font-size: 1.6rem;
+  }
+
+  .panelSub {
+    display: none;
+  }
+
+  .form {
+    padding: 2rem 1.75rem;
+  }
+}
