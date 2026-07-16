@@ -1,4 +1,10 @@
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# eSewa's PUBLIC sandbox credentials (safe to name here for detection only —
+# they must never be accepted in production).
+_ESEWA_SANDBOX_KEY = "8gBm/:&EnhH.1/q("
+_ESEWA_SANDBOX_CODE = "EPAYTEST"
 
 
 class Settings(BaseSettings):
@@ -31,10 +37,12 @@ class Settings(BaseSettings):
     BACKEND_BASE_URL: str = "http://localhost:8000"
     FRONTEND_BASE_URL: str = "http://localhost:5173"
 
-    # eSewa ePay v2 — sandbox defaults; override in production via env vars.
-    # Secrets MUST NOT be committed. ESEWA_SECRET_KEY goes in .env (gitignored).
-    ESEWA_SECRET_KEY: str = "8gBm/:&EnhH.1/q("   # sandbox test key
-    ESEWA_PRODUCT_CODE: str = "EPAYTEST"           # use merchant code in prod
+    # eSewa ePay v2 — NO code defaults (HANDOVER §8 #4): a forgotten env
+    # override must disable the gateway, never silently fall back to sandbox.
+    # Dev sandbox values live in backend/.env(.example); real merchant
+    # credentials go in the production .env only. Empty = gateway disabled.
+    ESEWA_SECRET_KEY: str = ""
+    ESEWA_PRODUCT_CODE: str = ""
 
     # Khalti — secret key required for server-side lookup call.
     KHALTI_SECRET_KEY: str = ""
@@ -110,6 +118,50 @@ class Settings(BaseSettings):
     EXPO_PUSH_ENABLED: bool = False
     EXPO_PUSH_URL: str = "https://exp.host/--/api/v2/push/send"
     EXPO_ACCESS_TOKEN: str = ""
+
+    # ── Fail-fast production guard ───────────────────────────────────────────────
+    # Runs at Settings() construction, i.e. at import — an unsafe production
+    # configuration prevents the app from booting at all (HANDOVER §8 #4).
+    @model_validator(mode="after")
+    def _refuse_unsafe_production_config(self) -> "Settings":
+        if self.ENVIRONMENT != "production":
+            return self
+
+        problems: list[str] = []
+
+        for name in ("SECRET_KEY", "QR_SECRET"):
+            if not getattr(self, name).strip():
+                problems.append(f"{name} is not set")
+
+        # A payment gateway is either fully configured or fully absent.
+        # Partial configuration is exactly the forgotten-override failure mode.
+        gateways = {
+            "eSewa": ("ESEWA_SECRET_KEY", "ESEWA_PRODUCT_CODE"),
+            "Khalti": ("KHALTI_SECRET_KEY",),
+            "Fonepay": ("FONEPAY_MERCHANT_CODE", "FONEPAY_SECRET_KEY"),
+        }
+        for gateway, fields in gateways.items():
+            values = {field: getattr(self, field).strip() for field in fields}
+            if any(values.values()) and not all(values.values()):
+                missing = ", ".join(f for f, v in values.items() if not v)
+                problems.append(f"{gateway} gateway is partially configured — missing: {missing}")
+
+        # Sandbox credentials must never take production payments.
+        if self.ESEWA_SECRET_KEY == _ESEWA_SANDBOX_KEY or self.ESEWA_PRODUCT_CODE == _ESEWA_SANDBOX_CODE:
+            problems.append(
+                "ESEWA_SECRET_KEY/ESEWA_PRODUCT_CODE are the eSewa SANDBOX credentials — "
+                "set your real merchant credentials or unset both to disable eSewa"
+            )
+
+        if "localhost" in self.ALLOWED_ORIGINS:
+            problems.append("ALLOWED_ORIGINS must not contain localhost in production")
+
+        if problems:
+            raise ValueError(
+                "Refusing to start with unsafe production configuration:\n  - "
+                + "\n  - ".join(problems)
+            )
+        return self
 
 
 settings = Settings()
