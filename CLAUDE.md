@@ -20,7 +20,7 @@ A **multi-tenant restaurant QR-ordering + POS SaaS**.
 |---|---|
 | Frontend | React + TypeScript (strict mode) |
 | Backend | FastAPI (Python 3.12) |
-| DB | PostgreSQL 16 |
+| DB | PostgreSQL 17 |
 | ORM / migrations | SQLAlchemy 2.x + Alembic |
 | Realtime | WebSockets |
 | Staff auth | JWT (access + rotating refresh) |

@@ -1,5 +1,5 @@
 -- Creates the restricted application role and grants minimum required privileges.
--- Executed by the postgres:16 image at first-run (docker-entrypoint-initdb.d).
+-- Executed by the postgres:17 image at first-run (docker-entrypoint-initdb.d).
 -- Requires: APP_DB_PASSWORD and POSTGRES_DB env vars set on the container.
 
 \getenv app_db_password APP_DB_PASSWORD
