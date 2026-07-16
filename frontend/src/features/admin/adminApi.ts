@@ -63,6 +63,7 @@ interface ProductUpdate {
   is_available?: boolean
   has_variants?: boolean
   allows_addons?: boolean
+  is_todays_special?: boolean
 }
 
 export interface StaffCreate {
@@ -313,6 +314,18 @@ export const adminApi = createApi({
       query: () => ({ method: 'POST', url: '/admin/settings/kot-worker-token' }),
       invalidatesTags: ['Settings'],
     }),
+    uploadBannerImage: builder.mutation<SettingsResponse, File>({
+      query: (file) => {
+        const form = new FormData()
+        form.append('file', file)
+        return { method: 'POST', url: '/admin/settings/banner-image', data: form }
+      },
+      invalidatesTags: ['Settings'],
+    }),
+    removeBannerImage: builder.mutation<SettingsResponse, void>({
+      query: () => ({ method: 'DELETE', url: '/admin/settings/banner-image' }),
+      invalidatesTags: ['Settings'],
+    }),
     // ── Staff ──────────────────────────────────────────────────────────────
     listStaff: builder.query<StaffResponse[], void>({
       query: () => ({ method: 'GET', url: '/admin/staff' }),
@@ -381,6 +394,8 @@ export const {
   useGetSettingsQuery,
   useUpdateSettingsMutation,
   useRotateKotWorkerTokenMutation,
+  useUploadBannerImageMutation,
+  useRemoveBannerImageMutation,
   useListStaffQuery,
   useCreateStaffMutation,
   useUpdateStaffMutation,

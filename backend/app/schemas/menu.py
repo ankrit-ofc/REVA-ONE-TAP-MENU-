@@ -77,6 +77,8 @@ class ProductUpdate(BaseModel):
     is_available: bool | None = None
     has_variants: bool | None = None
     allows_addons: bool | None = None
+    # Feature/unfeature in the customer menu's "Today's Special" section.
+    is_todays_special: bool | None = None
     # image_url intentionally absent — set only by the backend upload handler
 
 
@@ -94,6 +96,7 @@ class ProductResponse(BaseModel):
     is_active: bool
     has_variants: bool
     allows_addons: bool
+    is_todays_special: bool
     image_url: str | None
     created_at: datetime
     updated_at: datetime
@@ -219,6 +222,8 @@ class SettingsResponse(BaseModel):
     # Worker credential — exposed on the ADMIN-only settings response so the
     # Devices page can show it for the worker's config.json. Never in PrintConfig.
     kot_worker_token: str | None
+    # Customer menu hero image; set only via POST /admin/settings/banner-image.
+    banner_image_url: str | None
 
 
 class PrintConfigResponse(BaseModel):
@@ -273,3 +278,12 @@ class CategoryPublic(BaseModel):
     products: list[ProductPublic]
     # Nested subcategories (empty for leaf categories). The customer menu is a tree.
     children: list["CategoryPublic"] = []
+
+
+class MenuPublic(BaseModel):
+    """Full customer menu page payload: per-restaurant hero banner (NULL →
+    client falls back to the stock image), today's specials, and the category
+    tree. All derived from the table session's restaurant only."""
+    banner_image_url: str | None
+    specials: list[ProductPublic]
+    categories: list[CategoryPublic]

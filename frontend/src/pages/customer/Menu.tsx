@@ -45,7 +45,7 @@ function resolvePath(roots: CategoryPublic[], path: string[]): CategoryPublic[] 
 interface Group { name: string; products: ProductPublic[] }
 
 export default function Menu() {
-  const { categories, isLoading, isError } = useMenu()
+  const { categories, specials, bannerImageUrl, isLoading, isError } = useMenu()
   const { restaurantName } = useSession()
   const { theme, toggle } = useTheme()
   const [path, setPath] = useState<string[]>([])
@@ -144,7 +144,19 @@ export default function Menu() {
   return (
     <div className={styles.page}>
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
-      <section className={styles.hero}>
+      {/* Admin-uploaded banner when set; the stock image (CSS default) otherwise. */}
+      <section
+        className={styles.hero}
+        style={
+          bannerImageUrl
+            ? {
+                background:
+                  `linear-gradient(rgba(15, 42, 33, 0.5), rgba(15, 42, 33, 0.5)), ` +
+                  `url(${bannerImageUrl}) center / cover no-repeat`,
+              }
+            : undefined
+        }
+      >
         <button
           className={styles.themeToggle}
           onClick={toggle}
@@ -167,6 +179,22 @@ export default function Menu() {
         <h1 className={styles.restaurantName}>{restaurantName ?? 'Our Menu'}</h1>
         <p className={styles.tagline}>Good Food, Great Moments</p>
       </section>
+
+      {/* ── Today's Special (hidden entirely when none are flagged) ───────── */}
+      {specials.length > 0 && (
+        <section className={styles.specials} aria-label="Today's Special">
+          <h2 className={styles.specialsTitle}>
+            <span aria-hidden="true">⭐</span> Today&rsquo;s Special
+          </h2>
+          <div className={styles.specialsList}>
+            {specials.map((p) => (
+              <div key={`special-${p.id}`} className={styles.specialCard}>
+                <ProductCard product={p} currency={CURRENCY} />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ── Sticky band: cascading category rows + search + dietary filter ── */}
       <div className={styles.stickyBand}>

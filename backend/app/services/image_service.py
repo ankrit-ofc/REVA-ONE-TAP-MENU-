@@ -98,6 +98,65 @@ def validate_and_store(raw: bytes, restaurant_id: uuid.UUID) -> str:
     return f"/media/{restaurant_id}/{filename}"
 
 
+_BANNER_MAX_W: int = 2400   # hero images are wide — cap suited to a full-width banner
+_BANNER_MAX_H: int = 1200
+_BANNER_JPEG_QUALITY: int = 82
+
+
+def validate_and_store_banner(raw: bytes, restaurant_id: uuid.UUID) -> str:
+    """
+    Banner (menu hero) variant of the product-image pipeline. Same validation
+    chain — max byte size, magic-bytes type check (JPEG/PNG/WebP only), full
+    Pillow decode, EXIF orientation + metadata strip, UUID filename under the
+    tenant media path — but banner-specific dimension rules: the source keeps
+    its aspect ratio (no square crop) and must fit within 2400×1200; anything
+    larger is rejected rather than silently resized, so admins upload an asset
+    actually prepared for the hero slot.
+
+    Returns the public /media URL path. Raises ValueError on any failure
+    (caller converts to HTTP 400).
+    """
+    if len(raw) > _MAX_BYTES:
+        raise ValueError("Image exceeds the 25 MB size limit")
+
+    if _detect_image_type(raw[:12]) is None:
+        raise ValueError("Only JPEG, PNG, and WebP images are accepted")
+
+    try:
+        img = Image.open(io.BytesIO(raw))
+        img.load()  # force full decode; catches truncated/corrupt and bomb payloads
+    except Exception as exc:
+        raise ValueError(f"Cannot decode image: {exc}") from exc
+
+    img = ImageOps.exif_transpose(img)
+
+    if img.width > _BANNER_MAX_W or img.height > _BANNER_MAX_H:
+        raise ValueError(
+            f"Banner image must be at most {_BANNER_MAX_W}x{_BANNER_MAX_H} pixels "
+            f"(got {img.width}x{img.height})"
+        )
+
+    # Flatten transparency onto white (JPEG has no alpha channel).
+    if img.mode in ("RGBA", "LA", "P"):
+        img = img.convert("RGBA")
+        background = Image.new("RGB", img.size, (255, 255, 255))
+        background.paste(img, mask=img.split()[-1])
+        img = background
+    else:
+        img = img.convert("RGB")
+
+    # Re-encode as JPEG; exif=b"" strips all metadata.
+    out = io.BytesIO()
+    img.save(out, format="JPEG", quality=_BANNER_JPEG_QUALITY, optimize=True, progressive=True, exif=b"")
+
+    filename = f"{uuid.uuid4()}.jpg"
+    dest = _MEDIA_ROOT / str(restaurant_id) / filename
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_bytes(out.getvalue())
+
+    return f"/media/{restaurant_id}/{filename}"
+
+
 def store_model_bytes(data: bytes, restaurant_id: uuid.UUID, suffix: str = ".glb") -> str:
     """
     Write arbitrary 3D-model bytes (a compressed .glb or converted .usdz) under a

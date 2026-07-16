@@ -451,8 +451,10 @@ export default function AdminProducts() {
   const [showAdd, setShowAdd] = useState(false)
   const [editing, setEditing] = useState<ProductResponse | null>(null)
   const [viewing, setViewing] = useState<ProductResponse | null>(null)
+  const [specialsOnly, setSpecialsOnly] = useState(false)
 
-  const productList = products ?? []
+  const allProducts = products ?? []
+  const productList = specialsOnly ? allProducts.filter((p) => p.is_todays_special) : allProducts
   const paged = usePaginatedList(productList, {
     searchText: (p) => `${p.name} ${p.description ?? ''}`,
   })
@@ -485,6 +487,7 @@ export default function AdminProducts() {
             { label: 'Tax', value: `${Number(viewing.tax_rate).toFixed(1)}%` },
             { label: 'Type', value: <VegBadge foodType={viewing.food_type} /> },
             { label: 'Available', value: viewing.is_available ? 'Yes' : 'No' },
+            { label: "Today's Special", value: viewing.is_todays_special ? 'Yes ⭐' : 'No' },
             { label: 'Has Variants', value: viewing.has_variants ? 'Yes' : 'No' },
             { label: 'Allows Add-ons', value: viewing.allows_addons ? 'Yes' : 'No' },
             {
@@ -500,6 +503,14 @@ export default function AdminProducts() {
       <div className={ps.header}>
         <h1 className={styles.title}>Products</h1>
         <div className={styles.headerRight}>
+          <button
+            className={`${ps.specialFilter} ${specialsOnly ? ps.specialFilterActive : ''}`}
+            onClick={() => setSpecialsOnly(!specialsOnly)}
+            aria-pressed={specialsOnly}
+            title="Show only products featured as Today's Special"
+          >
+            ⭐ Today&rsquo;s Special
+          </button>
           <HeaderControls list={paged} placeholder="Search products…" />
           <button className={styles.btnAdd} onClick={() => setShowAdd(true)}>+ Add Product</button>
         </div>
@@ -513,7 +524,7 @@ export default function AdminProducts() {
           <EntityCard
             key={p.id}
             image={p.image_url}
-            title={p.name}
+            title={p.is_todays_special ? `⭐ ${p.name}` : p.name}
             subtitle={p.description ? truncateWords(p.description) : undefined}
             status={{ label: p.is_available ? 'Available' : 'Hidden', tone: p.is_available ? 'ok' : 'warn' }}
             onView={() => setViewing(p)}
@@ -522,7 +533,7 @@ export default function AdminProducts() {
           />
         ))}
         {paged.total === 0 && (
-          <p className={styles.empty}>{productList.length === 0 ? 'No products yet.' : 'No matches.'}</p>
+          <p className={styles.empty}>{allProducts.length === 0 ? 'No products yet.' : 'No matches.'}</p>
         )}
       </div>
 
@@ -537,6 +548,7 @@ export default function AdminProducts() {
               <th>Tax</th>
               <th>Type</th>
               <th>Available</th>
+              <th>Special</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -564,6 +576,17 @@ export default function AdminProducts() {
                     {p.is_available ? 'Yes' : 'No'}
                   </button>
                 </td>
+                <td>
+                  <button
+                    className={`${ps.starBtn} ${p.is_todays_special ? ps.starOn : ''}`}
+                    onClick={() => void updateProduct({ id: p.id, is_todays_special: !p.is_todays_special })}
+                    title={p.is_todays_special ? "Remove from Today's Special" : "Feature as Today's Special"}
+                    aria-pressed={p.is_todays_special}
+                    aria-label={p.is_todays_special ? "Remove from Today's Special" : "Feature as Today's Special"}
+                  >
+                    ⭐
+                  </button>
+                </td>
                 <td className={styles.actions}>
                   <IconAction kind="view" onClick={() => setViewing(p)} title="View" />
                   <IconAction kind="edit" onClick={() => setEditing(p)} title="Edit" />
@@ -572,7 +595,7 @@ export default function AdminProducts() {
               </tr>
             ))}
             {paged.total === 0 && (
-              <tr><td colSpan={8} className={styles.emptyRow}>{productList.length === 0 ? 'No products yet.' : 'No matches.'}</td></tr>
+              <tr><td colSpan={9} className={styles.emptyRow}>{allProducts.length === 0 ? 'No products yet.' : 'No matches.'}</td></tr>
             )}
           </tbody>
         </table>
