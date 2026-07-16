@@ -16,8 +16,19 @@ export function useMenu() {
   const { data, isLoading, isError, refetch } = useGetMenuQuery()
 
   function findProduct(productId: string): ProductPublic | undefined {
-    return findInTree(data ?? [], productId)
+    return (
+      data?.specials.find((p) => p.id === productId) ??
+      findInTree(data?.categories ?? [], productId)
+    )
   }
 
-  return { categories: data ?? [], isLoading, isError, refetch, findProduct }
+  return {
+    categories: data?.categories ?? [],
+    specials: data?.specials ?? [],
+    bannerImageUrl: data?.banner_image_url ?? null,
+    isLoading,
+    isError,
+    refetch,
+    findProduct,
+  }
 }

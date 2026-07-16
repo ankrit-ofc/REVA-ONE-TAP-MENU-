@@ -63,4 +63,8 @@ class RestaurantSettings(Base, TimestampMixin, TenantMixin):
     kot_printer_name: Mapped[str | None] = mapped_column(String(120), nullable=True)
     kot_worker_token: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True)
 
+    # Customer menu hero image. Set only by the backend upload handler (Phase 4
+    # image pipeline); never accepted from the client. NULL → stock hero.
+    banner_image_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+
     restaurant: Mapped["Restaurant"] = relationship("Restaurant", back_populates="settings")

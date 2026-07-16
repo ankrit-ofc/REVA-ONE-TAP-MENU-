@@ -30,6 +30,7 @@ from app.schemas.menu import (
     CategoryCreate,
     CategoryPublic,
     CategoryUpdate,
+    MenuPublic,
     ProductCreate,
     ProductPublic,
     ProductUpdate,
@@ -438,6 +439,7 @@ def _product_snapshot(p: Product) -> dict:
         "is_available": p.is_available,
         "has_variants": p.has_variants,
         "allows_addons": p.allows_addons,
+        "is_todays_special": p.is_todays_special,
     }
 
 
@@ -468,6 +470,8 @@ def update_product(
         product.has_variants = data.has_variants
     if data.allows_addons is not None:
         product.allows_addons = data.allows_addons
+    if data.is_todays_special is not None:
+        product.is_todays_special = data.is_todays_special
 
     product.updated_at = _now()
     _audit(
@@ -903,46 +907,117 @@ def update_settings(
     return settings
 
 
+def set_banner_image(
+    db: Session, restaurant_id: uuid.UUID, banner_image_url: str, actor: User
+) -> RestaurantSettings:
+    """Point the customer-menu hero at a freshly stored upload. The URL comes
+    from image_service.validate_and_store_banner only — never from the client."""
+    settings = get_or_create_settings(db, restaurant_id)
+    previous_url = settings.banner_image_url
+    settings.banner_image_url = banner_image_url
+    settings.updated_at = _now()
+    _audit(
+        db,
+        restaurant_id=restaurant_id,
+        actor=actor,
+        entity_type="restaurant_settings",
+        entity_id=settings.id,
+        action="BANNER_IMAGE_SET",
+        previous_value={"banner_image_url": previous_url},
+        new_value={"banner_image_url": banner_image_url},
+    )
+    db.commit()
+    db.refresh(settings)
+    return settings
+
+
+def remove_banner_image(
+    db: Session, restaurant_id: uuid.UUID, actor: User
+) -> RestaurantSettings:
+    """Null out the hero banner (customer page falls back to the stock image)."""
+    settings = get_or_create_settings(db, restaurant_id)
+    previous_url = settings.banner_image_url
+    settings.banner_image_url = None
+    settings.updated_at = _now()
+    _audit(
+        db,
+        restaurant_id=restaurant_id,
+        actor=actor,
+        entity_type="restaurant_settings",
+        entity_id=settings.id,
+        action="BANNER_IMAGE_REMOVE",
+        previous_value={"banner_image_url": previous_url},
+        new_value={"banner_image_url": None},
+    )
+    db.commit()
+    db.refresh(settings)
+    return settings
+
+
 # ──────────────────────────────────────────────────────────────────────────────
 # Customer-facing menu read
 # ──────────────────────────────────────────────────────────────────────────────
 
+def _product_public(p: Product) -> ProductPublic:
+    """Customer-facing view of one product, with active variants/addons."""
+    variants = [
+        VariantPublic(id=v.id, name=v.name, price=v.price)
+        for v in p.variants
+        if v.is_active
+    ]
+    addons = [
+        AddonPublic(id=m.addon.id, name=m.addon.name, price=m.addon.price)
+        for m in p.addon_mappings
+        if m.addon.is_active
+    ]
+    # Only expose AR model URLs for a PUBLISHED model (publish requires READY + GLB).
+    ar_published = p.model_published and bool(p.model_glb_url)
+    return ProductPublic(
+        id=p.id,
+        name=p.name,
+        description=p.description,
+        base_price=p.base_price,
+        tax_rate=p.tax_rate,
+        food_type=p.food_type,
+        image_url=p.image_url,
+        has_variants=p.has_variants,
+        allows_addons=p.allows_addons,
+        variants=variants,
+        addons=addons,
+        model_glb_url=p.model_glb_url if ar_published else None,
+        model_usdz_url=p.model_usdz_url if ar_published else None,
+    )
+
+
 def _public_products(cat: Category) -> list[ProductPublic]:
     """Active + available products of a category, with active variants/addons."""
-    products: list[ProductPublic] = []
-    for p in cat.products:
-        if not p.is_active or not p.is_available:
-            continue
-        variants = [
-            VariantPublic(id=v.id, name=v.name, price=v.price)
-            for v in p.variants
-            if v.is_active
-        ]
-        addons = [
-            AddonPublic(id=m.addon.id, name=m.addon.name, price=m.addon.price)
-            for m in p.addon_mappings
-            if m.addon.is_active
-        ]
-        # Only expose AR model URLs for a PUBLISHED model (publish requires READY + GLB).
-        ar_published = p.model_published and bool(p.model_glb_url)
-        products.append(
-            ProductPublic(
-                id=p.id,
-                name=p.name,
-                description=p.description,
-                base_price=p.base_price,
-                tax_rate=p.tax_rate,
-                food_type=p.food_type,
-                image_url=p.image_url,
-                has_variants=p.has_variants,
-                allows_addons=p.allows_addons,
-                variants=variants,
-                addons=addons,
-                model_glb_url=p.model_glb_url if ar_published else None,
-                model_usdz_url=p.model_usdz_url if ar_published else None,
-            )
+    return [
+        _product_public(p)
+        for p in cat.products
+        if p.is_active and p.is_available
+    ]
+
+
+def get_todays_specials(db: Session, restaurant_id: uuid.UUID) -> list[ProductPublic]:
+    """Featured products for THIS restaurant only: flagged AND active AND
+    available. Deactivated/hidden products never appear even if still flagged."""
+    rows = db.execute(
+        select(Product)
+        .where(
+            Product.restaurant_id == restaurant_id,
+            Product.is_todays_special.is_(True),
+            Product.is_active.is_(True),
+            Product.is_available.is_(True),
         )
-    return products
+        .options(
+            selectinload(Product.variants),
+            selectinload(Product.addon_mappings).options(
+                selectinload(ProductAddonMapping.addon)
+            ),
+        )
+        .order_by(Product.name)
+    ).scalars().all()
+    return [_product_public(p) for p in rows]
 
 
 def get_customer_menu(db: Session, restaurant_id: uuid.UUID) -> list[CategoryPublic]:
@@ -1005,3 +1080,13 @@ def get_customer_menu(db: Session, restaurant_id: uuid.UUID) -> list[CategoryPub
 
     roots.sort(key=lambda c: (c.display_order, c.name.lower()))
     return [n for c in roots if (n := build(c)) is not None]
+
+
+def get_customer_menu_page(db: Session, restaurant_id: uuid.UUID) -> MenuPublic:
+    """The whole GET /menu payload: hero banner + today's specials + category tree."""
+    settings = get_or_create_settings(db, restaurant_id)
+    return MenuPublic(
+        banner_image_url=settings.banner_image_url,
+        specials=get_todays_specials(db, restaurant_id),
+        categories=get_customer_menu(db, restaurant_id),
+    )

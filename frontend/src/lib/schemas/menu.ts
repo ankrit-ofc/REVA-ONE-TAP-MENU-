@@ -57,6 +57,12 @@ export const categoryPublicSchema: z.ZodType<CategoryPublic> = z.lazy(() =>
   }),
 )
 
-export const menuResponseSchema = z.array(categoryPublicSchema)
+// GET /menu payload: per-restaurant hero banner (null → stock image),
+// today's specials, and the category tree.
+export const menuResponseSchema = z.object({
+  banner_image_url: z.string().nullable(),
+  specials: z.array(productPublicSchema),
+  categories: z.array(categoryPublicSchema),
+})
 
 export type MenuResponse = z.infer<typeof menuResponseSchema>

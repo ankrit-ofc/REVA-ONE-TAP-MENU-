@@ -56,6 +56,44 @@
   margin: 0;
 }
 
+/* ── Today's Special ──────────────────────────────────────────────────── */
+.specials {
+  padding: 0.85rem 1rem 0.35rem;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--color-primary-deep, #0f2a21) 8%, var(--color-bg)) 0%,
+    var(--color-bg) 100%
+  );
+  border-bottom: 1px solid var(--color-border);
+}
+
+.specialsTitle {
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  margin: 0 0 0.6rem;
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.specialsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+/* Each special is a normal tappable ProductCard, dressed up with an accent
+   border + soft glow so the section reads as featured, not just first. */
+.specialCard {
+  border: 1.5px solid #d9a441;
+  border-radius: var(--radius-lg, 12px);
+  box-shadow: 0 2px 10px rgba(217, 164, 65, 0.18);
+  overflow: hidden;
+}
+
 /* ── Sticky band: categories + search + dietary filter ────────────────── */
 .stickyBand {
   position: sticky;

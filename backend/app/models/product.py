@@ -41,6 +41,8 @@ class Product(Base, TimestampMixin, TenantMixin):
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="true")
     has_variants: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
     allows_addons: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+    # Featured in the customer menu's "Today's Special" section (admin toggle).
+    is_todays_special: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
     # Set only by the backend upload handler (Phase 4); never accepted from the client directly.
     image_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 

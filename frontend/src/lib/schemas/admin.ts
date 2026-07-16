@@ -52,6 +52,7 @@ export const productResponseSchema = z.object({
   is_active: z.boolean(),
   has_variants: z.boolean(),
   allows_addons: z.boolean(),
+  is_todays_special: z.boolean(),
   image_url: z.string().nullable(),
   created_at: z.string(),
   updated_at: z.string(),
@@ -148,6 +149,8 @@ export const settingsResponseSchema = z.object({
   kot_print_mode: z.enum(['browser', 'worker']),
   kot_printer_name: z.string().nullable(),
   kot_worker_token: z.string().nullable(),
+  // Customer-menu hero image; set only via the banner upload endpoint.
+  banner_image_url: z.string().nullable(),
 })
 
 export const categoryCreateSchema = z.object({
