@@ -148,9 +148,10 @@ From the July 2026 code review — verified against source:
    auth or short-lived tickets when convenient.
 8. **`deps.py:62` loads users by PK alone** — add a `restaurant_id` cross-check
    after JWT decode.
-9. **Docs drift**: `docs/SCHEMA.md` is behind migrations 0004–0018; docs say
-   Postgres 16, stack runs 17; root `README.md` and root `package.json` are
-   stale — regenerate/delete.
+9. **Docs drift**: `docs/SCHEMA.md` is behind migrations 0004–0018 (stale
+   banner added; still needs regeneration). Postgres-16 references, root
+   `README.md`, and root `package.json` were fixed/removed in the repo
+   cleanup (2026-07-16).
 10. **Split the mega-services** (`order_service.py` 1056 lines,
     `menu_service.py` 1007, `payment_service.py` 972) before they grow further.
 

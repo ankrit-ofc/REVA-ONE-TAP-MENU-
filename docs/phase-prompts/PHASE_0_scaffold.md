@@ -15,7 +15,7 @@ Threat model for this phase:
   postgres superuser. Assume the compose file and env will be reviewed.
 
 Scope — build these files and only these:
-- docker-compose.yml: services for `db` (postgres:16), `backend` (FastAPI), and a
+- docker-compose.yml: services for `db` (postgres:17), `backend` (FastAPI), and a
   placeholder `frontend` (node:20, no app yet — just a container that idles).
 - backend/Dockerfile: Python 3.12-slim, installs from requirements.txt.
 - backend/requirements.txt: pinned deps (see below).
