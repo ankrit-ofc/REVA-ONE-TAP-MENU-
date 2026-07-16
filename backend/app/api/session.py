@@ -15,6 +15,8 @@ from app.core.limiter import limiter
 from app.models.enums import Role, SessionStatus
 from app.models.table import TableSession
 from app.models.user import User
+from app.realtime import tickets
+from app.schemas.auth import WsTicketResponse
 from app.schemas.session import InvalidateRequest
 from app.services import session_service
 
@@ -102,6 +104,19 @@ def invalidate_session_endpoint(
 
     session_service.invalidate_session(db, session)
     return {"status": "ok"}
+
+
+@router.post("/ws-ticket", response_model=WsTicketResponse)
+def create_ws_ticket(
+    session: Annotated[TableSession, Depends(get_current_session)],
+) -> WsTicketResponse:
+    """
+    Mint a short-lived, single-use ticket for /ws/customer. The WebSocket
+    accepts ONLY these tickets — raw session tokens in the query string are
+    rejected (they would leak into proxy logs; HANDOVER §8 #7).
+    """
+    ticket = tickets.issue_ticket("customer", session.id, session.restaurant_id)
+    return WsTicketResponse(ticket=ticket, expires_in=tickets.WS_TICKET_TTL_SECONDS)
 
 
 @router.post("/call-waiter")

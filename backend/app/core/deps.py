@@ -63,6 +63,14 @@ def get_current_user(
     if user is None or not user.is_active:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found or inactive")
 
+    # Tenant pin (HANDOVER §8 #8): the token's restaurant_id claim must match
+    # the user's current tenant. A token minted before an account was moved —
+    # or forged with a mismatched claim — is rejected, so a user row is never
+    # loaded "by PK alone" without its tenant being cross-checked.
+    claim_rid = payload.get("restaurant_id")
+    if claim_rid is None or str(claim_rid) != str(user.restaurant_id):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token claims")
+
     return user
 
 

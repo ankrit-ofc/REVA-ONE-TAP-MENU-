@@ -29,6 +29,13 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
 
 
+class WsTicketResponse(BaseModel):
+    """Opaque single-use WebSocket ticket (see app/realtime/tickets.py)."""
+
+    ticket: str
+    expires_in: int  # seconds
+
+
 class ForgotPasswordRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

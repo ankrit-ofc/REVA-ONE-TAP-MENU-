@@ -1,35 +1,35 @@
 """
-WebSocket authentication helpers (Phase 8).
+WebSocket authentication helpers (Phase 8; hardened per HANDOVER §8 #7).
 
-Auth transport: query param (both staff and customers).
-  Staff   : ?token=<jwt_access_token>
-  Customer: ?session_token=<table_session_token>
-
-Using query params because the WebSocket API in browsers does not allow
-setting the Authorization header — query param is the standard alternative.
+Auth transport: a short-lived, SINGLE-USE ticket in the `ticket` query param
+(both staff and customers), minted by POST /auth/ws-ticket (staff JWT) or
+POST /session/ws-ticket (customer session header). Raw long-lived credentials
+(?token= / ?session_token=) are REJECTED outright — query strings end up in
+proxy/access logs, and a logged 60-second one-shot ticket is worthless while
+a logged JWT or session token is a live credential.
 
 On auth failure the connection is accepted first (required by Starlette to
 send a close frame), then immediately closed with WS code 1008 (Policy
 Violation), and RuntimeError is raised so the caller can return early.
 
 restaurant_id (and role / table_id) are derived EXCLUSIVELY from the
-verified credential — never from any client-supplied query param or body.
+redeemed ticket + database row — never from any client-supplied value.
 """
 
 import uuid
 from datetime import datetime, timezone
 
-import jwt
 from fastapi import WebSocket
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core import security
 from app.models.enums import SessionStatus
 from app.models.table import TableSession
 from app.models.user import User
+from app.realtime.tickets import redeem_ticket
 
 WS_POLICY_VIOLATION = 1008
+
+_LEGACY_PARAMS = ("token", "session_token")
 
 
 async def _reject(ws: WebSocket, reason: str) -> None:
@@ -40,39 +40,43 @@ async def _reject(ws: WebSocket, reason: str) -> None:
         pass
 
 
+async def _extract_ticket(ws: WebSocket) -> str:
+    """Common ticket extraction; rejects legacy raw-token params outright."""
+    if any(param in ws.query_params for param in _LEGACY_PARAMS):
+        await _reject(ws, "Raw tokens are not accepted; obtain a ws-ticket")
+        raise RuntimeError("Legacy token query param rejected")
+
+    ticket = ws.query_params.get("ticket")
+    if not ticket:
+        await _reject(ws, "Missing ticket query param")
+        raise RuntimeError("Missing ticket")
+    return ticket
+
+
 # ── Staff ─────────────────────────────────────────────────────────────────────
 
 async def authenticate_staff_ws(ws: WebSocket, db: Session) -> User:
     """
-    Validate the JWT access token from the `token` query param.
-    Returns the active User on success.
+    Redeem the single-use `ticket` query param (kind=staff) and load the user.
     Closes the WS with 1008 and raises RuntimeError on any failure.
     """
-    token = ws.query_params.get("token")
-    if not token:
-        await _reject(ws, "Missing token query param")
-        raise RuntimeError("Missing token")
+    ticket = await _extract_ticket(ws)
 
-    try:
-        payload = security.decode_token(token)
-    except jwt.PyJWTError:
-        await _reject(ws, "Invalid or expired token")
-        raise RuntimeError("Invalid or expired token")
+    claims = redeem_ticket(ticket, kind="staff")
+    if claims is None:
+        await _reject(ws, "Invalid, expired, or already-used ticket")
+        raise RuntimeError("Ticket redemption failed")
 
-    if payload.get("type") != "access":
-        await _reject(ws, "Invalid token type")
-        raise RuntimeError("Invalid token type")
-
-    try:
-        user_id = uuid.UUID(str(payload.get("sub", "")))
-    except ValueError:
-        await _reject(ws, "Invalid token claims")
-        raise RuntimeError("Invalid token claims")
-
-    user: User | None = db.get(User, user_id)
+    user: User | None = db.get(User, uuid.UUID(claims.subject_id))
     if user is None or not user.is_active:
         await _reject(ws, "User not found or inactive")
         raise RuntimeError("User not found or inactive")
+
+    # Tenant pin: the bucket the connection joins comes from the ticket, and
+    # the ticket must still match the user's current tenant.
+    if str(user.restaurant_id) != claims.restaurant_id:
+        await _reject(ws, "Ticket/tenant mismatch")
+        raise RuntimeError("Ticket/tenant mismatch")
 
     return user
 
@@ -81,22 +85,21 @@ async def authenticate_staff_ws(ws: WebSocket, db: Session) -> User:
 
 async def authenticate_customer_ws(ws: WebSocket, db: Session) -> TableSession:
     """
-    Validate the table session token from the `session_token` query param.
-    Returns the ACTIVE TableSession on success.
-    Closes the WS with 1008 and raises RuntimeError on any failure.
+    Redeem the single-use `ticket` query param (kind=customer) and load the
+    ACTIVE TableSession. Closes the WS with 1008 and raises RuntimeError on
+    any failure.
     """
-    token = ws.query_params.get("session_token")
-    if not token:
-        await _reject(ws, "Missing session_token query param")
-        raise RuntimeError("Missing session_token")
+    ticket = await _extract_ticket(ws)
 
-    session: TableSession | None = db.execute(
-        select(TableSession).where(TableSession.token == token)
-    ).scalar_one_or_none()
+    claims = redeem_ticket(ticket, kind="customer")
+    if claims is None:
+        await _reject(ws, "Invalid, expired, or already-used ticket")
+        raise RuntimeError("Ticket redemption failed")
 
+    session: TableSession | None = db.get(TableSession, uuid.UUID(claims.subject_id))
     if session is None:
-        await _reject(ws, "Invalid session token")
-        raise RuntimeError("Invalid session token")
+        await _reject(ws, "Session not found")
+        raise RuntimeError("Session not found")
 
     now = datetime.now(timezone.utc)
     if session.status == SessionStatus.ACTIVE and session.expires_at <= now:
@@ -106,5 +109,9 @@ async def authenticate_customer_ws(ws: WebSocket, db: Session) -> TableSession:
     if session.status != SessionStatus.ACTIVE:
         await _reject(ws, "Session expired or invalidated")
         raise RuntimeError("Session expired or invalidated")
+
+    if str(session.restaurant_id) != claims.restaurant_id:
+        await _reject(ws, "Ticket/tenant mismatch")
+        raise RuntimeError("Ticket/tenant mismatch")
 
     return session

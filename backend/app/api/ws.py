@@ -1,8 +1,13 @@
 """
-WebSocket endpoints (Phase 8).
+WebSocket endpoints (Phase 8; ticket auth per HANDOVER §8 #7).
 
-  /ws/staff    — staff connections; JWT via ?token=<access_token>
-  /ws/customer — customer connections; session via ?session_token=<token>
+  /ws/staff    — staff connections; single-use ticket via ?ticket=<...>
+                 (minted by POST /auth/ws-ticket with a staff JWT)
+  /ws/customer — customer connections; single-use ticket via ?ticket=<...>
+                 (minted by POST /session/ws-ticket with X-Session-Token)
+
+Raw long-lived credentials (?token= / ?session_token=) are rejected — query
+strings leak into proxy logs; a 60-second one-shot ticket does not matter there.
 
 On connect:
   1. Accept the WebSocket upgrade.
@@ -33,9 +38,9 @@ _DbDep = Annotated[Session, Depends(get_db)]
 @router.websocket("/ws/staff")
 async def ws_staff(ws: WebSocket, db: _DbDep) -> None:
     """
-    Staff WebSocket.  JWT `token` query param is mandatory.
-    The connection is registered to the role bucket that matches the JWT's
-    role claim — no client can choose a different role or restaurant.
+    Staff WebSocket.  Single-use `ticket` query param is mandatory.
+    The connection is registered to the role/restaurant bucket derived from
+    the redeemed ticket — no client can choose a different role or restaurant.
     """
     await ws.accept()
     try:
@@ -57,9 +62,9 @@ async def ws_staff(ws: WebSocket, db: _DbDep) -> None:
 @router.websocket("/ws/customer")
 async def ws_customer(ws: WebSocket, db: _DbDep) -> None:
     """
-    Customer WebSocket.  Session `session_token` query param is mandatory.
-    The connection is registered to the table bucket derived from the session —
-    customers at table T only receive events for table T's orders.
+    Customer WebSocket.  Single-use `ticket` query param is mandatory.
+    The connection is registered to the table bucket derived from the ticket's
+    session — customers at table T only receive events for table T's orders.
     """
     await ws.accept()
     try:
