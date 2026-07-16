@@ -24,6 +24,9 @@ export default [
     },
     rules: {
       ...tsPlugin.configs.recommended.rules,
+      // TypeScript itself checks undefined identifiers (incl. type-only names
+      // like React.* and BufferSource); no-undef false-positives on them.
+      'no-undef': 'off',
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
     },

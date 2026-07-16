@@ -35,7 +35,7 @@ type ModelViewerElement = HTMLElement & {
 export default function TableArView({ src, iosSrc, alt, className }: Props) {
   const [libReady, setLibReady] = useState(false)
   const [modelReady, setModelReady] = useState(false)
-  const [canAR, setCanAR] = useState(false)
+  const [, setCanAR] = useState(false)
   const [show3D, setShow3D] = useState(false)
   const ref = useRef<HTMLElement | null>(null)
 
