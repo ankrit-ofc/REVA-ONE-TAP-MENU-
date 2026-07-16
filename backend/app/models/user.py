@@ -1,7 +1,7 @@
 import uuid
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, Enum as SAEnum, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, Enum as SAEnum, Index, String, Text, text
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -16,7 +16,16 @@ if TYPE_CHECKING:
 class User(Base, TimestampMixin, TenantMixin):
     __tablename__ = "users"
     __table_args__ = (
-        UniqueConstraint("email", "restaurant_id", name="uq_users_email_restaurant"),
+        # Partial unique index: only ACTIVE rows contend for an email, so a
+        # soft-deleted (is_active=false) member's email can be reused while the
+        # historical row is preserved (CLAUDE.md §3 — no DELETE on users).
+        Index(
+            "uq_users_email_restaurant_active",
+            "email",
+            "restaurant_id",
+            unique=True,
+            postgresql_where=text("is_active"),
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

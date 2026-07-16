@@ -30,12 +30,16 @@ def authenticate(db: Session, email: str, password: str, restaurant_slug: str) -
         )
     ).scalar_one_or_none()
 
+    # Active rows only: after staff soft-delete + email reuse, an inactive row
+    # may share (email, restaurant) — without this filter the lookup would
+    # raise MultipleResultsFound. Inactive users can't log in anyway.
     user: User | None = None
     if restaurant is not None:
         user = db.execute(
             select(User).where(
                 User.email == email,
                 User.restaurant_id == restaurant.id,
+                User.is_active.is_(True),
             )
         ).scalar_one_or_none()
 
@@ -229,12 +233,15 @@ def request_password_reset(db: Session, restaurant_slug: str, email: str) -> Non
         )
     ).scalar_one_or_none()
 
+    # Active rows only — see authenticate(): (email, restaurant) is unique only
+    # among active users once a freed email has been reused.
     user: User | None = None
     if restaurant is not None:
         user = db.execute(
             select(User).where(
                 User.email == email,
                 User.restaurant_id == restaurant.id,
+                User.is_active.is_(True),
             )
         ).scalar_one_or_none()
 

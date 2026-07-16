@@ -67,6 +67,6 @@ def delete_staff(
     user: _AdminDep,
     db: _DbDep,
 ) -> StaffResponse:
-    """Delete a staff member. Non-admin staff are hard-deleted (email frees up);
-    ADMIN accounts are soft-deleted (kept recoverable)."""
-    return staff_service.delete_staff(db, restaurant_id, user_id, actor_id=user.id)
+    """Deactivate a staff member (soft delete). The email is freed for reuse by
+    the partial unique index on active rows; the row and audit trail remain."""
+    return staff_service.delete_staff(db, restaurant_id, user_id, actor=user)
