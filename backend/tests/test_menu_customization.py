@@ -12,7 +12,19 @@ import io
 import uuid
 from datetime import datetime, timedelta, timezone
 
+import pytest
+
 from tests.conftest import TEST_PASSWORD, auth, login
+
+
+@pytest.fixture(autouse=True)
+def _media_tmpdir(tmp_path, monkeypatch):
+    """Redirect media writes to a pytest temp dir. The production constant is
+    /app/media (the container WORKDIR); on a CI runner the app is neither at
+    /app nor allowed to create it, so banner uploads would 500 without this."""
+    from app.services import image_service
+
+    monkeypatch.setattr(image_service, "_MEDIA_ROOT", tmp_path)
 
 
 # -- World builders ------------------------------------------------------------
