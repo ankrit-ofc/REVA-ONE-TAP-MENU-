@@ -85,10 +85,30 @@ The invariants in `CLAUDE.md` §3 are non-negotiable. Per feature:
 
 ## 6. Deploying
 
-- Prod: `docker-compose.prod.yml` + `deploy.sh` on the Vultr box — see
-  `docs/DEPLOY.md`. `deploy.sh` pulls, builds frontend, runs migrations, brings
-  the stack up. There is **no CD pipeline** — deploys are manual SSH.
+- Prod: `docker-compose.prod.yml` + `deploy.sh` on the server — see
+  `docs/DEPLOY.md`. `deploy.sh` now takes an automatic `pg_dump` backup
+  (step 0, keeps the 7 most recent in `backups/`), then pulls, builds,
+  migrates, and brings the stack up. There is **no CD pipeline** — deploys
+  are manual SSH.
 - Only Caddy's 80/443 are public; DB binds to host loopback only.
+
+### Safe-deploy checklist (production data protection)
+
+Data lives in named volumes (`postgres_data`, `media_data`) and survives every
+rebuild/restart. Per deploy:
+
+1. Confirm you are SSHed into **your** server (`hostname` / prompt check).
+2. CI is green on `main` — migrations already passed against a fresh DB.
+3. Run `./deploy.sh` — it backs up the DB automatically before anything else.
+4. After: `docker compose -f docker-compose.prod.yml ps` (all up) + hit
+   `/health` + one real page load.
+
+**Never run on production:** `docker compose down -v` (deletes the data
+volumes — the ONLY compose command that destroys data), or any destructive
+migration without a rehearsal against a restored backup copy first.
+
+**Restore procedure** (worst case):
+`gunzip -c backups/pre_deploy_<ts>.sql.gz | docker compose -f docker-compose.prod.yml exec -T db psql -U postgres -d multi_tenant_qr_resturant`
 
 ## 7. Secrets — rotate these now
 

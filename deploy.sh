@@ -8,6 +8,18 @@ cd "$(dirname "$0")"
 
 COMPOSE="docker compose -f docker-compose.prod.yml"
 
+echo "==> [0/5] Backing up the database (pre-deploy safety net)"
+mkdir -p backups
+if $COMPOSE ps --status running db 2>/dev/null | grep -q db; then
+  $COMPOSE exec -T db sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' \
+    | gzip > "backups/pre_deploy_$(date +%F_%H%M%S).sql.gz"
+  # keep only the 7 most recent backups
+  ls -1t backups/pre_deploy_*.sql.gz 2>/dev/null | tail -n +8 | xargs -r rm --
+  echo "    Backup saved to backups/ (7 most recent kept)"
+else
+  echo "    db container not running — skipping backup (first deploy)"
+fi
+
 echo "==> [1/5] Pulling latest code"
 git pull --ff-only
 
