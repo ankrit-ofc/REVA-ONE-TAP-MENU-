@@ -18,9 +18,34 @@ const NAV_LINKS = [
  * single-page <Outlet>. Everything is scoped under `.rt` (see landing.css).
  * The prominent "Go to App" button routes staff to the real product at /login.
  */
+const PAGE_TITLE = 'REVA TAP — One Tap. Your Menu.'
+const PAGE_DESCRIPTION =
+  'Transform your restaurant with NFC & QR-powered digital menus that customers can access instantly. No app required.'
+
 export default function LandingLayout() {
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+
+  // SEO head bits: the app has no head manager, so set the marketing title +
+  // description while the landing page is mounted and restore on unmount.
+  useEffect(() => {
+    const prevTitle = document.title
+    document.title = PAGE_TITLE
+    const existing = document.querySelector<HTMLMetaElement>('meta[name="description"]')
+    const created = !existing
+    const meta = existing ?? document.createElement('meta')
+    if (created) {
+      meta.name = 'description'
+      document.head.appendChild(meta)
+    }
+    const prevDescription = meta.content
+    meta.content = PAGE_DESCRIPTION
+    return () => {
+      document.title = prevTitle
+      if (created) meta.remove()
+      else meta.content = prevDescription
+    }
+  }, [])
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24)
@@ -59,7 +84,7 @@ export default function LandingLayout() {
               Book Demo
             </a>
             <Link to="/login" className="btn btn-primary" style={{ padding: '11px 24px' }}>
-              Go to App
+              Get Started
             </Link>
             <button
               className="hamburger"
@@ -82,7 +107,7 @@ export default function LandingLayout() {
           </a>
         ))}
         <Link to="/login" style={{ color: 'var(--green)' }} onClick={() => setMenuOpen(false)}>
-          Go to App →
+          Get Started →
         </Link>
       </div>
 
@@ -117,6 +142,7 @@ export default function LandingLayout() {
               <h4>Company</h4>
               <Link to="/login">Staff Login</Link>
               <a href="#">About</a>
+              <a href="#">Careers</a>
               <a href="#">Privacy Policy</a>
               <a href="#">Terms of Service</a>
             </div>

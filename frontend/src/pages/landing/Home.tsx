@@ -1,51 +1,37 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import Counter from './Counter'
-import ExpandRow from './ExpandRow'
-import type { ExpandPanel } from './ExpandRow'
+import FeatAcc from './FeatAcc'
+import type { FeatCard } from './FeatAcc'
 import ScrambleAmount from './ScrambleAmount'
 import {
   NfcWavesIcon, ArIcon, CheckIcon, SearchIcon, QrIcon, CartIcon, WaiterIcon,
-  ChartIcon, BoltIcon, PrintCostIcon, ClockIcon, StarIcon, HeartIcon, RepeatIcon,
-  GearIcon, ChevronDownIcon,
+  ChartIcon, BoltIcon, PrintCostIcon, ClockIcon, ChevronDownIcon,
 } from './icons'
 
 const DEMO_MAILTO = 'mailto:hello@revatap.com?subject=REVA%20TAP%20demo%20request'
 
-const FEATURE_PANELS: ExpandPanel[] = [
-  { icon: NfcWavesIcon, title: 'NFC Menu', body: 'Customers tap the REVA stand and the menu opens instantly. No typing, no scanning, no friction.', image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=900&q=80' },
-  { icon: QrIcon, title: 'QR Menu', body: 'A beautiful QR fallback that works on every phone ever made — iPhone, Android, everything.', image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=900&q=80' },
-  { icon: ArIcon, title: 'AR Menu', body: 'Let guests preview dishes in 3D on their table before they order — see the portion, plating and size in augmented reality.', image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=900&q=80' },
-  { icon: CartIcon, title: 'Direct Ordering', body: 'Customers order straight from their phone. Orders flow into your system without a single wave for a waiter.', image: 'https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=900&q=80' },
-  { icon: WaiterIcon, title: 'Waiter Dashboard', body: 'Waiters see every table, every order, every status — served faster with zero confusion.', image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=900&q=80' },
+const FEATURE_CARDS: FeatCard[] = [
+  { icon: NfcWavesIcon, title: 'NFC Menu', body: 'Customers tap the REVA stand and the menu opens instantly. No typing, no scanning, no friction.', image: '/landing/feature-nfc.jpg', imageAlt: 'NFC Menu' },
+  { icon: QrIcon, title: 'QR Menu', body: 'A beautiful QR fallback that works on every phone ever made — iPhone, Android, everything.', image: '/landing/feature-qr.jpg', imageAlt: 'QR Menu' },
+  { icon: ArIcon, title: 'AR Menu', body: 'Let guests preview dishes in 3D on their table before they order — see the portion, plating and size in augmented reality.', image: '/landing/feature-ar.jpg', imageAlt: 'AR Menu' },
+  { icon: CartIcon, title: 'Direct Ordering', body: 'Customers order straight from their phone. Orders flow into your system without a single wave for a waiter.', image: '/landing/feature-ordering.jpg', imageAlt: 'Direct Ordering' },
+  { icon: WaiterIcon, title: 'Waiter Dashboard', body: 'Waiters see every table, every order, every status — served faster with zero confusion.', image: '/landing/feature-waiter.jpg', imageAlt: 'Waiter Dashboard' },
 ]
 
-const BENEFIT_PANELS: ExpandPanel[] = [
+const WHY_CARDS = [
   { icon: PrintCostIcon, title: 'Save Printing Costs', body: 'Never reprint a menu again. Update digitally, forever.' },
   { icon: ChartIcon, title: 'Increase Sales', body: 'Photos and videos sell more. Upsells happen automatically.' },
   { icon: BoltIcon, title: 'Faster Ordering', body: 'Orders reach the kitchen in seconds, not minutes.' },
   { icon: ClockIcon, title: 'Reduce Wait Time', body: 'No waiting for menus, no waving for waiters.' },
-  { icon: StarIcon, title: 'Modern Experience', body: 'Feel like the most forward-thinking place on the street.' },
-  { icon: HeartIcon, title: 'Happier Customers', body: 'Smooth, beautiful, in their language. They notice.' },
-  { icon: RepeatIcon, title: 'More Repeat Visits', body: 'Great experiences bring people — and their friends — back.' },
-  { icon: GearIcon, title: 'Easy Management', body: 'One dashboard runs your whole menu operation.' },
 ]
 
 const STEPS: { title: string; body: string }[] = [
   { title: 'Tap NFC or Scan QR', body: 'Customer taps the REVA stand or scans the QR code on the table.' },
   { title: 'Menu Opens Instantly', body: 'Your full digital menu appears in their browser — no app, no signup, no waiting.' },
-  { title: 'Browse Food', body: "Photos, videos, descriptions and prices in the customer's own language." },
+  { title: 'Browse Food', body: "Photos, descriptions and prices in the customer's own language." },
   { title: 'Place Order', body: 'Customer builds a cart and orders directly from their seat.' },
   { title: 'Kitchen Receives Order', body: 'The KOT hits the kitchen screen instantly, color-coded by priority.' },
   { title: 'Food Delivered', body: "Waiters get notified the moment it's ready. Hot food, happy guests." },
-]
-
-const POPULAR = [
-  { emoji: '🥟', name: 'Steam Momo', w: '92%', count: '1,240' },
-  { emoji: '🍕', name: 'Margherita Pizza', w: '74%', count: '986' },
-  { emoji: '🍔', name: 'Classic Burger', w: '61%', count: '812' },
-  { emoji: '☕', name: 'Cappuccino', w: '48%', count: '644' },
-  { emoji: '🍰', name: 'Chocolate Cake', w: '35%', count: '470' },
 ]
 
 interface MqCard { initials: string; avatar: string; name: string; role: string; quote: string }
@@ -67,17 +53,17 @@ const MQ_COLS: { dur: string; rev: boolean; cards: MqCard[] }[] = [
 const PLANS = [
   {
     name: 'STARTER', featured: false, desc: 'For cafés and small restaurants getting started',
-    monthly: '1,999', yearly: '1,599', priceSuffix: '/month', cta: 'Start Free Trial', ctaClass: 'btn-secondary',
+    monthly: '1,999', yearly: '1,599', priceSuffix: '/month', cta: 'Start Free Trial', ctaClass: 'btn-secondary', trial: true,
     features: ['QR digital menu', 'Up to 50 menu items', 'Food images', 'Live menu updates', 'Basic analytics'],
   },
   {
     name: 'PROFESSIONAL', featured: true, desc: 'For busy restaurants that want the full experience',
-    monthly: '4,999', yearly: '3,999', priceSuffix: '/month', cta: 'Start Free Trial', ctaClass: 'btn-primary',
+    monthly: '4,999', yearly: '3,999', priceSuffix: '/month', cta: 'Start Free Trial', ctaClass: 'btn-primary', trial: true,
     features: ['Everything in Starter', 'NFC stands included', 'Video menu & unlimited items', 'Direct ordering + waiter & kitchen dashboards', 'Multi-language menus', 'Advanced analytics'],
   },
   {
     name: 'ENTERPRISE', featured: false, desc: 'For hotels, chains, resorts and food courts',
-    monthly: 'Custom', yearly: 'Custom', priceSuffix: ' pricing', cta: 'Talk to Sales', ctaClass: 'btn-secondary',
+    monthly: 'Custom', yearly: 'Custom', priceSuffix: ' pricing', cta: 'Talk to Sales', ctaClass: 'btn-secondary', trial: false,
     features: ['Everything in Professional', 'Multiple locations & outlets', 'Custom branding & domain', 'POS integrations & API', 'Dedicated success manager'],
   },
 ]
@@ -117,8 +103,10 @@ function MqCardView({ c }: { c: MqCard }) {
 
 export default function LandingHome() {
   const rootRef = useRef<HTMLDivElement>(null)
+  const whyGridRef = useRef<HTMLDivElement>(null)
   const [yearly, setYearly] = useState(false)
-  const [openFaq, setOpenFaq] = useState<number | null>(0)
+  const [openFaq, setOpenFaq] = useState<number | null>(null)
+  const [whyIn, setWhyIn] = useState(false)
 
   // Scroll-reveal: reveal each `.reveal` element the first time it enters view.
   useEffect(() => {
@@ -141,6 +129,29 @@ export default function LandingHome() {
       { threshold: 0.15, rootMargin: '0px 0px -40px 0px' },
     )
     els.forEach((el) => io.observe(el))
+    return () => io.disconnect()
+  }, [])
+
+  // Why REVA — staggered card reveal the first time the grid enters view.
+  // The per-card delay is inline; prefers-reduced-motion kills the transition
+  // in CSS so the delay becomes irrelevant there.
+  useEffect(() => {
+    const grid = whyGridRef.current
+    if (!grid) return
+    if (typeof IntersectionObserver === 'undefined') {
+      setWhyIn(true)
+      return
+    }
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setWhyIn(true)
+          io.disconnect()
+        }
+      },
+      { threshold: 0.15, rootMargin: '0px 0px -6% 0px' },
+    )
+    io.observe(grid)
     return () => io.disconnect()
   }, [])
 
@@ -220,7 +231,7 @@ export default function LandingHome() {
             </p>
             <div className="hero-ctas fade-up fu-4">
               <Link to="/login" className="btn btn-primary">
-                Go to App <span className="arrow">→</span>
+                Get Started <span className="arrow">→</span>
               </Link>
               <a href={DEMO_MAILTO} className="btn btn-secondary">Book a Demo</a>
             </div>
@@ -294,16 +305,16 @@ export default function LandingHome() {
           </div>
           <div className="logo-row reveal reveal-d1">
             <span className="t-logo">◆ Everest Bistro</span>
-            <span className="t-logo">✦ Café Kathmandu</span>
+            <span className="t-logo">● Café Kathmandu</span>
             <span className="t-logo">▲ The Terrace</span>
-            <span className="t-logo">◇ Himalayan Java</span>
-            <span className="t-logo">★ Roadhouse</span>
+            <span className="t-logo">■ Himalayan Java</span>
+            <span className="t-logo">◆ Roadhouse</span>
             <span className="t-logo">● Fire &amp; Ice</span>
           </div>
         </div>
       </section>
 
-      {/* ── FEATURES (expand panels) ─────────────────────────────────────── */}
+      {/* ── FEATURES (expand accordion) ──────────────────────────────────── */}
       <section className="section-pad" id="features">
         <div className="container">
           <div className="center reveal">
@@ -314,7 +325,7 @@ export default function LandingHome() {
               Nothing it doesn't.
             </h2>
           </div>
-          <ExpandRow panels={FEATURE_PANELS} />
+          <FeatAcc cards={FEATURE_CARDS} defaultActive={2} />
         </div>
       </section>
 
@@ -330,7 +341,7 @@ export default function LandingHome() {
           </div>
           <div className="timeline">
             {STEPS.map((s, i) => (
-              <div className="step reveal" key={s.title}>
+              <div className={`step reveal${i % 3 ? ` reveal-d${i % 3}` : ''}`} key={s.title}>
                 <div className="step-num">{String(i + 1).padStart(2, '0')}</div>
                 <div className="step-body">
                   <h3>{s.title}</h3>
@@ -342,73 +353,29 @@ export default function LandingHome() {
         </div>
       </section>
 
-      {/* ── BENEFITS (green expand panels) ───────────────────────────────── */}
-      <section className="section-pad" style={{ paddingTop: 20 }}>
-        <div className="benefits-band">
-          <div className="container" style={{ paddingTop: 100, paddingBottom: 100 }}>
-            <div className="center reveal">
-              <div className="eyebrow">Why REVA</div>
-              <h2 className="section-title">The upgrade your restaurant feels on day one</h2>
-              <p className="section-sub">Less friction for guests. More margin for you.</p>
-            </div>
-            <ExpandRow panels={BENEFIT_PANELS} onGreen />
-          </div>
-        </div>
-      </section>
-
-      {/* ── ANALYTICS ────────────────────────────────────────────────────── */}
-      <section className="section-pad">
+      {/* ── WHY REVA (staggered cards) ───────────────────────────────────── */}
+      <section className="section-pad" id="why" style={{ paddingTop: 20 }}>
         <div className="container">
           <div className="center reveal">
-            <div className="eyebrow">Analytics</div>
-            <h2 className="section-title">Know exactly what's working</h2>
-            <p className="section-sub">
-              Orders, revenue, visitors, peak hours and your best-selling dishes — beautifully
-              visualized.
-            </p>
+            <div className="eyebrow">Why REVA</div>
+            <h2 className="section-title">The upgrade your restaurant feels on day one</h2>
+            <p className="section-sub">Less friction for guests. More margin for you.</p>
           </div>
-          <div className="stats-row">
-            <div className="stat reveal"><div className="stat-value"><Counter to={100} suffix="+" /></div><div className="stat-label">Restaurants Onboard</div></div>
-            <div className="stat reveal reveal-d1"><div className="stat-value"><Counter to={250} suffix="K+" /></div><div className="stat-label">Orders Processed</div></div>
-            <div className="stat reveal reveal-d2"><div className="stat-value"><Counter to={38} suffix="%" /></div><div className="stat-label">Faster Table Turnover</div></div>
-            <div className="stat reveal reveal-d3"><div className="stat-value"><Counter to={24} suffix="%" /></div><div className="stat-label">Average Sales Lift</div></div>
-          </div>
-          <div className="analytics-grid">
-            <div className="chart-card reveal">
-              <div className="cc-head"><h3>Revenue &amp; Orders</h3><span>Last 30 days</span></div>
-              <svg className="line-chart" viewBox="0 0 560 220" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <linearGradient id="rtAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#0E6B4D" stopOpacity=".22" />
-                    <stop offset="100%" stopColor="#0E6B4D" stopOpacity="0" />
-                  </linearGradient>
-                </defs>
-                <g stroke="#E2E8F0" strokeWidth="1">
-                  <line x1="0" y1="55" x2="560" y2="55" /><line x1="0" y1="110" x2="560" y2="110" /><line x1="0" y1="165" x2="560" y2="165" />
-                </g>
-                <path className="area" d="M0,180 C40,168 70,150 105,145 C140,140 165,155 200,138 C235,121 260,95 300,98 C340,101 360,120 400,100 C440,80 460,55 505,48 C525,45 545,42 560,38 L560,220 L0,220 Z" />
-                <path className="line" d="M0,180 C40,168 70,150 105,145 C140,140 165,155 200,138 C235,121 260,95 300,98 C340,101 360,120 400,100 C440,80 460,55 505,48 C525,45 545,42 560,38" />
-                <circle cx="505" cy="48" r="6" fill="#0E6B4D" />
-                <circle cx="505" cy="48" r="11" fill="#0E6B4D" opacity=".15" />
-              </svg>
-              <div style={{ display: 'flex', gap: 24, marginTop: 18 }}>
-                <span style={{ fontSize: 13, color: 'var(--gray)', display: 'flex', alignItems: 'center', gap: 7 }}><i style={{ width: 10, height: 10, borderRadius: 3, background: 'var(--green)', display: 'inline-block' }} />Revenue · <strong style={{ color: 'var(--dark)' }}>Rs. 21.4L</strong></span>
-                <span style={{ fontSize: 13, color: 'var(--gray)', display: 'flex', alignItems: 'center', gap: 7 }}><i style={{ width: 10, height: 10, borderRadius: 3, background: 'var(--accent)', opacity: 0.5, display: 'inline-block' }} />Peak hour · <strong style={{ color: 'var(--dark)' }}>7–9 PM</strong></span>
-              </div>
-            </div>
-            <div className="chart-card reveal reveal-d1">
-              <div className="cc-head"><h3>Popular Items</h3><span>This week</span></div>
-              {POPULAR.map((p) => (
-                <div className="pop-item" key={p.name}>
-                  <div className="pop-emoji">{p.emoji}</div>
-                  <div className="pop-info">
-                    <div className="pop-name">{p.name}</div>
-                    <div className="pop-bar"><i style={{ ['--w' as string]: p.w } as React.CSSProperties} /></div>
-                  </div>
-                  <div className="pop-count">{p.count}</div>
-                </div>
-              ))}
-            </div>
+          <div className="why-grid" ref={whyGridRef}>
+            {WHY_CARDS.map((c, i) => {
+              const Icon = c.icon
+              return (
+                <article
+                  key={c.title}
+                  className={whyIn ? 'why-card in' : 'why-card'}
+                  style={{ transitionDelay: `${i * 0.12}s` }}
+                >
+                  <div className="why-icon"><Icon /></div>
+                  <h3>{c.title}</h3>
+                  <p>{c.body}</p>
+                </article>
+              )
+            })}
           </div>
         </div>
       </section>
@@ -470,7 +437,9 @@ export default function LandingHome() {
                       <li key={f}><CheckIcon />{f}</li>
                     ))}
                   </ul>
-                  <a href={DEMO_MAILTO} className={`btn ${p.ctaClass}`}>{p.cta}</a>
+                  {p.trial
+                    ? <Link to="/login" className={`btn ${p.ctaClass}`}>{p.cta}</Link>
+                    : <a href={DEMO_MAILTO} className={`btn ${p.ctaClass}`}>{p.cta}</a>}
                 </div>
               )
             })}
@@ -503,7 +472,7 @@ export default function LandingHome() {
 
       {/* Sticky mobile CTA */}
       <div className="sticky-cta">
-        <Link to="/login" className="btn btn-primary">Go to App →</Link>
+        <Link to="/login" className="btn btn-primary">Get Started — Free Trial</Link>
       </div>
     </div>
   )
