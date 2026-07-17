@@ -1,0 +1,223 @@
+/*
+ * Tailwind entry for the ADMIN shell only.
+ *
+ * Deliberately NOT `@import "tailwindcss"`: that would pull in preflight, a
+ * global reset that breaks the CSS-modules surfaces (customer/kitchen/waiter/
+ * counter/superadmin). We import only the theme and utilities layers —
+ * utilities are opt-in class names, inert outside admin markup — and ship a
+ * minimal preflight equivalent scoped under `.tw-admin` (the AppShell root).
+ *
+ * Tokens use the shadcn CSS-variable convention via `@theme inline`, so
+ * nothing is emitted at :root and the app's existing `--color-*` variables
+ * (index.css) are never shadowed.
+ */
+
+@layer theme, base, components, utilities;
+
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+/* ── shadcn design tokens, scoped to the admin shell ─────────────────────── */
+.tw-admin {
+  --radius: 0.625rem;
+
+  --background: #faf7f2; /* match the app's warm cream */
+  --foreground: #1c1917;
+  --card: #ffffff;
+  --card-foreground: #1c1917;
+  --popover: #ffffff;
+  --popover-foreground: #1c1917;
+  --primary: #1b4332; /* brand forest green */
+  --primary-foreground: #f0fdf7;
+  --secondary: #f5f5f4;
+  --secondary-foreground: #1c1917;
+  --muted: #f5f5f4;
+  --muted-foreground: #78716c;
+  --accent: #f0ede6;
+  --accent-foreground: #1c1917;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --border: #e7e5e4;
+  --input: #e7e5e4;
+  --ring: #1b4332;
+  --chart-1: #1b4332;
+  --chart-2: #d9a441;
+  --chart-3: #2d6a4f;
+  --chart-4: #74c69d;
+  --chart-5: #b07f24;
+  --sidebar: #0f2a21; /* deep green sidebar, matches the brand hero tint */
+  --sidebar-foreground: #e7e5e4;
+  --sidebar-primary: #d9a441;
+  --sidebar-primary-foreground: #0f2a21;
+  --sidebar-accent: rgba(255, 255, 255, 0.08);
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgba(255, 255, 255, 0.1);
+  --sidebar-ring: #d9a441;
+}
+
+/* The customer-facing theme toggle sets data-theme on <html> and persists;
+   keep the admin shell coherent if an admin lands with dark mode on. */
+:root[data-theme='dark'] .tw-admin {
+  --background: #131211;
+  --foreground: #e7e5e4;
+  --card: #1c1a19;
+  --card-foreground: #e7e5e4;
+  --popover: #1c1a19;
+  --popover-foreground: #e7e5e4;
+  --primary: #74c69d;
+  --primary-foreground: #0f2a21;
+  --secondary: #292524;
+  --secondary-foreground: #e7e5e4;
+  --muted: #292524;
+  --muted-foreground: #a8a29e;
+  --accent: #292524;
+  --accent-foreground: #e7e5e4;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #2e2b29;
+  --input: #2e2b29;
+  --ring: #74c69d;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+/* ── Preflight equivalent, scoped so nothing outside the shell changes ───── */
+@layer base {
+  .tw-admin,
+  .tw-admin *,
+  .tw-admin ::before,
+  .tw-admin ::after {
+    box-sizing: border-box;
+    border-width: 0;
+    border-style: solid;
+    border-color: var(--border);
+  }
+
+  .tw-admin {
+    background-color: var(--background);
+    color: var(--foreground);
+    line-height: 1.5;
+  }
+
+  .tw-admin :is(h1, h2, h3, h4, h5, h6, p, figure, blockquote, dl, dd, hr) {
+    margin: 0;
+  }
+
+  .tw-admin :is(h1, h2, h3, h4, h5, h6) {
+    font-size: inherit;
+    font-weight: inherit;
+  }
+
+  .tw-admin :is(ul, ol, menu) {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .tw-admin hr {
+    height: 0;
+    color: inherit;
+    border-top-width: 1px;
+  }
+
+  .tw-admin :is(button, input, select, textarea, optgroup) {
+    font: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+    margin: 0;
+  }
+
+  .tw-admin :is(button, [type='button'], [type='submit'], [type='reset']) {
+    appearance: none;
+    background-color: transparent;
+    background-image: none;
+    padding: 0;
+    cursor: pointer;
+  }
+
+  .tw-admin a {
+    color: inherit;
+    text-decoration: inherit;
+  }
+
+  .tw-admin table {
+    text-indent: 0;
+    border-color: inherit;
+    border-collapse: collapse;
+  }
+
+  .tw-admin :is(svg, img, video, canvas) {
+    display: block;
+    vertical-align: middle;
+  }
+
+  .tw-admin :is(button, a):focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+}
+
+/* Radix dropdown/collapsible enter-leave motion (replaces tw-animate-css). */
+@keyframes tw-admin-menu-in {
+  from { opacity: 0; transform: translateY(-4px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes tw-admin-menu-out {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(-4px) scale(0.97); }
+}
+
+.tw-admin-pop[data-state='open'],
+[data-state='open'].tw-admin-pop {
+  animation: tw-admin-menu-in 0.15s ease-out;
+}
+
+.tw-admin-pop[data-state='closed'],
+[data-state='closed'].tw-admin-pop {
+  animation: tw-admin-menu-out 0.12s ease-in;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tw-admin-pop[data-state='open'],
+  .tw-admin-pop[data-state='closed'] {
+    animation: none;
+  }
+}

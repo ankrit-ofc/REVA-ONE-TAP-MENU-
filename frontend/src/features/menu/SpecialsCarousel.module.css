@@ -1,5 +1,5 @@
-/* Center-focused carousel for Today's Special. Gold accents match the
-   .specialCard treatment this replaces (border #d9a441 + soft glow). */
+/* Center-focused carousel for Today's Special. Cards are borderless/clean,
+   matching regular product cards — the ⭐ heading alone marks the section. */
 
 .carousel {
   position: relative;
@@ -8,7 +8,7 @@
 
 .carousel:focus-visible {
   border-radius: var(--radius-lg, 12px);
-  box-shadow: 0 0 0 2px #d9a441;
+  box-shadow: 0 0 0 2px var(--color-primary);
 }
 
 .viewport {
@@ -26,7 +26,7 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  border: 1.5px solid #d9a441;
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-lg, 12px);
   background: var(--color-surface);
   overflow: hidden;
@@ -40,7 +40,7 @@
 
 .itemActive {
   opacity: 1;
-  box-shadow: 0 2px 14px rgba(217, 164, 65, 0.28);
+  box-shadow: var(--shadow-sm, 0 2px 8px rgba(0, 0, 0, 0.08));
 }
 
 /* More than one step away from center: fade out entirely (only matters for 4+). */
