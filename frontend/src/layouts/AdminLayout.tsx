@@ -4,6 +4,7 @@ import { useAuth } from '@/features/auth/useAuth'
 import { useGetMeQuery } from '@/features/auth/authApi'
 import LogoutIcon from '@/components/common/LogoutIcon'
 import styles from './AdminLayout.module.css'
+import '@/styles/admin.css'
 
 const NAV_ITEMS = [
   { to: '/admin', label: '📊 Dashboard', end: true },
