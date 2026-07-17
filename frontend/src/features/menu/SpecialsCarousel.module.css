@@ -1,0 +1,146 @@
+/* Center-focused carousel for Today's Special. Gold accents match the
+   .specialCard treatment this replaces (border #d9a441 + soft glow). */
+
+.carousel {
+  position: relative;
+  outline: none;
+}
+
+.carousel:focus-visible {
+  border-radius: var(--radius-lg, 12px);
+  box-shadow: 0 0 0 2px #d9a441;
+}
+
+.viewport {
+  position: relative;
+  height: clamp(13rem, 58vw, 17rem);
+  overflow: hidden;
+  touch-action: pan-y; /* vertical page scroll stays native; we handle horizontal */
+}
+
+.item {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: min(62%, 20rem);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  border: 1.5px solid #d9a441;
+  border-radius: var(--radius-lg, 12px);
+  background: var(--color-surface);
+  overflow: hidden;
+  opacity: 0.45;
+  cursor: pointer;
+  transition: transform 0.4s ease, opacity 0.4s ease;
+  will-change: transform, opacity;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.itemActive {
+  opacity: 1;
+  box-shadow: 0 2px 14px rgba(217, 164, 65, 0.28);
+}
+
+/* More than one step away from center: fade out entirely (only matters for 4+). */
+.itemOffstage {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* While a finger is down we track it 1:1 — no easing lag. */
+.noTransition {
+  transition: none;
+}
+
+.image {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+/* Same fallback dish glyph as ProductCard's thumbPlaceholder, scaled up. */
+.imagePlaceholder {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  background: var(--color-tint);
+}
+
+.caption {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.65rem;
+  background: var(--color-surface);
+}
+
+.name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.price {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #b07f24;
+  white-space: nowrap;
+}
+
+/* ── Arrows ────────────────────────────────────────────────────────────── */
+.controls {
+  position: absolute;
+  inset: 0;
+  z-index: 3; /* above the slides (z 1/2), or the peeking ones steal the click */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  pointer-events: none; /* only the buttons themselves catch taps */
+}
+
+.arrow {
+  pointer-events: auto;
+  width: 2rem;
+  height: 2rem;
+  margin: 0 0.15rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.12);
+}
+
+.arrow:active {
+  background: var(--color-tint);
+}
+
+/* Touch-only viewports swipe instead; arrows would crowd the peeking slides. */
+@media (hover: none) and (pointer: coarse) {
+  .controls {
+    display: none;
+  }
+}
+
+/* Reduced motion: jump instantly between slides (auto-advance is disabled in JS). */
+@media (prefers-reduced-motion: reduce) {
+  .item {
+    transition: none;
+  }
+}

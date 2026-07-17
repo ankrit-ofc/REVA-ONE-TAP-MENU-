@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useMenu } from '@/features/menu/useMenu'
+import SpecialsCarousel from '@/features/menu/SpecialsCarousel'
 import { useSession } from '@/features/session/useSession'
 import { useTheme } from '@/features/ui/useTheme'
 import ProductCard from '@/components/ui/ProductCard'
@@ -186,13 +187,7 @@ export default function Menu() {
           <h2 className={styles.specialsTitle}>
             <span aria-hidden="true">⭐</span> Today&rsquo;s Special
           </h2>
-          <div className={styles.specialsList}>
-            {specials.map((p) => (
-              <div key={`special-${p.id}`} className={styles.specialCard}>
-                <ProductCard product={p} currency={CURRENCY} />
-              </div>
-            ))}
-          </div>
+          <SpecialsCarousel specials={specials} currency={CURRENCY} />
         </section>
       )}
 
