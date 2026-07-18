@@ -27,6 +27,7 @@ echo "==> [2/5] Building the frontend (static SPA -> frontend/dist)"
 docker run --rm \
   -v "$PWD/frontend:/app" -w /app \
   -e VITE_API_BASE_URL="" \
+  -e NODE_OPTIONS="--max-old-space-size=1536" \
   node:20-alpine sh -c "npm ci && npm run build"
 
 echo "==> [3/5] Building images"
