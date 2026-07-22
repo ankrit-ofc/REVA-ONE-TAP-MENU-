@@ -19,12 +19,14 @@ export default function CustomerLayout() {
   const [callWaiter, { isLoading: isCalling }] = useCallWaiterMutation()
   const [waiterCooldown, setWaiterCooldown] = useState(false)
   const [waiterNotified, setWaiterNotified] = useState(false)
+  const [waiterFailed, setWaiterFailed] = useState(false)
   const [ringing, setRinging] = useState(false)
 
   const showCartBar = totalItems > 0 && pathname === '/menu'
 
   async function handleCallWaiter() {
     if (isCalling || waiterCooldown) return
+    setWaiterFailed(false)
     setRinging(true)
     setTimeout(() => setRinging(false), 600)
     try {
@@ -35,7 +37,10 @@ export default function CustomerLayout() {
       setWaiterCooldown(true)
       setTimeout(() => setWaiterCooldown(false), 5_000)
     } catch {
-      // best-effort signal; nothing to surface
+      // Never fail silently — the customer must know the waiter was NOT called.
+      // No cooldown here, so they can retry immediately.
+      setWaiterFailed(true)
+      setTimeout(() => setWaiterFailed(false), 5000)
     }
   }
 
@@ -64,31 +69,34 @@ export default function CustomerLayout() {
           </svg>
         </button>
 
+        {/* Wordmark only. The signal-wave glyph that used to sit here was pure
+            decoration on the home button, but customers read it as "call for
+            service" and tapped it expecting a waiter — a false affordance that
+            competed with the real Call Waiter action. Removed deliberately. */}
         <button className={styles.brand} onClick={() => navigate('/menu')} aria-label="Go to home">
           REVA
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
-            strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className={styles.brandWave} aria-hidden="true">
-            <circle cx="5" cy="12" r="1.6" fill="currentColor" stroke="none" />
-            <path d="M9 8.5a5 5 0 0 1 0 7" />
-            <path d="M12.5 5.5a10 10 0 0 1 0 13" />
-          </svg>
         </button>
 
         <div className={styles.appbarRight}>
+          {/* Labeled action — an unlabeled icon read as decoration, so the word
+              "Call Waiter" carries the affordance and the bell reinforces it. */}
           <button
-            className={`${styles.iconBtn} ${ringing ? styles.callRinging : ''}`}
+            className={`${styles.callBtn} ${ringing ? styles.callRinging : ''}`}
             onClick={() => void handleCallWaiter()}
             disabled={isCalling || waiterCooldown}
             aria-label={waiterCooldown ? 'Waiter notified' : 'Call waiter'}
-            title={waiterCooldown ? 'Waiter notified' : 'Call waiter'}
           >
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor"
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor"
               strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <circle cx="12" cy="7.5" r="3" />
-              <path d="M6.5 19a5.5 5.5 0 0 1 11 0" />
-              <path className={styles.vibLeft} d="M4 6a5 5 0 0 0 0 7" />
-              <path className={styles.vibRight} d="M20 6a5 5 0 0 1 0 7" />
+              {/* Service bell — reads as "call for service" far better than a signal wave. */}
+              <path d="M18 16H6a6 6 0 0 1 12 0Z" />
+              <path d="M4 19h16" />
+              <path d="M12 7v3" />
+              <circle cx="12" cy="5.6" r="1.3" />
             </svg>
+            <span className={styles.callBtnLabel}>
+              {isCalling ? 'Calling…' : waiterCooldown ? 'Notified ✓' : 'Call Waiter'}
+            </span>
           </button>
 
           <button
@@ -108,7 +116,13 @@ export default function CustomerLayout() {
       </header>
 
       {waiterNotified && (
-        <div className={styles.waiterToast} role="status">Waiter notified ✓</div>
+        <div className={styles.waiterToast} role="status">Waiter is on the way ✓</div>
+      )}
+
+      {waiterFailed && (
+        <div className={styles.waiterToastError} role="alert">
+          Couldn't reach a waiter — please tap again
+        </div>
       )}
 
       <main className={styles.main}>

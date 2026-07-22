@@ -74,23 +74,51 @@
   gap: 0.25rem;
 }
 
-/* "Call waiter": vibration arcs pulse to suggest ringing. */
-.vibLeft,
-.vibRight {
-  transform-origin: center;
-  animation: vibPulse 1.6s ease-in-out infinite;
+/* "Call Waiter": a labeled pill, not a bare icon — the text carries the
+   affordance. Outlined against the dark green bar so it reads as tappable
+   without competing with the gold cart badge. */
+.callBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.32rem 0.7rem;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
 }
 
-.vibRight {
-  animation-delay: 0.15s;
+.callBtn:active {
+  background: rgba(255, 255, 255, 0.26);
+  transform: scale(0.97);
 }
 
-@keyframes vibPulse {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 1; }
+/* Disabled = in-flight or cooling down; stays legible so "Notified ✓" reads. */
+.callBtn:disabled {
+  opacity: 0.7;
+  cursor: default;
 }
 
-/* Stronger shake on press. */
+.callBtnLabel {
+  letter-spacing: 0.01em;
+}
+
+/* Narrow phones: tighten the pill rather than drop the label — the label is
+   the entire point of this control. */
+@media (max-width: 360px) {
+  .callBtn {
+    padding: 0.3rem 0.55rem;
+    font-size: 0.75rem;
+    gap: 0.28rem;
+  }
+}
+
+/* Shake the bell on press. */
 .callRinging svg {
   animation: callRing 0.55s ease-in-out;
 }
@@ -120,6 +148,24 @@
   animation: toastIn 0.2s ease-out;
 }
 
+/* Failure must be visible — a silent no-op leaves the customer waiting for a
+   waiter who was never called. Same shape as the success toast, warning colour. */
+.waiterToastError {
+  position: fixed;
+  top: 3.4rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+  background: #8c2f2f;
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-pill);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  animation: toastIn 0.2s ease-out;
+}
+
 @keyframes toastIn {
   from { opacity: 0; transform: translate(-50%, -6px); }
   to { opacity: 1; transform: translate(-50%, 0); }
@@ -138,10 +184,6 @@
   align-items: center;
   gap: 0.15rem;
   padding: 0;
-}
-
-.brandWave {
-  color: #fff;
 }
 
 .appbarBadge {
