@@ -219,6 +219,48 @@ export const tableResponseSchema = z.object({
   scan_url: z.string(),
 })
 
+// ── Dashboard widgets ──────────────────────────────────────────────────────
+export const activeTableItemSchema = z.object({
+  name: z.string(),
+  quantity: z.number(),
+})
+export const activeTableOrderSchema = z.object({
+  order_id: z.string().uuid(),
+  order_number: z.number(),
+  status: z.enum(['OPEN', 'MEAL_FINISHED', 'CLOSED']),
+  placed_at: z.string(),
+  items: z.array(activeTableItemSchema),
+})
+export const activeTableSchema = z.object({
+  table_id: z.string().uuid(),
+  table_label: z.string(),
+  order_count: z.number(),
+  earliest_placed_at: z.string(),
+  total_amount: z.coerce.number(),
+  orders: z.array(activeTableOrderSchema),
+})
+export const revenueTodaySchema = z.object({
+  amount: z.coerce.number().nullable(),
+  currency: z.string(),
+})
+export const ordersThisWeekSchema = z.object({
+  count: z.number(),
+})
+export const topProductSchema = z.object({
+  product_name: z.string(),
+  quantity_sold: z.number(),
+})
+export const topProductsSchema = z.object({
+  window_days: z.number(),
+  products: z.array(topProductSchema),
+})
+
+export type ActiveTable = z.infer<typeof activeTableSchema>
+export type ActiveTableOrder = z.infer<typeof activeTableOrderSchema>
+export type RevenueToday = z.infer<typeof revenueTodaySchema>
+export type OrdersThisWeek = z.infer<typeof ordersThisWeekSchema>
+export type TopProducts = z.infer<typeof topProductsSchema>
+
 export type CategoryResponse = z.infer<typeof categoryResponseSchema>
 export type ProductResponse = z.infer<typeof productResponseSchema>
 export type VariantResponse = z.infer<typeof variantResponseSchema>

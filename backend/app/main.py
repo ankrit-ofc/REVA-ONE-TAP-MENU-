@@ -18,6 +18,7 @@ from app.api.admin_menu import router as admin_menu_router, media_router
 from app.api.admin_ar import router as admin_ar_router
 from app.api.admin_staff import router as admin_staff_router
 from app.api.admin_tables import router as admin_tables_router
+from app.api.dashboard import router as dashboard_router
 from app.api.menu import router as menu_router
 from app.api.settings import router as settings_router
 from app.api.orders import router as orders_router
@@ -112,6 +113,7 @@ app.include_router(admin_menu_router)
 app.include_router(admin_ar_router)
 app.include_router(admin_staff_router)
 app.include_router(admin_tables_router)
+app.include_router(dashboard_router)
 app.include_router(media_router)
 app.include_router(menu_router)
 app.include_router(settings_router)
