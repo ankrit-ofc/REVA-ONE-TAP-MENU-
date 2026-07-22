@@ -10,6 +10,14 @@ import {
   modelStatusResponseSchema,
   productViewImageResponseSchema,
   annotationResponseSchema,
+  activeTableSchema,
+  revenueTodaySchema,
+  ordersThisWeekSchema,
+  topProductsSchema,
+  type ActiveTable,
+  type RevenueToday,
+  type OrdersThisWeek,
+  type TopProducts,
   type CategoryResponse,
   type ProductResponse,
   type VariantResponse,
@@ -360,6 +368,23 @@ export const adminApi = createApi({
       query: (id) => ({ method: 'DELETE', url: `/admin/tables/${id}` }),
       invalidatesTags: ['Table'],
     }),
+    // ── Dashboard (read-only aggregations; polled like the other widgets) ────
+    getActiveTables: builder.query<ActiveTable[], void>({
+      query: () => ({ method: 'GET', url: '/dashboard/active-tables' }),
+      transformResponse: parseWith(z.array(activeTableSchema)),
+    }),
+    getRevenueToday: builder.query<RevenueToday, void>({
+      query: () => ({ method: 'GET', url: '/dashboard/revenue-today' }),
+      transformResponse: parseWith(revenueTodaySchema),
+    }),
+    getOrdersThisWeek: builder.query<OrdersThisWeek, void>({
+      query: () => ({ method: 'GET', url: '/dashboard/orders-this-week' }),
+      transformResponse: parseWith(ordersThisWeekSchema),
+    }),
+    getTopProducts: builder.query<TopProducts, void>({
+      query: () => ({ method: 'GET', url: '/dashboard/top-products' }),
+      transformResponse: parseWith(topProductsSchema),
+    }),
   }),
 })
 
@@ -404,4 +429,8 @@ export const {
   useCreateTableMutation,
   useUpdateTableMutation,
   useDeactivateTableMutation,
+  useGetActiveTablesQuery,
+  useGetRevenueTodayQuery,
+  useGetOrdersThisWeekQuery,
+  useGetTopProductsQuery,
 } = adminApi

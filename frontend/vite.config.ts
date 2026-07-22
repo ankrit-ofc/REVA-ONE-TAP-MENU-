@@ -18,7 +18,7 @@ export default defineConfig({
     // Proxy all API and WS paths to the backend dev server so the frontend
     // can make same-origin requests (avoids CORS issues in development).
     proxy: {
-      '^/(auth|scan|session|menu|orders|kitchen|waiter|counter|invoices|webhooks|health|media|admin|superadmin)': {
+      '^/(auth|scan|session|menu|orders|kitchen|waiter|counter|invoices|webhooks|health|media|admin|superadmin|dashboard)': {
         target: process.env.BACKEND_URL ?? 'http://localhost:8000',
         changeOrigin: true,
         // Browser page-navigation sends Accept: text/html — serve the SPA

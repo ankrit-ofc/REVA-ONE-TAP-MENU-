@@ -1,23 +1,15 @@
-import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts'
 import {
   Armchair,
   ArrowUpRight,
+  ChevronDown,
   Clock,
   FolderTree,
   PackagePlus,
   TrendingUp,
-  Users,
+  Trophy,
   UtensilsCrossed,
+  Users,
   Wallet,
 } from 'lucide-react'
 import {
@@ -26,11 +18,13 @@ import {
   useListAddonsQuery,
   useListStaffQuery,
   useListTablesQuery,
+  useGetActiveTablesQuery,
+  useGetRevenueTodayQuery,
+  useGetOrdersThisWeekQuery,
+  useGetTopProductsQuery,
 } from '@/features/admin/adminApi'
-import {
-  useGetCounterOpenOrdersQuery,
-  useGetCounterOrdersQuery,
-} from '@/features/counter/counterApi'
+import type { ActiveTable } from '@/lib/schemas/admin'
+import { formatPrice } from '@/lib/currency'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 const STAT_ICONS = {
@@ -47,36 +41,9 @@ interface StatItem {
   to: string
 }
 
-/** Bucket active orders (existing counter queues) into hours placed, today. */
-function useOrdersByHour() {
-  // ADMIN is authorized on these endpoints (backend: require_role COUNTER|ADMIN|WAITER).
-  const { data: open, isLoading: l1 } = useGetCounterOpenOrdersQuery()
-  const { data: finished, isLoading: l2 } = useGetCounterOrdersQuery()
-
-  return useMemo(() => {
-    const all = [...(open ?? []), ...(finished ?? [])]
-    const today = new Date()
-    const isToday = (iso: string) => {
-      const d = new Date(iso)
-      return (
-        d.getFullYear() === today.getFullYear() &&
-        d.getMonth() === today.getMonth() &&
-        d.getDate() === today.getDate()
-      )
-    }
-    const todays = all.filter((o) => isToday(o.created_at))
-    const byHour = new Map<number, number>()
-    for (const o of todays) {
-      const h = new Date(o.created_at).getHours()
-      byHour.set(h, (byHour.get(h) ?? 0) + 1)
-    }
-    const data = Array.from({ length: 24 }, (_, h) => ({
-      hour: `${String(h).padStart(2, '0')}:00`,
-      orders: byHour.get(h) ?? 0,
-    }))
-    return { data, total: todays.length, loading: l1 || l2 }
-  }, [open, finished, l1, l2])
-}
+// Dashboard widgets poll as a fallback to the WS invalidation used elsewhere;
+// 30 s matches the counter/waiter order queues so Active Tables stays live.
+const POLL_MS = 30_000
 
 function StatCard({ label, active, to }: StatItem) {
   const Icon = STAT_ICONS[label]
@@ -100,18 +67,162 @@ function StatCard({ label, active, to }: StatItem) {
   )
 }
 
-/** Metrics that need a backend stats endpoint that doesn't exist yet. */
-function ComingSoonCard({ label, icon: Icon }: { label: string; icon: typeof Wallet }) {
+/** "45m" or "1h 23m" since the table's earliest active order was placed. */
+function openFor(iso: string): string {
+  const mins = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 60_000))
+  if (mins < 60) return `${mins}m`
+  return `${Math.floor(mins / 60)}h ${mins % 60}m`
+}
+
+function ActiveTableRow({ table }: { table: ActiveTable }) {
   return (
-    <Card className="border-dashed">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardDescription>{label}</CardDescription>
-        <Icon className="size-4 text-muted-foreground" aria-hidden />
+    <details className="group rounded-lg border">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
+        <div className="flex min-w-0 items-center gap-3">
+          <Armchair className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+          <span className="truncate font-medium">{table.table_label}</span>
+          <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+            {table.order_count} {table.order_count === 1 ? 'order' : 'orders'}
+          </span>
+        </div>
+        <div className="flex shrink-0 items-center gap-3 text-sm text-muted-foreground">
+          <span className="inline-flex items-center gap-1 tabular-nums">
+            <Clock className="size-3.5" aria-hidden />
+            {openFor(table.earliest_placed_at)}
+          </span>
+          <ChevronDown
+            className="size-4 transition-transform group-open:rotate-180"
+            aria-hidden
+          />
+        </div>
+      </summary>
+      <div className="space-y-3 border-t px-4 py-3">
+        {table.orders.map((order) => (
+          <div key={order.order_id}>
+            <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
+              <span className="font-medium text-foreground">#{order.order_number}</span>
+              <span>{order.status}</span>
+            </div>
+            <ul className="space-y-0.5 text-sm">
+              {order.items.map((item, i) => (
+                <li key={i} className="flex justify-between gap-2">
+                  <span className="truncate">{item.name}</span>
+                  <span className="shrink-0 tabular-nums text-muted-foreground">×{item.quantity}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </details>
+  )
+}
+
+function ActiveTablesPanel() {
+  const { data: tables, isLoading } = useGetActiveTablesQuery(undefined, {
+    pollingInterval: POLL_MS,
+  })
+
+  return (
+    <Card className="lg:col-span-2">
+      <CardHeader>
+        <CardTitle>Active Tables</CardTitle>
+        <CardDescription>
+          Tables with an open, unbilled order — longest-waiting first
+          {isLoading || !tables ? '' : ` — ${tables.length} occupied`}
+        </CardDescription>
       </CardHeader>
       <CardContent>
-        <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
-          Coming soon
+        {isLoading ? (
+          <div className="flex h-56 items-center justify-center text-sm text-muted-foreground">
+            Loading…
+          </div>
+        ) : !tables || tables.length === 0 ? (
+          <div className="flex h-56 flex-col items-center justify-center gap-1 text-center">
+            <Clock className="size-6 text-muted-foreground" aria-hidden />
+            <p className="text-sm font-medium">No active orders right now</p>
+            <p className="text-xs text-muted-foreground">
+              New orders appear here as tables place them.
+            </p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {tables.map((t) => (
+              <ActiveTableRow key={t.table_id} table={t} />
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+function RevenueTodayCard() {
+  const { data, isLoading } = useGetRevenueTodayQuery(undefined, { pollingInterval: POLL_MS })
+  const value =
+    isLoading || !data
+      ? '—'
+      : data.amount === null
+        ? 'Not available yet'
+        : formatPrice(data.amount, data.currency)
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardDescription>Revenue today</CardDescription>
+        <Wallet className="size-4 text-muted-foreground" aria-hidden />
+      </CardHeader>
+      <CardContent>
+        <span className="text-2xl font-bold tabular-nums">{value}</span>
+      </CardContent>
+    </Card>
+  )
+}
+
+function OrdersThisWeekCard() {
+  const { data, isLoading } = useGetOrdersThisWeekQuery(undefined, { pollingInterval: POLL_MS })
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardDescription>Orders this week</CardDescription>
+        <TrendingUp className="size-4 text-muted-foreground" aria-hidden />
+      </CardHeader>
+      <CardContent>
+        <span className="text-2xl font-bold tabular-nums">
+          {isLoading || !data ? '—' : data.count}
         </span>
+      </CardContent>
+    </Card>
+  )
+}
+
+function TopProductsCard() {
+  const { data, isLoading } = useGetTopProductsQuery(undefined, { pollingInterval: POLL_MS })
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardDescription>Top-selling products · last 7 days</CardDescription>
+        <Trophy className="size-4 text-muted-foreground" aria-hidden />
+      </CardHeader>
+      <CardContent>
+        {isLoading || !data ? (
+          <span className="text-sm text-muted-foreground">—</span>
+        ) : data.products.length === 0 ? (
+          <span className="text-sm text-muted-foreground">No sales in the last 7 days.</span>
+        ) : (
+          <ol className="space-y-1.5 text-sm">
+            {data.products.map((p, i) => (
+              <li key={p.product_name} className="flex items-center justify-between gap-2">
+                <span className="min-w-0 truncate">
+                  <span className="mr-2 text-muted-foreground tabular-nums">{i + 1}.</span>
+                  {p.product_name}
+                </span>
+                <span className="shrink-0 tabular-nums text-muted-foreground">
+                  {p.quantity_sold} sold
+                </span>
+              </li>
+            ))}
+          </ol>
+        )}
       </CardContent>
     </Card>
   )
@@ -123,7 +234,6 @@ export default function AdminDashboard() {
   const { data: addons } = useListAddonsQuery()
   const { data: staff } = useListStaffQuery()
   const { data: tables } = useListTablesQuery()
-  const chart = useOrdersByHour()
 
   const countActive = <T extends { is_active: boolean }>(list?: T[]) =>
     list ? list.filter((x) => x.is_active).length : null
@@ -150,79 +260,12 @@ export default function AdminDashboard() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Active orders today</CardTitle>
-            <CardDescription>
-              Orders currently open or awaiting billing, by hour placed
-              {chart.loading ? '' : ` — ${chart.total} right now`}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {chart.loading ? (
-              <div className="flex h-56 items-center justify-center text-sm text-muted-foreground">
-                Loading…
-              </div>
-            ) : chart.total === 0 ? (
-              <div className="flex h-56 flex-col items-center justify-center gap-1 text-center">
-                <Clock className="size-6 text-muted-foreground" aria-hidden />
-                <p className="text-sm font-medium">No active orders right now</p>
-                <p className="text-xs text-muted-foreground">
-                  New orders appear here as tables place them.
-                </p>
-              </div>
-            ) : (
-              <div className="h-56 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chart.data} margin={{ top: 4, right: 8, bottom: 0, left: -24 }}>
-                    <defs>
-                      <linearGradient id="ordersFill" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="var(--chart-1)" stopOpacity={0.5} />
-                        <stop offset="95%" stopColor="var(--chart-1)" stopOpacity={0.05} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="var(--border)" />
-                    <XAxis
-                      dataKey="hour"
-                      tickLine={false}
-                      axisLine={false}
-                      interval={3}
-                      tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }}
-                    />
-                    <YAxis
-                      allowDecimals={false}
-                      tickLine={false}
-                      axisLine={false}
-                      tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }}
-                    />
-                    <Tooltip
-                      cursor={{ stroke: 'var(--border)' }}
-                      contentStyle={{
-                        background: 'var(--popover)',
-                        border: '1px solid var(--border)',
-                        borderRadius: 8,
-                        fontSize: 12,
-                        color: 'var(--popover-foreground)',
-                      }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="orders"
-                      stroke="var(--chart-1)"
-                      strokeWidth={2}
-                      fill="url(#ordersFill)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <ActiveTablesPanel />
 
         <div className="flex flex-col gap-4">
-          <ComingSoonCard label="Revenue today" icon={Wallet} />
-          <ComingSoonCard label="Orders this week" icon={TrendingUp} />
-          <ComingSoonCard label="Top-selling products" icon={UtensilsCrossed} />
+          <RevenueTodayCard />
+          <OrdersThisWeekCard />
+          <TopProductsCard />
         </div>
       </div>
     </div>

@@ -37,7 +37,7 @@ from app.realtime.manager import _fire
 
 # Android notification channel the mobile app must create with this exact id so
 # high-priority (heads-up + sound + lock-screen) delivery applies.
-_ANDROID_CHANNEL = "staff-orders"
+_ANDROID_CHANNEL = "staff-v2"
 
 # Which staff roles should be pushed for each event type — mirrors the WS
 # broadcast targets, minus COUNTER_DISPLAY (a passive screen that never needs a
