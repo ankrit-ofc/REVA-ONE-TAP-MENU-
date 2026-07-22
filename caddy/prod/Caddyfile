@@ -32,7 +32,7 @@
 	# XHR/fetch (Accept: application/json) → backend; browser navigation
 	# (Accept: text/html) → SPA fallback below.
 	@api {
-		path_regexp ^/(auth|scan|session|menu|orders|kitchen|waiter|counter|invoices|admin|superadmin)(/|$)
+		path_regexp ^/(auth|scan|session|menu|orders|kitchen|waiter|counter|invoices|admin|superadmin|dashboard)(/|$)
 		not header Accept *text/html*
 	}
 	handle @api {
