@@ -1,9 +1,13 @@
 """
 Admin dashboard read-endpoints.
 
-ADMIN-only, tenant-scoped (restaurant_id derived from the JWT via tenant_scope,
-never from the client). All four endpoints are plain aggregations over existing
+Tenant-scoped (restaurant_id derived from the JWT via tenant_scope, never from
+the client). All four endpoints are plain aggregations over existing
 order/invoice data — no writes, no state transitions, no forecasting.
+
+The three analytics endpoints (revenue-today, orders-this-week, top-products)
+are ADMIN-only. active-tables is additionally readable by WAITER and COUNTER —
+it exposes table occupancy for floor work, no revenue or sales figures.
 """
 
 import uuid
@@ -26,13 +30,16 @@ from app.services import dashboard_service
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
 _AdminDep = Annotated[User, Depends(require_role(Role.ADMIN))]
+# active-tables only: floor staff need to see which tables are waiting. Kept as a
+# separate dependency so the analytics endpoints below stay strictly ADMIN-only.
+_TablesDep = Annotated[User, Depends(require_role(Role.ADMIN, Role.WAITER, Role.COUNTER))]
 _RidDep = Annotated[uuid.UUID, Depends(tenant_scope)]
 _DbDep = Annotated[Session, Depends(get_db)]
 
 
 @router.get("/active-tables", response_model=list[ActiveTable])
 def get_active_tables(
-    _user: _AdminDep,
+    _user: _TablesDep,
     restaurant_id: _RidDep,
     db: _DbDep,
 ) -> list[ActiveTable]:
