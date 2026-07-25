@@ -1,3 +1,29 @@
+# CLAUDE.md — read before any work in this repo
+
+## What this repo is
+WEB ADMIN + BACKEND (FastAPI, React web, Caddy). Ships via: merge to main → server `git pull --ff-only` → `bash deploy.sh` → live at revatap.com.
+The STAFF MOBILE APP is a separate repo (reva-tap-analysis) shipping via eas build. Staff-phone features do NOT go here.
+
+## Settled decisions — do not reverse without explicit instruction from Ankrit
+- Caddy @always_api MUST include /push/* — removing it breaks all staff push registration (405 at the edge).
+- _ANDROID_CHANNEL = "staff-v2" MUST match the mobile app's CHANNEL_ID. Changing either alone breaks lock-screen alerts.
+- Push messages must send priority: "high" + channelId (push_service.py) — required for screen-off delivery.
+- device_tokens must contain only @ank.ofc-project tokens. Mixed-project batches fail entirely (PUSH_TOO_MANY_EXPERIENCE_IDS). Backend still needs a per-project batching fix (pending task).
+
+## Known traps
+- NEW TOP-LEVEL BACKEND ROUTE → must be added to Caddy's @always_api path list or @api regex, or it 405s at the edge. This has caused a multi-day outage once already.
+- The server (/opt/app) cannot push to GitHub (403). NEVER rely on server-side git push. All changes flow PC → PR → merge → server pulls.
+- NEVER git reset --hard on the server unless origin verifiably contains every server commit.
+- Backend is a BAKED Docker image: server code changes require `docker compose -f docker-compose.prod.yml up -d --build backend`, not just restart.
+- Caddy config is a bind mount (./caddy/prod:/etc/caddy): edit host file, then caddy reload.
+
+## Session rules
+- One task per session. Pending items listed at END, never acted on.
+- Raw command output as evidence for every claim.
+- Diffs before commit. No push/merge/deploy without explicit go.
+
+---
+
 # CLAUDE.md — Standing Instructions
 
 > Claude Code reads this file at the start of **every** session and treats it as
