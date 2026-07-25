@@ -4,6 +4,8 @@ import {
   useUpdateSettingsMutation,
   useUploadBannerImageMutation,
   useRemoveBannerImageMutation,
+  useUploadPaymentQrMutation,
+  useRemovePaymentQrMutation,
 } from '@/features/admin/adminApi'
 import type { SettingsResponse, SettingsUpdate } from '@/lib/schemas/admin'
 import { getDevicePosition, GeolocationError } from '@/lib/geolocation'
@@ -107,6 +109,79 @@ function BannerSection({ bannerUrl }: { bannerUrl: string | null }) {
   )
 }
 
+const QR_MAX_MB = 25
+const QR_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+
+/** Payment QR: upload with preview, replace, remove. Mirrors BannerSection —
+ *  uploads apply immediately and the backend validates content, size, and
+ *  dimensions (the QR is stored uncropped and lossless so it stays scannable). */
+function PaymentQrSection({ qrUrl }: { qrUrl: string | null }) {
+  const [upload, { isLoading: uploading }] = useUploadPaymentQrMutation()
+  const [remove, { isLoading: removing }] = useRemovePaymentQrMutation()
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [err, setErr] = useState<string | null>(null)
+
+  const pick = async (file: File) => {
+    setErr(null)
+    if (!QR_TYPES.includes(file.type)) { setErr('Only JPEG, PNG, or WebP images allowed.'); return }
+    if (file.size > QR_MAX_MB * 1024 * 1024) { setErr(`Image must be under ${QR_MAX_MB} MB.`); return }
+    try {
+      await upload(file).unwrap()
+    } catch (e) {
+      setErr(errDetail(e))
+    }
+  }
+
+  return (
+    <section className={`${styles.section} ${styles.bannerSection}`}>
+      <h2 className={styles.sectionTitle}>Payment QR</h2>
+      <div className={styles.field}>
+        {qrUrl
+          ? <img src={qrUrl} alt="Current payment QR" className={styles.bannerPreview} />
+          : <div className={styles.bannerEmpty}>No payment QR uploaded — the Billing screen shows none.</div>}
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          style={{ display: 'none' }}
+          onChange={(e) => {
+            const f = e.target.files?.[0]
+            if (f) void pick(f)
+            e.target.value = '' // allow re-selecting the same file
+          }}
+        />
+        <div className={styles.bannerActions}>
+          <button
+            type="button"
+            className={styles.btnSecondary}
+            disabled={uploading || removing}
+            onClick={() => fileRef.current?.click()}
+          >
+            {uploading ? 'Uploading…' : qrUrl ? 'Replace QR' : 'Upload QR'}
+          </button>
+          {qrUrl && (
+            <button
+              type="button"
+              className={styles.btnSecondary}
+              disabled={uploading || removing}
+              onClick={() => { setErr(null); void remove() }}
+            >
+              {removing ? 'Removing…' : 'Remove QR'}
+            </button>
+          )}
+        </div>
+        {err && <p className={styles.geoErr}>{err}</p>}
+        <p className={styles.hint}>
+          Shown to guests on the staff Billing screen so they can scan to pay
+          (eSewa / Khalti / Fonepay). JPEG, PNG, or WebP up to {QR_MAX_MB} MB and
+          at most 1200×1200 px. Upload the QR uncropped — it is stored without
+          cropping or compression so it stays scannable.
+        </p>
+      </div>
+    </section>
+  )
+}
+
 export default function AdminSettings() {
   const { data: settings, isLoading, isError } = useGetSettingsQuery()
   const [update, { isLoading: isSaving }] = useUpdateSettingsMutation()
@@ -138,8 +213,10 @@ export default function AdminSettings() {
         kot_print_mode: settings.kot_print_mode,
         kot_printer_name: settings.kot_printer_name,
         kot_worker_token: settings.kot_worker_token,
-        // Managed by the banner upload/remove endpoints below, not this form.
+        // Managed by the banner / payment-QR upload/remove endpoints below,
+        // not this form.
         banner_image_url: settings.banner_image_url,
+        payment_qr_url: settings.payment_qr_url,
       })
     }
   }, [settings])
@@ -202,6 +279,7 @@ export default function AdminSettings() {
       <h1 className={styles.title}>Restaurant Settings</h1>
 
       <BannerSection bannerUrl={settings?.banner_image_url ?? null} />
+      <PaymentQrSection qrUrl={settings?.payment_qr_url ?? null} />
 
       <form onSubmit={(e) => void handleSubmit(e)} className={styles.form}>
         <section className={styles.section}>

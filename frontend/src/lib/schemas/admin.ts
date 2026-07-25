@@ -151,6 +151,8 @@ export const settingsResponseSchema = z.object({
   kot_worker_token: z.string().nullable(),
   // Customer-menu hero image; set only via the banner upload endpoint.
   banner_image_url: z.string().nullable(),
+  // Payment QR shown at billing; set only via the payment-qr upload endpoint.
+  payment_qr_url: z.string().nullable(),
 })
 
 export const categoryCreateSchema = z.object({

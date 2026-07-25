@@ -954,6 +954,54 @@ def remove_banner_image(
     return settings
 
 
+def set_payment_qr(
+    db: Session, restaurant_id: uuid.UUID, payment_qr_url: str, actor: User
+) -> RestaurantSettings:
+    """Point the restaurant's payment QR at a freshly stored upload. The URL
+    comes from image_service.validate_and_store_payment_qr only — never from
+    the client."""
+    settings = get_or_create_settings(db, restaurant_id)
+    previous_url = settings.payment_qr_url
+    settings.payment_qr_url = payment_qr_url
+    settings.updated_at = _now()
+    _audit(
+        db,
+        restaurant_id=restaurant_id,
+        actor=actor,
+        entity_type="restaurant_settings",
+        entity_id=settings.id,
+        action="PAYMENT_QR_SET",
+        previous_value={"payment_qr_url": previous_url},
+        new_value={"payment_qr_url": payment_qr_url},
+    )
+    db.commit()
+    db.refresh(settings)
+    return settings
+
+
+def remove_payment_qr(
+    db: Session, restaurant_id: uuid.UUID, actor: User
+) -> RestaurantSettings:
+    """Null out the payment QR (the Billing screen shows no QR)."""
+    settings = get_or_create_settings(db, restaurant_id)
+    previous_url = settings.payment_qr_url
+    settings.payment_qr_url = None
+    settings.updated_at = _now()
+    _audit(
+        db,
+        restaurant_id=restaurant_id,
+        actor=actor,
+        entity_type="restaurant_settings",
+        entity_id=settings.id,
+        action="PAYMENT_QR_REMOVE",
+        previous_value={"payment_qr_url": previous_url},
+        new_value={"payment_qr_url": None},
+    )
+    db.commit()
+    db.refresh(settings)
+    return settings
+
+
 # ──────────────────────────────────────────────────────────────────────────────
 # Customer-facing menu read
 # ──────────────────────────────────────────────────────────────────────────────
