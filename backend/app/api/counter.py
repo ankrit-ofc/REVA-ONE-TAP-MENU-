@@ -26,7 +26,7 @@ from app.models.order import Order
 from app.models.restaurant import RestaurantSettings
 from app.models.user import User
 from app.schemas.invoice import CounterPaymentRequest, InvoiceResponse
-from app.schemas.menu import PrintConfigResponse
+from app.schemas.menu import PaymentQrResponse, PrintConfigResponse
 from app.schemas.order import CounterOrderSummary, OrderResponse
 from app.schemas.workflow import ReopenRequest
 from app.services import menu_service, order_service, payment_service
@@ -85,6 +85,18 @@ def get_print_config(
     themselves remain ADMIN-only to edit)."""
     settings = menu_service.get_or_create_settings(db, restaurant_id)
     return PrintConfigResponse.model_validate(settings)
+
+@router.get("/payment-qr", response_model=PaymentQrResponse)
+def get_payment_qr(
+    restaurant_id: _RidDep,
+    _user: _CounterDep,
+    db: _DbDep,
+) -> PaymentQrResponse:
+    """The restaurant's payment QR for the staff Billing screen (billing-staff
+    readable; settings themselves remain ADMIN-only to edit). Returns the
+    /media path of the image, or null when no QR is configured."""
+    settings = menu_service.get_or_create_settings(db, restaurant_id)
+    return PaymentQrResponse.model_validate(settings)
 
 @router.get("/orders", response_model=list[CounterOrderSummary])
 def list_meal_finished_orders(

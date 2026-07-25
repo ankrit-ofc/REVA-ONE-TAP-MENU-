@@ -67,4 +67,9 @@ class RestaurantSettings(Base, TimestampMixin, TenantMixin):
     # image pipeline); never accepted from the client. NULL → stock hero.
     banner_image_url: Mapped[str | None] = mapped_column(Text, nullable=True)
 
+    # Payment QR (eSewa/Khalti/Fonepay) shown to guests on the staff Billing
+    # screen. Same rules as the banner: set only by the backend upload handler,
+    # never accepted from the client. NULL → no QR configured.
+    payment_qr_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+
     restaurant: Mapped["Restaurant"] = relationship("Restaurant", back_populates="settings")

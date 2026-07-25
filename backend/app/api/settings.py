@@ -87,6 +87,49 @@ def remove_banner_image(
     return SettingsResponse.model_validate(settings)
 
 
+@router.post("/settings/payment-qr", response_model=SettingsResponse)
+def upload_payment_qr(
+    file: UploadFile,
+    restaurant_id: _RidDep,
+    user: _AdminDep,
+    db: _DbDep,
+) -> SettingsResponse:
+    """
+    Sets the payment QR staff display to guests at billing. Multipart upload
+    validated by magic bytes (JPEG/PNG/WebP only), max 25 MB, max 1200x1200,
+    EXIF stripped, stored uncropped as lossless PNG under a UUID filename in
+    this tenant's media path. payment_qr_url is only ever set by this endpoint
+    — never accepted from the client. Audited.
+    """
+    raw = file.file.read()
+    try:
+        qr_url = image_service.validate_and_store_payment_qr(raw, restaurant_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+
+    settings = menu_service.get_or_create_settings(db, restaurant_id)
+    previous_url = settings.payment_qr_url
+    settings = menu_service.set_payment_qr(db, restaurant_id, qr_url, actor=user)
+    if previous_url:
+        image_service.delete_image(previous_url)  # best-effort cleanup of the replaced file
+    return SettingsResponse.model_validate(settings)
+
+
+@router.delete("/settings/payment-qr", response_model=SettingsResponse)
+def remove_payment_qr(
+    restaurant_id: _RidDep,
+    user: _AdminDep,
+    db: _DbDep,
+) -> SettingsResponse:
+    """Removes the payment QR (the Billing screen then shows none). Audited."""
+    settings = menu_service.get_or_create_settings(db, restaurant_id)
+    previous_url = settings.payment_qr_url
+    settings = menu_service.remove_payment_qr(db, restaurant_id, actor=user)
+    if previous_url:
+        image_service.delete_image(previous_url)
+    return SettingsResponse.model_validate(settings)
+
+
 @router.post("/settings/kot-worker-token", response_model=SettingsResponse)
 def rotate_kot_worker_token(
     restaurant_id: _RidDep,

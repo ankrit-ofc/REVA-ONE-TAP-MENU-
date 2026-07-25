@@ -81,6 +81,14 @@ class OrderResponse(BaseModel):
     items: list[OrderItemResponse]
 
 
+class CounterOrderSummaryItem(BaseModel):
+    """One line on a billing-queue summary — enough for staff to read the order
+    back to a guest, without the pricing detail the full invoice carries."""
+
+    name: str
+    quantity: int
+
+
 class CounterOrderSummary(BaseModel):
     """Lightweight order summary for the counter/waiter billing queues."""
 
@@ -95,6 +103,9 @@ class CounterOrderSummary(BaseModel):
     bill_requested: bool
     created_at: datetime
     updated_at: datetime
+    # Non-cancelled lines, so the Billing screen can show what was ordered.
+    # Same visibility rule as item_count above.
+    items: list[CounterOrderSummaryItem]
 
     @classmethod
     def from_order(cls, order) -> "CounterOrderSummary":
@@ -114,4 +125,9 @@ class CounterOrderSummary(BaseModel):
             bill_requested=order.bill_requested_at is not None,
             created_at=order.created_at,
             updated_at=order.updated_at,
+            items=[
+                CounterOrderSummaryItem(name=item.product_name, quantity=item.quantity)
+                for item in order.items
+                if item.status != OrderItemStatus.CANCELLED
+            ],
         )

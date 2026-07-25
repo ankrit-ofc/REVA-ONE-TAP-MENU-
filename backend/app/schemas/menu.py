@@ -224,6 +224,16 @@ class SettingsResponse(BaseModel):
     kot_worker_token: str | None
     # Customer menu hero image; set only via POST /admin/settings/banner-image.
     banner_image_url: str | None
+    # Payment QR shown to guests at billing; set only via POST /admin/settings/payment-qr.
+    payment_qr_url: str | None
+
+
+class PaymentQrResponse(BaseModel):
+    """The restaurant's payment QR, readable by billing staff (COUNTER/ADMIN/
+    WAITER) so the staff app can display it to a guest. Settings themselves
+    remain ADMIN-only to edit. NULL → no QR configured."""
+    model_config = ConfigDict(from_attributes=True)
+    payment_qr_url: str | None
 
 
 class PrintConfigResponse(BaseModel):

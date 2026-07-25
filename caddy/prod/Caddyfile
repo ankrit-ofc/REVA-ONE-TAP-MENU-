@@ -23,7 +23,11 @@
 	# the real client to any inbound value). uvicorn is started with
 	# --proxy-headers --forwarded-allow-ips=172.16.0.0/12, so it trusts that
 	# header only from the Docker network — per-client rate limiting depends on it.
-	@always_api path /webhooks/* /ws/* /media/* /printworker/* /health /health/* /push/*
+	# NOTE on /counter: only backend-only counter paths may be listed here.
+	# /counter and /counter/devices are ALSO React routes (routes/AppRoutes.tsx),
+	# so a blanket /counter/* would send a browser navigation to those pages at
+	# the backend and break the web counter surface. Per-path entries only.
+	@always_api path /webhooks/* /ws/* /media/* /printworker/* /health /health/* /push/* /counter/payment-qr /counter/print-config /counter/orders
 	handle @always_api {
 		reverse_proxy backend:8000
 	}
