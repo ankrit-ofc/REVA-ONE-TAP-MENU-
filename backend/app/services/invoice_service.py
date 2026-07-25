@@ -18,7 +18,7 @@ import uuid
 from datetime import datetime, timezone
 from decimal import ROUND_HALF_UP, Decimal
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models.audit_log import AuditLog
@@ -35,6 +35,90 @@ _TWO_PLACES = Decimal("0.01")
 
 def _q(value: Decimal) -> Decimal:
     return value.quantize(_TWO_PLACES, rounding=ROUND_HALF_UP)
+
+
+# Terminal invoice states — an invoice that has finished its lifecycle, whether
+# it was collected, reversed, or cancelled. REFUNDED and VOID are included
+# deliberately: a history screen that hid them would misrepresent the day's
+# takings to the staff reading it. DRAFT / PENDING_PAYMENT / FAILED are still
+# in flight and belong to the billing queue, not to history.
+_HISTORY_STATUSES = (InvoiceStatus.PAID, InvoiceStatus.REFUNDED, InvoiceStatus.VOID)
+
+
+def list_order_history(
+    db: Session,
+    restaurant_id: uuid.UUID,
+    *,
+    limit: int,
+    offset: int,
+    table_id: uuid.UUID | None = None,
+    date_from: datetime | None = None,
+    date_to: datetime | None = None,
+) -> tuple[list[dict], int]:
+    """
+    A page of terminal invoices for this restaurant, newest first, plus the
+    total number of matches ignoring limit/offset.
+
+    Read-only: no state is written or transitioned here. Every query is filtered
+    on restaurant_id (never by PK alone), and the join to orders is likewise
+    tenant-filtered so a table_id from another tenant cannot widen the result.
+
+    date_to is treated as EXCLUSIVE, so a caller passing midnight-to-midnight
+    does not pick up the next day's first invoice.
+    """
+    conditions = [
+        Invoice.restaurant_id == restaurant_id,
+        Invoice.status.in_(_HISTORY_STATUSES),
+    ]
+    if table_id is not None:
+        conditions.append(Order.table_id == table_id)
+    if date_from is not None:
+        conditions.append(Invoice.created_at >= date_from)
+    if date_to is not None:
+        conditions.append(Invoice.created_at < date_to)
+
+    # The order join is tenant-scoped on both sides; Table is joined for its name.
+    base = (
+        select(Invoice, Order.order_number, Table.name)
+        .join(Order, (Order.id == Invoice.order_id) & (Order.restaurant_id == restaurant_id))
+        .join(Table, Table.id == Order.table_id)
+        .where(*conditions)
+    )
+
+    total = db.scalar(
+        select(func.count())
+        .select_from(Invoice)
+        .join(Order, (Order.id == Invoice.order_id) & (Order.restaurant_id == restaurant_id))
+        .where(*conditions)
+    ) or 0
+
+    # id is the tiebreak: invoices written in the same transaction can share a
+    # created_at, and without it the same row could appear on two pages.
+    rows = db.execute(
+        base.order_by(Invoice.created_at.desc(), Invoice.id.desc())
+        .limit(limit)
+        .offset(offset)
+    ).all()
+
+    # Currency is per-restaurant, read once for the page rather than per row.
+    settings = db.execute(
+        select(RestaurantSettings).where(RestaurantSettings.restaurant_id == restaurant_id)
+    ).scalar_one_or_none()
+    currency = settings.currency if settings is not None else "NPR"
+
+    items = [
+        {
+            "invoice_id": invoice.id,
+            "order_number": order_number,
+            "table_name": table_name,
+            "total": invoice.total,
+            "currency": currency,
+            "status": invoice.status,
+            "created_at": invoice.created_at,
+        }
+        for invoice, order_number, table_name in rows
+    ]
+    return items, total
 
 
 def build_receipt(db: Session, restaurant_id: uuid.UUID, invoice_id: uuid.UUID) -> dict:

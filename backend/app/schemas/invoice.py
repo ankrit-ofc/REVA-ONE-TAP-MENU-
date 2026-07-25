@@ -86,6 +86,32 @@ class InvoiceResponse(BaseModel):
     updated_at: datetime
 
 
+# ── Order history (paginated list of terminal invoices) ───────────────────────
+
+class OrderHistoryRow(BaseModel):
+    """One row of the billing history list. The index into the per-invoice
+    detail already available at GET /invoices/{invoice_id}/receipt."""
+
+    invoice_id: uuid.UUID
+    order_number: int
+    table_name: str
+    total: Decimal
+    currency: str
+    status: InvoiceStatus
+    created_at: datetime
+
+
+class OrderHistoryPage(BaseModel):
+    """A page of history rows plus the unpaginated match count, so the client
+    knows when to stop paging. `total` counts every row matching the filters,
+    ignoring limit/offset."""
+
+    items: list[OrderHistoryRow]
+    total: int
+    limit: int
+    offset: int
+
+
 # ── Printable receipt (itemized bill for thermal printing) ────────────────────
 
 class ReceiptAddon(BaseModel):

@@ -14,9 +14,10 @@ Invoice/payment endpoints are Phase 7 — not implemented here.
 """
 
 import uuid
+from datetime import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload, selectinload
 
@@ -25,11 +26,11 @@ from app.models.enums import OrderStatus, Role
 from app.models.order import Order
 from app.models.restaurant import RestaurantSettings
 from app.models.user import User
-from app.schemas.invoice import CounterPaymentRequest, InvoiceResponse
+from app.schemas.invoice import CounterPaymentRequest, InvoiceResponse, OrderHistoryPage
 from app.schemas.menu import PaymentQrResponse, PrintConfigResponse
 from app.schemas.order import CounterOrderSummary, OrderResponse
 from app.schemas.workflow import ReopenRequest
-from app.services import menu_service, order_service, payment_service
+from app.services import invoice_service, menu_service, order_service, payment_service
 from app.services.order_state import OrderError
 from app.services.payment_state import InvoiceError
 
@@ -97,6 +98,37 @@ def get_payment_qr(
     /media path of the image, or null when no QR is configured."""
     settings = menu_service.get_or_create_settings(db, restaurant_id)
     return PaymentQrResponse.model_validate(settings)
+
+@router.get("/order-history", response_model=OrderHistoryPage)
+def get_order_history(
+    restaurant_id: _RidDep,
+    _user: _CounterDep,
+    db: _DbDep,
+    limit: Annotated[int, Query(ge=1, le=100)] = 50,
+    offset: Annotated[int, Query(ge=0)] = 0,
+    table_id: uuid.UUID | None = None,
+    date_from: datetime | None = None,
+    date_to: datetime | None = None,
+) -> OrderHistoryPage:
+    """
+    Paginated billing history: terminal invoices (PAID / REFUNDED / VOID) for
+    this restaurant, newest first, each row carrying its own status label so a
+    refund or void is visible rather than silently dropped.
+
+    Read-only. Optional filters: table_id, and a created_at range where
+    date_from is inclusive and date_to is exclusive. limit is capped at 100 —
+    history grows without bound, so an unpaginated read is never offered.
+    """
+    items, total = invoice_service.list_order_history(
+        db,
+        restaurant_id,
+        limit=limit,
+        offset=offset,
+        table_id=table_id,
+        date_from=date_from,
+        date_to=date_to,
+    )
+    return OrderHistoryPage(items=items, total=total, limit=limit, offset=offset)
 
 @router.get("/orders", response_model=list[CounterOrderSummary])
 def list_meal_finished_orders(
