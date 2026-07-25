@@ -72,10 +72,20 @@ def _close_order_and_reset_table(
     restaurant_id: uuid.UUID,
 ) -> None:
     """
-    Marks the order CLOSED and invalidates all active table sessions.
-    Called inside an existing transaction — does NOT commit.
+    Marks the order CLOSED, clears any outstanding bill request, and invalidates
+    all active table sessions. Called inside an existing transaction — does NOT
+    commit.
+
+    Clearing bill_requested_at is what stops the "🔔 Bill requested" alert from
+    outliving the request that raised it. The stamp is only ever set (by the
+    customer in order_service.request_bill, or by the staff override) and had no
+    off-switch, so a reopened order came back still flagged — showing the alert
+    for a request nobody made, and satisfying the billing gates in
+    transition_order / quick_bill without a fresh request. Closing the table
+    means the request has been handled, whether it was paid or written off.
     """
     order.status = OrderStatus.CLOSED
+    order.bill_requested_at = None
     now = datetime.now(timezone.utc)
     sessions = db.execute(
         select(TableSession).where(
