@@ -28,8 +28,19 @@ function errDetail(e: unknown): string {
 
 // ── QR Modal ─────────────────────────────────────────────────────────────────
 
+// GET /admin/tables only populates qr_token/scan_url for ADMIN (WAITER/COUNTER
+// get them omitted). This page is ADMIN-only via RequireRole, so the guard
+// below should always pass — it exists so a future change to either of those
+// two facts fails closed (modal doesn't open) instead of crashing on
+// `undefined` inside QRCode.toDataURL/jsPDF.
+type TableWithQr = TableResponse & { qr_token: string; scan_url: string }
+
+function hasQrFields(t: TableResponse): t is TableWithQr {
+  return t.qr_token !== undefined && t.scan_url !== undefined
+}
+
 interface QRModalProps {
-  table: TableResponse
+  table: TableWithQr
   onClose: () => void
 }
 
@@ -240,7 +251,7 @@ export default function AdminTables() {
 
   return (
     <div className={styles.page}>
-      {qrModal && <QRModal table={qrModal} onClose={() => setQrModal(null)} />}
+      {qrModal && hasQrFields(qrModal) && <QRModal table={qrModal} onClose={() => setQrModal(null)} />}
 
       <div className={styles.pageHeader}>
         <h1 className={styles.pageTitle}>Tables</h1>

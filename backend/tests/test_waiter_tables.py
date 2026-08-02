@@ -3,6 +3,11 @@ GET /waiter/tables — floor-map coverage.
 
 Covers: zero tables, free table, two OPEN orders with merged items, WAITER 200,
 unauthorised role 403. Does not modify /dashboard/active-tables.
+
+Also covers the GET /admin/tables floor-read widening (ADMIN/WAITER/COUNTER):
+qr_token/scan_url present for ADMIN, absent (not null) for WAITER/COUNTER, and
+a tripwire asserting the five always-present fields never get swept up by
+response_model_exclude_none.
 """
 
 import uuid
@@ -211,3 +216,74 @@ def test_waiter_tables_waiter_ok_kitchen_forbidden(client, seed):
 
     forbidden = client.get("/waiter/tables", headers=auth(kitchen_tok))
     assert forbidden.status_code == 403, forbidden.text
+
+
+_ALWAYS_PRESENT_FIELDS = {"id", "name", "is_active", "created_at", "updated_at"}
+
+
+def test_admin_tables_admin_gets_qr_fields_populated(client, seed):
+    admin = login(client, seed["a"])
+    rid = uuid.UUID(seed["a"]["restaurant_id"])
+    table_id = _add_table(rid, f"Adm-{uuid.uuid4().hex[:6]}")
+
+    r = client.get("/admin/tables", headers=auth(admin))
+    assert r.status_code == 200, r.text
+    row = next(t for t in r.json() if t["id"] == table_id)
+    assert isinstance(row["qr_token"], str) and row["qr_token"] != ""
+    assert isinstance(row["scan_url"], str) and row["scan_url"] != ""
+    assert row["scan_url"].endswith(row["qr_token"])
+
+
+def test_admin_tables_waiter_and_counter_get_no_qr_fields(client, seed):
+    admin = login(client, seed["a"])
+    rid = uuid.UUID(seed["a"]["restaurant_id"])
+    table_id = _add_table(rid, f"Flr-{uuid.uuid4().hex[:6]}")
+
+    waiter_email = f"waiter-{uuid.uuid4().hex[:6]}@example.com"
+    counter_email = f"counter-{uuid.uuid4().hex[:6]}@example.com"
+    _create_staff(client, admin, role="WAITER", email=waiter_email)
+    _create_staff(client, admin, role="COUNTER", email=counter_email)
+    waiter_tok = _login_role(client, seed["a"], waiter_email)
+    counter_tok = _login_role(client, seed["a"], counter_email)
+
+    for tok in (waiter_tok, counter_tok):
+        r = client.get("/admin/tables", headers=auth(tok))
+        assert r.status_code == 200, r.text
+        row = next(t for t in r.json() if t["id"] == table_id)
+        # Fields must be genuinely ABSENT (response_model_exclude_none), not
+        # present-and-null — that's the whole point of the fix.
+        assert "qr_token" not in row, row
+        assert "scan_url" not in row, row
+
+
+def test_admin_tables_kitchen_still_forbidden(client, seed):
+    admin = login(client, seed["a"])
+    kitchen_email = f"kitchen-{uuid.uuid4().hex[:6]}@example.com"
+    _create_staff(client, admin, role="KITCHEN", email=kitchen_email)
+    kitchen_tok = _login_role(client, seed["a"], kitchen_email)
+
+    r = client.get("/admin/tables", headers=auth(kitchen_tok))
+    assert r.status_code == 403, r.text
+
+
+def test_admin_tables_exclude_none_tripwire(client, seed):
+    """
+    response_model_exclude_none is a blanket switch on the route. This pins
+    down that the five always-present TableResponse fields survive it for a
+    non-ADMIN caller — if one of them ever became Optional and happened to be
+    None, this is what would catch it silently disappearing too.
+    """
+    admin = login(client, seed["a"])
+    rid = uuid.UUID(seed["a"]["restaurant_id"])
+    _add_table(rid, f"Trp-{uuid.uuid4().hex[:6]}")
+
+    waiter_email = f"waiter-{uuid.uuid4().hex[:6]}@example.com"
+    _create_staff(client, admin, role="WAITER", email=waiter_email)
+    waiter_tok = _login_role(client, seed["a"], waiter_email)
+
+    r = client.get("/admin/tables", headers=auth(waiter_tok))
+    assert r.status_code == 200, r.text
+    rows = r.json()
+    assert len(rows) >= 1
+    for row in rows:
+        assert _ALWAYS_PRESENT_FIELDS <= row.keys(), row

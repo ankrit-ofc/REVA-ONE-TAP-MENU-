@@ -217,8 +217,8 @@ export const tableResponseSchema = z.object({
   is_active: z.boolean(),
   created_at: z.string(),
   updated_at: z.string(),
-  qr_token: z.string(),
-  scan_url: z.string(),
+  qr_token: z.string().optional(),
+  scan_url: z.string().optional(),
 })
 
 // ── Dashboard widgets ──────────────────────────────────────────────────────

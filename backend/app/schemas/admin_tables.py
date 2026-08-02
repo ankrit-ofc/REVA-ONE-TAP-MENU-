@@ -30,5 +30,7 @@ class TableResponse(BaseModel):
     is_active: bool
     created_at: datetime
     updated_at: datetime
-    qr_token: str
-    scan_url: str
+    # Populated for ADMIN only; None (and dropped by response_model_exclude_none)
+    # for the WAITER/COUNTER floor-read widening on GET /admin/tables.
+    qr_token: str | None = None
+    scan_url: str | None = None
