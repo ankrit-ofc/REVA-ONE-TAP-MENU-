@@ -12,6 +12,11 @@ export interface RestaurantCreate {
 export interface RestaurantUpdate {
   name?: string
   is_active?: boolean
+  plan?: 'basic' | 'starter' | 'custom'
+  order_enabled?: boolean
+  call_waiter_enabled?: boolean
+  ar_enabled?: boolean
+  qr_pay_enabled?: boolean
 }
 
 export const superadminApi = createApi({

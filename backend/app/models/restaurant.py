@@ -1,11 +1,12 @@
 import uuid
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, Float, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, Enum as SAEnum, Float, Integer, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+from app.models.enums import RestaurantPlan
 from app.models.mixins import TimestampMixin, TenantMixin
 
 if TYPE_CHECKING:
@@ -19,6 +20,19 @@ class Restaurant(Base, TimestampMixin):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     slug: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="true")
+    # Platform plan label (basic|starter|custom). Assigning a plan WRITES the
+    # four preset booleans via apply_plan_preset; reads always use the STORED
+    # columns below (overrides persist — never recompute from plan on read).
+    plan: Mapped[RestaurantPlan] = mapped_column(
+        SAEnum(RestaurantPlan, name="restaurant_plan", create_type=False, values_callable=lambda x: [e.value for e in x]),
+        nullable=False,
+        server_default=RestaurantPlan.CUSTOM.value,
+    )
+    # STORED feature flags — source of truth for gating + customer UI.
+    order_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="true")
+    call_waiter_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="true")
+    ar_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="true")
+    qr_pay_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="true")
 
     settings: Mapped["RestaurantSettings"] = relationship(
         "RestaurantSettings", back_populates="restaurant", uselist=False
@@ -34,6 +48,10 @@ class RestaurantSettings(Base, TimestampMixin, TenantMixin):
 
     id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     enable_qr_payment: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+    # SOFT-DEPRECATED: sole source of truth is restaurants.qr_pay_enabled.
+    # Column kept so older staff-mobile clients that still PUT enable_qr_payment
+    # do not 422; SettingsUpdate accept-and-ignores it. Drop in a later migration
+    # once mobile stops sending the field.
     waiter_can_accept_payment: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
     allow_order_reopen: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
     # When true, each batch of customer-ordered items waits in PENDING_APPROVAL

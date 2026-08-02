@@ -11,6 +11,15 @@ class Role(str, enum.Enum):
     COUNTER_DISPLAY = "COUNTER_DISPLAY"
 
 
+class RestaurantPlan(str, enum.Enum):
+    """Platform subscription plan. Effective Order / Call Waiter flags are
+    COMPUTED from plan + stored toggles (see plan_features) — never stored as
+    the final on/off state."""
+    BASIC = "basic"
+    STARTER = "starter"
+    CUSTOM = "custom"
+
+
 class OrderStatus(str, enum.Enum):
     OPEN = "OPEN"
     MEAL_FINISHED = "MEAL_FINISHED"
