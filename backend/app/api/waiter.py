@@ -30,6 +30,7 @@ from app.models.enums import OrderItemStatus, OrderStatus, Role
 from app.models.order import Order, OrderItem
 from app.models.restaurant import RestaurantSettings
 from app.models.user import User
+from app.schemas.dashboard import WaiterTable
 from app.schemas.order import (
     CounterOrderSummary,
     OrderItemAddonResponse,
@@ -42,12 +43,16 @@ from app.schemas.workflow import (
     ReopenRequest,
     WaiterCallResponse,
 )
-from app.services import order_service, waiter_call_service
+from app.services import dashboard_service, order_service, waiter_call_service
 from app.services.order_state import OrderError
 
 router = APIRouter(prefix="/waiter", tags=["waiter"])
 
 _WaiterDep = Annotated[User, Depends(require_role(Role.WAITER, Role.ADMIN))]
+# Floor map (GET /waiter/tables): same roles as /dashboard/active-tables.
+_TablesFloorDep = Annotated[
+    User, Depends(require_role(Role.ADMIN, Role.WAITER, Role.COUNTER))
+]
 _RidDep = Annotated[uuid.UUID, Depends(tenant_scope)]
 _DbDep = Annotated[Session, Depends(get_db)]
 
@@ -97,6 +102,19 @@ def _check_reopen_allowed(db: Session, restaurant_id: uuid.UUID) -> None:
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
+
+@router.get("/tables", response_model=list[WaiterTable])
+def get_waiter_tables(
+    _user: _TablesFloorDep,
+    restaurant_id: _RidDep,
+    db: _DbDep,
+) -> list[WaiterTable]:
+    """
+    Floor map: every active table for the restaurant (occupied or free).
+    Occupancy is derived from OPEN orders — same predicate as active-tables.
+    """
+    return dashboard_service.waiter_tables(db, restaurant_id)
+
 
 @router.get("/ready", response_model=list[QueueItemResponse])
 def get_ready_items(

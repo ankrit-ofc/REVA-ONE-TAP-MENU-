@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 from app.models.enums import InvoiceStatus, OrderItemStatus
 from app.models.invoice import Invoice
 from app.models.order import Order, OrderItem
+from app.models.table import Table
 from app.schemas.dashboard import (
     ActiveTable,
     ActiveTableItem,
@@ -26,6 +27,7 @@ from app.schemas.dashboard import (
     RevenueToday,
     TopProduct,
     TopProducts,
+    WaiterTable,
 )
 from app.services import menu_service, order_service
 
@@ -129,6 +131,111 @@ def active_tables(db: Session, restaurant_id: uuid.UUID) -> list[ActiveTable]:
     ]
     tables.sort(key=lambda t: t.earliest_placed_at)
     return tables
+
+
+def waiter_tables(db: Session, restaurant_id: uuid.UUID) -> list[WaiterTable]:
+    """
+    Every *active* (is_active=true) table for the restaurant, whether or not it
+    currently has an OPEN order. Occupancy is derived the same way as
+    active_tables: OPEN orders from list_open_orders, grouped by table_id.
+
+    Free tables still produce a row (occupied=false, empty orders/items).
+    Deactivated tables are excluded — is_active is soft-delete, not floor state.
+
+    N+1 note (same as active_tables L77–79): billable running-tab math walks
+    item.addons without selectinload. Cost only applies to tables that have
+    open orders — unchanged from today's active-tables path.
+    """
+    all_tables = list(
+        db.scalars(
+            select(Table)
+            .where(
+                Table.restaurant_id == restaurant_id,
+                Table.is_active.is_(True),
+            )
+            .order_by(Table.name.asc())
+        ).all()
+    )
+
+    # Reuse the canonical OPEN-order query (table + items eager-loaded).
+    orders = order_service.list_open_orders(db, restaurant_id)
+
+    by_table: dict[uuid.UUID, dict] = {}
+    for order in orders:
+        billable = [i for i in order.items if i.status not in _NON_BILLABLE]
+        visible = [i for i in order.items if i.status != OrderItemStatus.CANCELLED]
+
+        order_total = Decimal("0")
+        for item in billable:
+            # N+1 on item.addons — see docstring above.
+            addon_sum = sum((a.addon_price for a in item.addons), Decimal("0"))
+            line_sub = item.quantity * (item.unit_price + addon_sum)
+            line_tax = line_sub * item.tax_rate / Decimal("100")
+            order_total += line_sub + line_tax
+
+        entry = by_table.setdefault(
+            order.table_id,
+            {
+                "orders": [],
+                "total_amount": Decimal("0"),
+                "earliest_placed_at": order.created_at,
+                "merged_qty": {},  # name -> quantity
+            },
+        )
+        entry["orders"].append(
+            ActiveTableOrder(
+                order_id=order.id,
+                order_number=order.order_number,
+                status=order.status,
+                placed_at=order.created_at,
+                items=[
+                    ActiveTableItem(name=i.product_name, quantity=i.quantity)
+                    for i in visible
+                ],
+            )
+        )
+        entry["total_amount"] += order_total
+        if order.created_at < entry["earliest_placed_at"]:
+            entry["earliest_placed_at"] = order.created_at
+        for i in visible:
+            entry["merged_qty"][i.product_name] = (
+                entry["merged_qty"].get(i.product_name, 0) + i.quantity
+            )
+
+    rows: list[WaiterTable] = []
+    for table in all_tables:
+        data = by_table.get(table.id)
+        if data is None:
+            rows.append(
+                WaiterTable(
+                    table_id=table.id,
+                    table_label=table.name,
+                    occupied=False,
+                    order_count=0,
+                    earliest_placed_at=None,
+                    total_amount="0.00",
+                    items=[],
+                    orders=[],
+                )
+            )
+            continue
+        merged = [
+            ActiveTableItem(name=name, quantity=qty)
+            for name, qty in sorted(data["merged_qty"].items(), key=lambda kv: kv[0])
+        ]
+        rows.append(
+            WaiterTable(
+                table_id=table.id,
+                table_label=table.name,
+                occupied=True,
+                order_count=len(data["orders"]),
+                earliest_placed_at=data["earliest_placed_at"],
+                total_amount=str(_q(data["total_amount"])),
+                items=merged,
+                orders=data["orders"],
+            )
+        )
+    return rows
 
 
 # ── B. Revenue Today ──────────────────────────────────────────────────────────

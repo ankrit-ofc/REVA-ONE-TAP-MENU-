@@ -50,6 +50,30 @@ class ActiveTable(BaseModel):
     orders: list[ActiveTableOrder]
 
 
+class WaiterTable(BaseModel):
+    """
+    Floor-map row for GET /waiter/tables: every *active* table, occupied or free.
+
+    Extends the ActiveTable shape with `occupied` and a flat merged `items` list
+    for card display. Money is a Decimal string ("0.00"), matching staff WS /
+    receipt conventions — not a float.
+
+    Note: Postgres partial unique index `uq_orders_active_table` currently allows
+    at most one OPEN order per table, so `orders` is typically length 0 or 1.
+    Merge-by-name still applies when a single order has repeated product names
+    (e.g. after place_or_append).
+    """
+
+    table_id: uuid.UUID
+    table_label: str
+    occupied: bool
+    order_count: int
+    earliest_placed_at: datetime | None
+    total_amount: str
+    items: list[ActiveTableItem]
+    orders: list[ActiveTableOrder]
+
+
 # ── Analytics cards ───────────────────────────────────────────────────────────
 
 class RevenueToday(BaseModel):
