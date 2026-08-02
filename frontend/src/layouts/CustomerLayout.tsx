@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
+import { Info } from 'lucide-react'
 import { useSession } from '@/features/session/useSession'
 import { useCallWaiterMutation } from '@/features/session/sessionApi'
 import { useCart } from '@/features/cart/useCart'
@@ -8,6 +9,35 @@ import { formatPrice } from '@/lib/currency'
 import styles from './CustomerLayout.module.css'
 
 const CURRENCY = 'NPR'
+const ABOUT_URL = 'https://revatap.com/'
+
+type CapabilityLine = { emoji: string; text: string }
+
+/** Only list capabilities this restaurant has enabled (missing flag → on). */
+function revaCapabilities(flags: {
+  orderEnabled: boolean
+  callWaiterEnabled: boolean
+  qrPaymentEnabled: boolean
+}): CapabilityLine[] {
+  const lines: CapabilityLine[] = [
+    { emoji: '🍽️', text: 'View the digital menu' },
+  ]
+  if (flags.orderEnabled) {
+    lines.push(
+      { emoji: '🛒', text: 'Order food directly from your phone' },
+      { emoji: '➕', text: 'Add more items anytime' },
+      { emoji: '📦', text: 'Track your order status' },
+      { emoji: '🧾', text: 'View everything ordered on your table' },
+    )
+  }
+  if (flags.callWaiterEnabled) {
+    lines.push({ emoji: '🙋', text: 'Call a waiter with one tap' })
+  }
+  if (flags.qrPaymentEnabled) {
+    lines.push({ emoji: '💳', text: 'Request your bill and pay from your phone' })
+  }
+  return lines
+}
 
 export default function CustomerLayout() {
   const {
@@ -17,17 +47,25 @@ export default function CustomerLayout() {
     isInvalidating,
     orderEnabled,
     callWaiterEnabled,
+    qrPaymentEnabled,
   } = useSession()
   const { totalItems, estimatedTotal } = useCart()
   const { theme } = useTheme()
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [infoOpen, setInfoOpen] = useState(false)
   const [callWaiter, { isLoading: isCalling }] = useCallWaiterMutation()
   const [waiterCooldown, setWaiterCooldown] = useState(false)
   const [waiterNotified, setWaiterNotified] = useState(false)
   const [waiterFailed, setWaiterFailed] = useState(false)
   const [ringing, setRinging] = useState(false)
+
+  const capabilityLines = revaCapabilities({
+    orderEnabled,
+    callWaiterEnabled,
+    qrPaymentEnabled,
+  })
 
   const showCartBar = orderEnabled && totalItems > 0 && pathname === '/menu'
 
@@ -85,6 +123,14 @@ export default function CustomerLayout() {
         </button>
 
         <div className={styles.appbarRight}>
+          <button
+            className={styles.iconBtn}
+            onClick={() => setInfoOpen(true)}
+            aria-label="What you can do with REVA"
+          >
+            <Info size={20} strokeWidth={1.8} aria-hidden="true" />
+          </button>
+
           {/* Labeled action — an unlabeled icon read as decoration, so the word
               "Call Waiter" carries the affordance and the bell reinforces it. */}
           {callWaiterEnabled && (
@@ -171,6 +217,14 @@ export default function CustomerLayout() {
               <button onClick={() => { setDrawerOpen(false); navigate('/menu') }}>Menu</button>
               <button onClick={() => { setDrawerOpen(false); navigate('/order-status') }}>My Orders</button>
               <button onClick={() => { setDrawerOpen(false); navigate('/cart') }}>Cart</button>
+              <a
+                href={ABOUT_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setDrawerOpen(false)}
+              >
+                About us
+              </a>
             </nav>
 
             <button
@@ -184,6 +238,42 @@ export default function CustomerLayout() {
               Close
             </button>
           </aside>
+        </div>
+      )}
+
+      {/* ── "What you can do with REVA" (feature-flag–aware) ───────────── */}
+      {infoOpen && (
+        <div
+          className={styles.infoOverlay}
+          onClick={() => setInfoOpen(false)}
+          role="presentation"
+        >
+          <div
+            className={styles.infoPanel}
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="reva-capabilities-title"
+          >
+            <h2 id="reva-capabilities-title" className={styles.infoTitle}>
+              What you can do with REVA
+            </h2>
+            <ul className={styles.infoList}>
+              {capabilityLines.map((line) => (
+                <li key={line.text}>
+                  <span className={styles.infoEmoji} aria-hidden="true">{line.emoji}</span>
+                  <span>{line.text}</span>
+                </li>
+              ))}
+            </ul>
+            <button
+              type="button"
+              className={styles.infoClose}
+              onClick={() => setInfoOpen(false)}
+            >
+              Got it
+            </button>
+          </div>
         </div>
       )}
     </div>
