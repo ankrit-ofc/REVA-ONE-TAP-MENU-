@@ -1,0 +1,73 @@
+.panel {
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  background: var(--color-bg);
+  width: 100%;
+}
+
+.caption {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin: 0 0 0.5rem;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-bottom: 0.5rem;
+}
+
+.chip {
+  border: 1.5px solid var(--color-border-strong);
+  background: var(--color-surface);
+  color: var(--color-text-soft);
+  border-radius: 999px;
+  padding: 0.3125rem 0.6875rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.chipSelected {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-primary-contrast, #fff);
+}
+
+.textarea {
+  width: 100%;
+  resize: none;
+  border: 1.5px solid var(--color-border-strong);
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  font-size: 0.8125rem;
+  font-family: inherit;
+  color: var(--color-text);
+  background: var(--color-surface);
+  box-sizing: border-box;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+}
+
+.counter {
+  font-size: 0.6875rem;
+  color: var(--color-text-faint);
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.actions button {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8125rem;
+}

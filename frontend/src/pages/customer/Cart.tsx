@@ -12,7 +12,8 @@ const CURRENCY = 'NPR'
 export default function Cart() {
   const navigate = useNavigate()
   const { orderEnabled } = useSession()
-  const { items, estimatedTotal, estimatedTax, isEmpty, updateQuantity, clearCart } = useCart()
+  const { items, estimatedTotal, estimatedTax, isEmpty, updateQuantity, updateSpecialInstructions, clearCart } =
+    useCart()
   const [placeOrAppend, { isLoading, error }] = usePlaceOrAppendMutation()
 
   async function handlePlaceOrder() {
@@ -78,6 +79,7 @@ export default function Cart() {
             item={item}
             currency={CURRENCY}
             onQuantityChange={updateQuantity}
+            onNoteChange={updateSpecialInstructions}
           />
         ))}
       </div>

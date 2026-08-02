@@ -4,6 +4,7 @@ import {
   addItem,
   removeItem,
   updateQuantity,
+  updateSpecialInstructions,
   clearCart,
   makeCartKey,
   type CartItem,
@@ -35,6 +36,8 @@ export function useCart() {
     removeItem: (key: string) => dispatch(removeItem(key)),
     updateQuantity: (key: string, quantity: number) =>
       dispatch(updateQuantity({ key, quantity })),
+    updateSpecialInstructions: (key: string, specialInstructions: string) =>
+      dispatch(updateSpecialInstructions({ key, specialInstructions })),
     clearCart: () => dispatch(clearCart()),
     makeCartKey,
   }

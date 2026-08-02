@@ -68,11 +68,22 @@ const cartSlice = createSlice({
       }
     },
 
+    updateSpecialInstructions(
+      state,
+      action: PayloadAction<{ key: string; specialInstructions: string }>,
+    ) {
+      const item = state.items.find((i) => i.key === action.payload.key)
+      if (item) {
+        item.specialInstructions = action.payload.specialInstructions
+      }
+    },
+
     clearCart(state) {
       state.items = []
     },
   },
 })
 
-export const { addItem, removeItem, updateQuantity, clearCart } = cartSlice.actions
+export const { addItem, removeItem, updateQuantity, updateSpecialInstructions, clearCart } =
+  cartSlice.actions
 export default cartSlice.reducer

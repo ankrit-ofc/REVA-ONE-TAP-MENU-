@@ -5,6 +5,9 @@ Data contract:
 - OrderItemCreate accepts product_id / variant_id / addon_ids / quantity /
   special_instructions ONLY.  No price, name, or tax field is present;
   extra="forbid" guarantees the client cannot inject one.
+- special_instructions doubles as the customer's per-item note (preset chips +
+  free text on the client). Trimmed and capped at 140 chars server-side;
+  whitespace-only input normalizes to NULL rather than an empty string.
 - All snapshot fields (product_name, unit_price, tax_rate, addon prices) appear
   only in *Response* models — they are set server-side, never accepted from the
   client.
@@ -20,7 +23,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.models.enums import OrderItemStatus, OrderStatus
 
@@ -34,7 +37,16 @@ class OrderItemCreate(BaseModel):
     variant_id: uuid.UUID | None = None
     addon_ids: list[uuid.UUID] = Field(default_factory=list)
     quantity: Annotated[int, Field(ge=1, le=99)]
-    special_instructions: Annotated[str, Field(max_length=500)] | None = None
+    special_instructions: Annotated[str, Field(max_length=140)] | None = None
+
+    @field_validator("special_instructions", mode="before")
+    @classmethod
+    def _normalize_special_instructions(cls, v: str | None) -> str | None:
+        """Trim before the length cap is checked; blank input becomes NULL."""
+        if v is None:
+            return None
+        v = v.strip()
+        return v or None
 
 
 class PlaceOrderRequest(BaseModel):
