@@ -176,6 +176,34 @@ export const productCreateSchema = z.object({
   allows_addons: z.boolean(),
 })
 
+// ── Product CSV Import ──────────────────────────────────────────────────────
+
+export const importRowErrorSchema = z.object({
+  row: z.number(),
+  field: z.string(),
+  message: z.string(),
+  raw: z.string(),
+})
+
+export const importPreviewResponseSchema = z.object({
+  valid_rows: z.number(),
+  products_to_create: z.number(),
+  duplicates_skipped: z.number(),
+  new_categories: z.array(z.string()),
+  existing_categories: z.array(z.string()),
+  errors: z.array(importRowErrorSchema),
+})
+
+export const importCommitResponseSchema = z.object({
+  categories_created: z.number(),
+  products_created: z.number(),
+  duplicates_skipped: z.number(),
+})
+
+export type ImportRowError = z.infer<typeof importRowErrorSchema>
+export type ImportPreviewResponse = z.infer<typeof importPreviewResponseSchema>
+export type ImportCommitResponse = z.infer<typeof importCommitResponseSchema>
+
 export const settingsUpdateSchema = z.object({
   enable_qr_payment: z.boolean().optional(), // soft-deprecated; ignored by backend
   waiter_can_accept_payment: z.boolean().optional(),

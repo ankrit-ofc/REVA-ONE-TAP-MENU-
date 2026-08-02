@@ -48,6 +48,7 @@ import CounterDisplay from '@/pages/staff/counter/CounterDisplay'
 import AdminDashboard from '@/pages/admin/Dashboard'
 import AdminCategories from '@/pages/admin/Categories'
 import AdminProducts from '@/pages/admin/Products'
+import AdminProductImport from '@/pages/admin/ProductImport'
 import AdminAddons from '@/pages/admin/Addons'
 import AdminStaff from '@/pages/admin/Staff'
 import AdminTables from '@/pages/admin/Tables'
@@ -119,6 +120,7 @@ export default function AppRoutes() {
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/categories" element={<AdminCategories />} />
           <Route path="/admin/products" element={<AdminProducts />} />
+          <Route path="/admin/products/import" element={<AdminProductImport />} />
           <Route path="/admin/addons" element={<AdminAddons />} />
           <Route path="/admin/staff" element={<AdminStaff />} />
           <Route path="/admin/tables" element={<AdminTables />} />

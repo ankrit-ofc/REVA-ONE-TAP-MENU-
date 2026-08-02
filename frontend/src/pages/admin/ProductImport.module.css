@@ -1,0 +1,167 @@
+.backLink {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+}
+
+.backLink:hover {
+  color: #7c3aed;
+}
+
+.intro {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0 0 1.25rem;
+  max-width: 60ch;
+}
+
+.dropzone {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 0.75rem;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.fileName {
+  font-size: 0.8125rem;
+  color: #374151;
+  font-weight: 600;
+}
+
+.summaryRow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+@media (max-width: 640px) {
+  .summaryRow {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.summaryTile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 0.875rem 1rem;
+}
+
+.summaryValue {
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.summaryLabel {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.categoriesRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.categoryGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.categoryGroupLabel {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #374151;
+}
+
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.chipNew {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.chipExisting {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #4338ca;
+  border: 1px solid #c7d2fe;
+}
+
+.errorTableWrap {
+  margin-bottom: 1.25rem;
+}
+
+.rawCell {
+  color: #6b7280;
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+}
+
+.confirmRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 0.875rem 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.blockedHint {
+  font-size: 0.8125rem;
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.readyHint {
+  font-size: 0.8125rem;
+  color: #374151;
+  font-weight: 600;
+}
+
+.successBanner {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #047857;
+  border-radius: 0.75rem;
+  padding: 0.875rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.successBanner a {
+  color: #047857;
+  text-decoration: underline;
+}

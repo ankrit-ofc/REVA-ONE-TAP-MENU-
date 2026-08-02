@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { Link } from 'react-router-dom'
 import {
   useListProductsQuery,
   useListCategoriesQuery,
@@ -522,6 +523,9 @@ export default function AdminProducts() {
             ⭐ Today&rsquo;s Special
           </button>
           <HeaderControls list={paged} placeholder="Search products…" />
+          <Link to="/admin/products/import" className={ps.btnSm} style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
+            Bulk Import
+          </Link>
           <button className={styles.btnAdd} onClick={() => setShowAdd(true)}>+ Add Product</button>
         </div>
       </div>
