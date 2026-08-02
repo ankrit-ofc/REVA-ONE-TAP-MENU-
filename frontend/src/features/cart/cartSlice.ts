@@ -33,8 +33,13 @@ export function makeCartKey(
   productId: string,
   variantId: string | null,
   addonIds: string[],
+  specialInstructions = '',
 ): string {
-  return [productId, variantId ?? '', ...[...addonIds].sort()].join('|')
+  // Note joins the identity tuple so two adds of the same product+variant+addons
+  // with different notes become distinct lines instead of merging and silently
+  // dropping one note. Editing a note later never recomputes an existing line's
+  // key (see updateSpecialInstructions) — only a fresh add can produce a match.
+  return [productId, variantId ?? '', ...[...addonIds].sort(), specialInstructions.trim()].join('|')
 }
 
 const cartSlice = createSlice({
@@ -72,6 +77,8 @@ const cartSlice = createSlice({
       state,
       action: PayloadAction<{ key: string; specialInstructions: string }>,
     ) {
+      // Intentionally does not recompute `key` — editing a note must never
+      // merge this line into another, even if the text becomes identical.
       const item = state.items.find((i) => i.key === action.payload.key)
       if (item) {
         item.specialInstructions = action.payload.specialInstructions
