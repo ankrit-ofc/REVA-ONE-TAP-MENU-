@@ -25,6 +25,8 @@ from app.schemas.menu import (
     CategoryCreate,
     CategoryResponse,
     CategoryUpdate,
+    ImportCommitResponse,
+    ImportPreviewResponse,
     ProductCreate,
     ProductResponse,
     ProductUpdate,
@@ -32,7 +34,7 @@ from app.schemas.menu import (
     VariantResponse,
     VariantUpdate,
 )
-from app.services import image_service, menu_service
+from app.services import image_service, menu_service, product_import_service
 
 router = APIRouter(prefix="/admin", tags=["admin-menu"])
 media_router = APIRouter(tags=["media"])
@@ -185,6 +187,38 @@ def upload_product_image(
 
     product = menu_service.set_product_image(db, restaurant_id, product_id, image_url, _user)
     return ProductResponse.model_validate(product)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Product CSV Import
+# ──────────────────────────────────────────────────────────────────────────────
+
+@router.post("/products/import/preview", response_model=ImportPreviewResponse)
+def preview_product_import(
+    restaurant_id: _RidDep,
+    _user: _AdminDep,
+    db: _DbDep,
+    file: UploadFile,
+) -> ImportPreviewResponse:
+    """Parses + validates the CSV and reports what a commit would do. Writes
+    nothing — safe to call repeatedly while the admin fixes their CSV."""
+    raw = file.file.read()
+    return product_import_service.preview(db, restaurant_id, raw)
+
+
+@router.post("/products/import/commit", response_model=ImportCommitResponse)
+def commit_product_import(
+    restaurant_id: _RidDep,
+    _user: _AdminDep,
+    db: _DbDep,
+    file: UploadFile,
+) -> ImportCommitResponse:
+    """Re-validates the CSV and, if it's error-free, creates the categories and
+    products in one transaction (all-or-nothing). Refuses (422) if any row has
+    an error — the admin must fix the CSV and re-preview first. Re-importing the
+    same CSV a second time is a no-op: every row is a duplicate-skip."""
+    raw = file.file.read()
+    return product_import_service.commit(db, restaurant_id, raw, _user)
 
 
 # ──────────────────────────────────────────────────────────────────────────────

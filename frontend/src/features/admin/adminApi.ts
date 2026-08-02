@@ -14,6 +14,8 @@ import {
   revenueTodaySchema,
   ordersThisWeekSchema,
   topProductsSchema,
+  importPreviewResponseSchema,
+  importCommitResponseSchema,
   type ActiveTable,
   type RevenueToday,
   type OrdersThisWeek,
@@ -34,6 +36,8 @@ import {
   type ProductViewImageResponse,
   type AnnotationResponse,
   type ProductView,
+  type ImportPreviewResponse,
+  type ImportCommitResponse,
 } from '@/lib/schemas/admin'
 
 /** Nutrition-tag fields the admin can set (create requires a label). */
@@ -146,6 +150,24 @@ export const adminApi = createApi({
       },
       transformResponse: parseWith(productResponseSchema),
       invalidatesTags: ['Product'],
+    }),
+    // ── Bulk CSV import ────────────────────────────────────────────────────
+    previewProductImport: builder.mutation<ImportPreviewResponse, File>({
+      query: (file) => {
+        const form = new FormData()
+        form.append('file', file)
+        return { method: 'POST', url: '/admin/products/import/preview', data: form }
+      },
+      transformResponse: parseWith(importPreviewResponseSchema),
+    }),
+    commitProductImport: builder.mutation<ImportCommitResponse, File>({
+      query: (file) => {
+        const form = new FormData()
+        form.append('file', file)
+        return { method: 'POST', url: '/admin/products/import/commit', data: form }
+      },
+      transformResponse: parseWith(importCommitResponseSchema),
+      invalidatesTags: ['Product', 'Category'],
     }),
     // ── AR / 3D model ──────────────────────────────────────────────────────
     getModelStatus: builder.query<ModelStatusResponse, string>({
@@ -410,6 +432,8 @@ export const {
   useUpdateProductMutation,
   useSoftDeleteProductMutation,
   useUploadProductImageMutation,
+  usePreviewProductImportMutation,
+  useCommitProductImportMutation,
   useGetModelStatusQuery,
   useUploadModelViewMutation,
   useGenerateModelMutation,

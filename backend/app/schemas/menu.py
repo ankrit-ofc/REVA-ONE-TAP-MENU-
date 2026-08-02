@@ -103,6 +103,33 @@ class ProductResponse(BaseModel):
 
 
 # ──────────────────────────────────────────────────────────────────────────────
+# Product CSV Import
+# ──────────────────────────────────────────────────────────────────────────────
+
+class ImportRowError(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    row: int
+    field: str
+    message: str
+    raw: str
+
+
+class ImportPreviewResponse(BaseModel):
+    valid_rows: int
+    products_to_create: int
+    duplicates_skipped: int
+    new_categories: list[str]
+    existing_categories: list[str]
+    errors: list[ImportRowError]
+
+
+class ImportCommitResponse(BaseModel):
+    categories_created: int
+    products_created: int
+    duplicates_skipped: int
+
+
+# ──────────────────────────────────────────────────────────────────────────────
 # Product Variant
 # ──────────────────────────────────────────────────────────────────────────────
 

@@ -197,9 +197,13 @@ def _descendant_ids(
     return result
 
 
-def create_category(
+def build_category(
     db: Session, restaurant_id: uuid.UUID, data: CategoryCreate, actor: User
 ) -> Category:
+    """Validate + construct a Category row and stage its audit log entry, but do
+    NOT commit. Lets callers that write several rows in one transaction (e.g. the
+    CSV importer) share a single commit/rollback boundary. `create_category` below
+    is the normal single-row path: build + commit + refresh."""
     if data.parent_id is not None:
         _get_active_parent_or_422(db, restaurant_id, data.parent_id)
         if _depth_of(db, restaurant_id, data.parent_id) >= _MAX_CATEGORY_DEPTH:
@@ -233,6 +237,13 @@ def create_category(
             "parent_id": str(cat.parent_id) if cat.parent_id else None,
         },
     )
+    return cat
+
+
+def create_category(
+    db: Session, restaurant_id: uuid.UUID, data: CategoryCreate, actor: User
+) -> Category:
+    cat = build_category(db, restaurant_id, data, actor)
     db.commit()
     db.refresh(cat)
     return cat
@@ -359,9 +370,12 @@ def soft_delete_category(
 # Products
 # ──────────────────────────────────────────────────────────────────────────────
 
-def create_product(
+def build_product(
     db: Session, restaurant_id: uuid.UUID, data: ProductCreate, actor: User
 ) -> Product:
+    """Validate + construct a Product row and stage its audit log entry, but do
+    NOT commit — see build_category. `create_product` below is the normal
+    single-row path: build + commit + refresh."""
     # Validate that the category belongs to this restaurant
     _get_category_or_404(db, restaurant_id, data.category_id)
 
@@ -400,6 +414,13 @@ def create_product(
             "allows_addons": product.allows_addons,
         },
     )
+    return product
+
+
+def create_product(
+    db: Session, restaurant_id: uuid.UUID, data: ProductCreate, actor: User
+) -> Product:
+    product = build_product(db, restaurant_id, data, actor)
     db.commit()
     db.refresh(product)
     return product
