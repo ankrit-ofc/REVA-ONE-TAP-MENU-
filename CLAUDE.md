@@ -16,11 +16,38 @@ The STAFF MOBILE APP is a separate repo (reva-tap-analysis) shipping via eas bui
 - NEVER git reset --hard on the server unless origin verifiably contains every server commit.
 - Backend is a BAKED Docker image: server code changes require `docker compose -f docker-compose.prod.yml up -d --build backend`, not just restart.
 - Caddy config is a bind mount (./caddy/prod:/etc/caddy): edit host file, then caddy reload.
+- TESTS SHARE A SESSION-SCOPED DATABASE WITH NO ROLLBACK (conftest.py fixtures
+  `database` and `seed` are scope="session"; the `client` fixture does not wrap
+  a transaction). Every row a test writes persists for the whole run, visible to
+  every later test, and files run in alphabetical order. Never assert on
+  full-list results for a seeded tenant — filter to the ID you created, or
+  create a fresh restaurant inside the test. Neither seed["a"] nor seed["b"] is
+  clean by the time later files run. This has already turned CI red once.
 
 ## Session rules
 - One task per session. Pending items listed at END, never acted on.
 - Raw command output as evidence for every claim.
 - Diffs before commit. No push/merge/deploy without explicit go.
+
+## Git hygiene — non-negotiable
+
+- **Identity must be configured before committing.** Every machine sets
+  `user.name`, `user.email`, and `user.useConfigOnly true` globally. Without
+  the last one git silently invents an address from username@hostname, which
+  maps to no GitHub account and renders as an unlinked commit. This has already
+  cost one cleanup session.
+- **Never `git init` on a copy of this repo.** Always `git clone`. An init
+  produces unrelated history and squashes real work into one opaque commit;
+  recovering requires reconstructing commits by tree.
+- **Never commit to local `main`.** Branch first:
+  `git switch -c <name> origin/main`. Always `git fetch origin` before branching.
+- **`main` is PR-only.** No direct push, no force-push, no deletion. The server
+  pulls `--ff-only`, so a rewritten `main` breaks deploys outright.
+- **One concern per PR.** A PR bundling migrations, services, and UI is not
+  reviewable and will be split.
+- **Before pushing, verify the author** with
+  `git log --format='%an <%ae>' origin/main..HEAD`. Wrong identity is cheap to
+  fix before a PR exists and irritating afterwards.
 
 ---
 
@@ -94,6 +121,13 @@ doesn't mention it.
 - RBAC is enforced on **every** protected endpoint via the shared dependency.
 - Hiding a button in the UI is never authorization.
 - Permission is checked **before** any state change or write.
+- **Widening an endpoint's RBAC requires auditing its response body.** Adding
+  roles to `require_role(...)` is not sufficient — every field the endpoint
+  returns must be checked against what the newly-admitted roles should see.
+  A WAITER-widened GET /admin/tables was caught returning signed
+  `qr_token`/`scan_url` in review, before it merged. Trim per-role, and add a
+  test asserting the field is absent for
+  the lower role, not merely that the status code is 200.
 
 ### Money
 - All monetary values use `NUMERIC`/`Decimal`. **`FLOAT` for money is forbidden.**
