@@ -98,26 +98,68 @@ def _menu_product(client, admin: str, *, name: str, price: str = "100.00") -> st
     return prod.json()["id"]
 
 
-def test_waiter_tables_zero_tables(client, seed):
-    admin = login(client, seed["a"])
-    # Tenant A starts with no tables in the seed fixture.
+def _fresh_tenant() -> dict:
+    """
+    A restaurant no other test writes to, for assertions on an empty/exact
+    table list. seed["a"]/seed["b"] are session-scoped and shared across the
+    whole test run (see conftest.py) — by the time this file runs, both
+    already have tables from test_menu_customization.py and
+    test_payments_and_transitions.py (confirmed: tenant A had 13, tenant B
+    had 2 "MC-" tables at this point in a full run). Mirrors the seed
+    fixture's own construction, scoped to a single test instead of the
+    session.
+    """
+    from app.core import security
+    from app.db.session import SessionLocal
+    from app.models.enums import Role
+    from app.models.restaurant import Restaurant, RestaurantSettings
+    from app.models.user import User
+
+    db = SessionLocal()
+    try:
+        slug = f"wtables-zero-{uuid.uuid4().hex[:10]}"
+        r = Restaurant(name="Tenant Zero-Tables", slug=slug, is_active=True)
+        db.add(r)
+        db.flush()
+        db.add(RestaurantSettings(restaurant_id=r.id))
+        email = f"admin-{uuid.uuid4().hex[:8]}@example.com"
+        user = User(
+            restaurant_id=r.id,
+            email=email,
+            password_hash=security.hash_password(TEST_PASSWORD),
+            role=Role.ADMIN,
+        )
+        db.add(user)
+        db.commit()
+        return {"restaurant_id": str(r.id), "slug": slug, "email": email}
+    finally:
+        db.close()
+
+
+def test_waiter_tables_zero_tables(client):
+    tenant = _fresh_tenant()
+    admin = login(client, tenant)
     r = client.get("/waiter/tables", headers=auth(admin))
     assert r.status_code == 200, r.text
     assert r.json() == []
 
 
 def test_waiter_tables_free_table_row(client, seed):
+    # seed["a"] is session-scoped and shared with other test files — filter to
+    # this test's own table by id (matching
+    # test_waiter_tables_occupied_items_and_cancelled_excluded below) rather
+    # than asserting on the full list.
     admin = login(client, seed["a"])
     rid = uuid.UUID(seed["a"]["restaurant_id"])
-    _add_table(rid, f"Free-{uuid.uuid4().hex[:6]}")
-    # Deactivated must not appear.
-    _add_table(rid, f"Dead-{uuid.uuid4().hex[:6]}", is_active=False)
+    free_id = _add_table(rid, f"Free-{uuid.uuid4().hex[:6]}")
+    dead_id = _add_table(rid, f"Dead-{uuid.uuid4().hex[:6]}", is_active=False)
 
     r = client.get("/waiter/tables", headers=auth(admin))
     assert r.status_code == 200, r.text
     rows = r.json()
-    assert len(rows) == 1
-    row = rows[0]
+    ids = {row["table_id"] for row in rows}
+    assert dead_id not in ids  # deactivated must not appear
+    row = next(t for t in rows if t["table_id"] == free_id)
     assert row["occupied"] is False
     assert row["order_count"] == 0
     assert row["items"] == []
