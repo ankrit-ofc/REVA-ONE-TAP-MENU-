@@ -8,6 +8,7 @@ import { makeCartKey } from '@/features/cart/cartSlice'
 import Button from '@/components/common/Button'
 import Loader from '@/components/common/Loader'
 import TableArView from '@/components/customer/TableArView'
+import ItemNoteEditor from '@/components/ui/ItemNoteEditor'
 import { formatPrice } from '@/lib/currency'
 import styles from './ProductDetail.module.css'
 
@@ -40,6 +41,8 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1)
   const [orderMode, setOrderMode] = useState<'idle' | 'qty'>('idle')
   const [validationError, setValidationError] = useState<string | null>(null)
+  const [specialInstructions, setSpecialInstructions] = useState('')
+  const [isEditingNote, setIsEditingNote] = useState(false)
 
   if (isLoading) return <Loader fullscreen message="Loading…" />
 
@@ -92,7 +95,7 @@ export default function ProductDetail() {
     }
 
     addItem({
-      key: makeCartKey(product!.id, variantId, addonIds),
+      key: makeCartKey(product!.id, variantId, addonIds, specialInstructions),
       productId: product!.id,
       productName: product!.name,
       variantId: variantId,
@@ -101,7 +104,7 @@ export default function ProductDetail() {
       addonNames: selectedAddons.map((a) => a.name),
       addonPriceTotal: addonTotal,
       quantity,
-      specialInstructions: '',
+      specialInstructions,
       unitPrice,
       taxRate: product!.tax_rate,
     })
@@ -175,6 +178,33 @@ export default function ProductDetail() {
           </section>
         )}
 
+        {/* Per-item note: preset chips + free text, same editor the cart uses. */}
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>Note</h2>
+          {specialInstructions && !isEditingNote && (
+            <p className={styles.notePreview}>&ldquo;{specialInstructions}&rdquo;</p>
+          )}
+          {!isEditingNote && (
+            <button
+              type="button"
+              className={styles.noteToggle}
+              onClick={() => setIsEditingNote(true)}
+            >
+              {specialInstructions ? 'Edit note' : '+ Add note'}
+            </button>
+          )}
+          {isEditingNote && (
+            <ItemNoteEditor
+              value={specialInstructions}
+              onCancel={() => setIsEditingNote(false)}
+              onSave={(note) => {
+                setSpecialInstructions(note)
+                setIsEditingNote(false)
+              }}
+            />
+          )}
+        </section>
+
         {validationError && (
           <p role="alert" className={styles.error}>
             {validationError}
@@ -188,7 +218,7 @@ export default function ProductDetail() {
               onClick={startOrder}
               style={{ width: '100%', fontSize: '1rem', padding: '0.9rem' }}
             >
-              Add to Order · {formatPrice(linePrice, CURRENCY)}
+              Add to cart · {formatPrice(linePrice, CURRENCY)}
             </Button>
           ) : (
             <div className={styles.orderRow}>
