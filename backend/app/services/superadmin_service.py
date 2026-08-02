@@ -8,10 +8,11 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.core import security
 from app.models.audit_log import AuditLog
-from app.models.enums import Role
+from app.models.enums import RestaurantPlan, Role
 from app.models.restaurant import Restaurant, RestaurantSettings
 from app.models.user import User
 from app.schemas.superadmin import AdminEmailUpdate, RestaurantCreate, RestaurantUpdate
+from app.services.plan_features import apply_plan_preset
 
 
 def _set_tenant_guc(db: Session, restaurant_id: uuid.UUID) -> None:
@@ -119,6 +120,13 @@ def create_restaurant(
 def update_restaurant(
     db: Session, restaurant_id: uuid.UUID, data: RestaurantUpdate, actor: User
 ) -> Restaurant:
+    """Update restaurant platform fields.
+
+    Precedence when `plan` and bools are in the same request:
+      1) set plan + write its four preset booleans (apply_plan_preset)
+      2) apply any explicit bool overrides on top (explicit wins)
+    Reads always use the STORED columns — plan is never recomputed on read.
+    """
     restaurant = get_restaurant(db, restaurant_id)
 
     previous: dict[str, object] = {}
@@ -132,6 +140,29 @@ def update_restaurant(
         previous["is_active"] = restaurant.is_active
         changed["is_active"] = data.is_active
         restaurant.is_active = data.is_active
+
+    # 1) Plan assignment writes presets first.
+    if data.plan is not None:
+        new_plan = RestaurantPlan(data.plan)
+        if new_plan != restaurant.plan:
+            previous["plan"] = restaurant.plan.value
+            changed["plan"] = new_plan.value
+            restaurant.plan = new_plan
+        preset = apply_plan_preset(new_plan)
+        for key, value in preset.items():
+            old = getattr(restaurant, key)
+            if old != value:
+                previous.setdefault(key, old)
+                changed[key] = value
+                setattr(restaurant, key, value)
+
+    # 2) Explicit bool overrides win over the preset within this request.
+    for key in ("order_enabled", "call_waiter_enabled", "ar_enabled", "qr_pay_enabled"):
+        value = getattr(data, key)
+        if value is not None and getattr(restaurant, key) != value:
+            previous.setdefault(key, getattr(restaurant, key))
+            changed[key] = value
+            setattr(restaurant, key, value)
 
     if changed:
         _set_tenant_guc(db, restaurant_id)

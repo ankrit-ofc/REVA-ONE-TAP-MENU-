@@ -6,6 +6,7 @@ import {
   useUpdateAdminEmailMutation,
 } from '@/features/superadmin/superadminApi'
 import type { RestaurantResponse } from '@/lib/schemas/superadmin'
+import { planPreset } from '@/lib/schemas/superadmin'
 import EntityCard from '@/components/admin/EntityCard'
 import IconAction from '@/components/admin/IconAction'
 import ViewModal from '@/components/admin/ViewModal'
@@ -213,9 +214,38 @@ function EditRestaurantModal({ restaurant, onClose }: { restaurant: RestaurantRe
   const [name, setName] = useState(restaurant.name)
   const [nameError, setNameError] = useState<string | null>(null)
   const [nameSaved, setNameSaved] = useState(false)
+  const [plan, setPlan] = useState(restaurant.plan)
+  const [orderEnabled, setOrderEnabled] = useState(restaurant.order_enabled)
+  const [callWaiterEnabled, setCallWaiterEnabled] = useState(restaurant.call_waiter_enabled)
+  const [arEnabled, setArEnabled] = useState(restaurant.ar_enabled)
+  const [qrPayEnabled, setQrPayEnabled] = useState(restaurant.qr_pay_enabled)
+  const [planError, setPlanError] = useState<string | null>(null)
+  const [planSaved, setPlanSaved] = useState(false)
   useOnEscape(onClose)
 
   const nameDirty = name.trim() !== restaurant.name
+  const preset = planPreset(plan)
+  const differsFromPreset =
+    orderEnabled !== preset.order_enabled ||
+    callWaiterEnabled !== preset.call_waiter_enabled ||
+    arEnabled !== preset.ar_enabled ||
+    qrPayEnabled !== preset.qr_pay_enabled
+  const planDirty =
+    plan !== restaurant.plan ||
+    orderEnabled !== restaurant.order_enabled ||
+    callWaiterEnabled !== restaurant.call_waiter_enabled ||
+    arEnabled !== restaurant.ar_enabled ||
+    qrPayEnabled !== restaurant.qr_pay_enabled
+
+  const applyPlanLocally = (next: RestaurantResponse['plan']) => {
+    const p = planPreset(next)
+    setPlan(next)
+    setOrderEnabled(p.order_enabled)
+    setCallWaiterEnabled(p.call_waiter_enabled)
+    setArEnabled(p.ar_enabled)
+    setQrPayEnabled(p.qr_pay_enabled)
+    setPlanSaved(false)
+  }
 
   const saveName = async () => {
     setNameError(null)
@@ -232,6 +262,25 @@ function EditRestaurantModal({ restaurant, onClose }: { restaurant: RestaurantRe
     }
   }
 
+  const savePlan = async () => {
+    setPlanError(null)
+    setPlanSaved(false)
+    try {
+      // Send plan + explicit bools. Backend: plan preset first, then overrides.
+      await updateRestaurant({
+        id: restaurant.id,
+        plan,
+        order_enabled: orderEnabled,
+        call_waiter_enabled: callWaiterEnabled,
+        ar_enabled: arEnabled,
+        qr_pay_enabled: qrPayEnabled,
+      }).unwrap()
+      setPlanSaved(true)
+    } catch (e) {
+      setPlanError(errDetail(e))
+    }
+  }
+
   const setActive = async (active: boolean) => {
     await updateRestaurant({ id: restaurant.id, is_active: active })
     onClose()
@@ -245,7 +294,6 @@ function EditRestaurantModal({ restaurant, onClose }: { restaurant: RestaurantRe
           <button className={styles.modalClose} type="button" onClick={onClose}>×</button>
         </div>
 
-        {/* Name (editable) */}
         <div className={styles.field}>
           <span className={styles.fieldLabel}>Restaurant name</span>
           <div className={styles.inlineRow}>
@@ -268,14 +316,77 @@ function EditRestaurantModal({ restaurant, onClose }: { restaurant: RestaurantRe
           {nameSaved && <span className={styles.savedNote}>Saved ✓</span>}
         </div>
 
-        {/* Restaurant Identifier (read-only, permanent) */}
         <div className={styles.field}>
           <span className={styles.fieldLabel}>Restaurant Identifier</span>
           <div className={styles.readonly}>{restaurant.slug}</div>
           <span className={styles.hint}>Permanent login key — can’t be changed.</span>
         </div>
 
-        {/* Admin email(s) */}
+        <div className={styles.field}>
+          <span className={styles.fieldLabel}>Plan (applies feature preset)</span>
+          <select
+            className={styles.formInput}
+            value={plan}
+            onChange={(e) => applyPlanLocally(e.target.value as RestaurantResponse['plan'])}
+          >
+            <option value="basic">basic — menu only</option>
+            <option value="starter">starter — order + call waiter</option>
+            <option value="custom">custom — all features on</option>
+          </select>
+          <div className={styles.statusRow} style={{ marginTop: '0.75rem', flexDirection: 'column', alignItems: 'flex-start', gap: '0.5rem' }}>
+            <label>
+              <input
+                type="checkbox"
+                checked={orderEnabled}
+                onChange={(e) => { setOrderEnabled(e.target.checked); setPlanSaved(false) }}
+              />{' '}
+              Order enabled
+              {orderEnabled !== preset.order_enabled && <span className={styles.hint}> (differs from {plan} preset)</span>}
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={callWaiterEnabled}
+                onChange={(e) => { setCallWaiterEnabled(e.target.checked); setPlanSaved(false) }}
+              />{' '}
+              Call waiter enabled
+              {callWaiterEnabled !== preset.call_waiter_enabled && <span className={styles.hint}> (differs from {plan} preset)</span>}
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={arEnabled}
+                onChange={(e) => { setArEnabled(e.target.checked); setPlanSaved(false) }}
+              />{' '}
+              AR enabled
+              {arEnabled !== preset.ar_enabled && <span className={styles.hint}> (differs from {plan} preset)</span>}
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={qrPayEnabled}
+                onChange={(e) => { setQrPayEnabled(e.target.checked); setPlanSaved(false) }}
+              />{' '}
+              Online QR pay enabled
+              {qrPayEnabled !== preset.qr_pay_enabled && <span className={styles.hint}> (differs from {plan} preset)</span>}
+            </label>
+          </div>
+          {differsFromPreset && (
+            <span className={styles.hint}>One or more switches differ from the {plan} preset — overrides persist.</span>
+          )}
+          <div className={styles.inlineRow} style={{ marginTop: '0.75rem' }}>
+            <button
+              className={styles.btnSubmit}
+              disabled={isLoading || !planDirty}
+              onClick={() => void savePlan()}
+            >
+              Save plan &amp; features
+            </button>
+          </div>
+          {planError && <span className={styles.formError}>{planError}</span>}
+          {planSaved && <span className={styles.savedNote}>Plan saved ✓</span>}
+        </div>
+
         {restaurant.admins.length === 0 ? (
           <div className={styles.field}>
             <span className={styles.fieldLabel}>Admin email</span>
@@ -287,7 +398,6 @@ function EditRestaurantModal({ restaurant, onClose }: { restaurant: RestaurantRe
           ))
         )}
 
-        {/* Status */}
         <div className={styles.field}>
           <span className={styles.fieldLabel}>Status</span>
           <div className={styles.statusRow}>
@@ -347,6 +457,7 @@ export default function SuperadminRestaurants() {
           rows={[
             { label: 'Name', value: viewing.name },
             { label: 'Restaurant Identifier', value: viewing.slug },
+            { label: 'Plan', value: viewing.plan },
             { label: 'Admin(s)', value: adminsText(viewing) },
             { label: 'Status', value: viewing.is_active ? 'Active' : 'Inactive' },
             { label: 'Created', value: new Date(viewing.created_at).toLocaleDateString() },
@@ -372,7 +483,7 @@ export default function SuperadminRestaurants() {
             showImage={false}
             title={r.name}
             subtitle={r.slug}
-            status={{ label: r.is_active ? 'Active' : 'Inactive', tone: r.is_active ? 'ok' : 'muted' }}
+            status={{ label: `${r.plan} · ${r.is_active ? 'Active' : 'Inactive'}`, tone: r.is_active ? 'ok' : 'muted' }}
             onView={() => setViewing(r)}
             onEdit={() => setEditing(r)}
           />
@@ -388,6 +499,7 @@ export default function SuperadminRestaurants() {
             <tr>
               <th>Name</th>
               <th>Identifier</th>
+              <th>Plan</th>
               <th>Admin(s)</th>
               <th>Status</th>
               <th>Actions</th>
@@ -398,6 +510,7 @@ export default function SuperadminRestaurants() {
               <tr key={r.id}>
                 <td>{r.name}</td>
                 <td><span className={styles.slugChip}>{r.slug}</span></td>
+                <td>{r.plan}</td>
                 <td>
                   {r.admins.length === 0 ? (
                     <span className={styles.noAdmin}>No admin</span>

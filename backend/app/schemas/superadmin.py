@@ -4,32 +4,44 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
+
+from app.models.enums import RestaurantPlan
+
+RestaurantPlanLiteral = Literal["basic", "starter", "custom"]
 
 
 class RestaurantCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     name: Annotated[str, Field(min_length=1, max_length=255)]
-    # slug must be lowercase alphanumeric + hyphens only (URL-safe)
     slug: Annotated[str, Field(min_length=1, max_length=100, pattern=r'^[a-z0-9-]+$')]
     admin_email: Annotated[str, Field(min_length=1, max_length=255)]
     admin_password: Annotated[str, Field(min_length=8, max_length=100)]
 
 
 class RestaurantUpdate(BaseModel):
+    """Partial update. Precedence when both plan and bools are sent:
+    1) apply plan + its four preset bools
+    2) apply any explicit bool overrides on top (explicit wins).
+    """
+
     model_config = ConfigDict(extra="forbid")
 
     name: Annotated[str, Field(min_length=1, max_length=255)] | None = None
     is_active: bool | None = None
+    plan: RestaurantPlanLiteral | None = None
+    order_enabled: bool | None = None
+    call_waiter_enabled: bool | None = None
+    ar_enabled: bool | None = None
+    qr_pay_enabled: bool | None = None
 
 
 class AdminEmailUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    # Plain constrained str (no EmailStr — that would add a dependency).
     email: Annotated[str, Field(min_length=1, max_length=255)]
 
 
@@ -39,19 +51,22 @@ class AdminInfo(BaseModel):
 
 
 class RestaurantResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, use_enum_values=True)
 
     id: uuid.UUID
     name: str
     slug: str
     is_active: bool
+    plan: RestaurantPlan
+    order_enabled: bool
+    call_waiter_enabled: bool
+    ar_enabled: bool
+    qr_pay_enabled: bool
     created_at: datetime
     updated_at: datetime
     admins: list[AdminInfo] = []
 
 
 class RestaurantCreateResponse(BaseModel):
-    """Returned when creating a new restaurant; includes the admin email for handoff."""
-
     restaurant: RestaurantResponse
     admin_email: str
