@@ -215,7 +215,7 @@ def create_payment_intent(
     """
     Customer: start a QR gateway payment for an invoice.
     Returns gateway-specific parameters (signed form fields / payment URL / QR params).
-    Requires restaurant setting enable_qr_payment=true.
+    Requires restaurants.qr_pay_enabled=true.
     """
     gateway = _gateway_for(body.gateway)
     try:

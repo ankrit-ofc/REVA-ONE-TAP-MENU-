@@ -58,11 +58,16 @@ export const categoryPublicSchema: z.ZodType<CategoryPublic> = z.lazy(() =>
 )
 
 // GET /menu payload: per-restaurant hero banner (null → stock image),
-// today's specials, and the category tree.
+// today's specials, and the category tree. Feature flags are COMPUTED
+// server-side; optional for backward compat (missing → treat as enabled).
 export const menuResponseSchema = z.object({
   banner_image_url: z.string().nullable(),
   specials: z.array(productPublicSchema),
   categories: z.array(categoryPublicSchema),
+  order_enabled: z.boolean().optional(),
+  call_waiter_enabled: z.boolean().optional(),
+  ar_enabled: z.boolean().optional(),
+  qr_pay_enabled: z.boolean().optional(),
 })
 
 export type MenuResponse = z.infer<typeof menuResponseSchema>

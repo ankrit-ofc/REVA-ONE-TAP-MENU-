@@ -33,7 +33,7 @@ const CURRENCY = 'NPR'
 export default function BillRequest() {
   const navigate = useNavigate()
   const dispatch = useDispatch<AppDispatch>()
-  const { sessionToken } = useSession()
+  const { sessionToken, qrPaymentEnabled } = useSession()
 
   const [paid, setPaid] = useState(false)
   const [paidInfo, setPaidInfo] = useState<{ invoiceNumber?: string; total?: number }>({})
@@ -181,7 +181,7 @@ export default function BillRequest() {
           />
 
           <div className={styles.status}>
-            {invoice.status === 'PENDING_PAYMENT' && (
+            {invoice.status === 'PENDING_PAYMENT' && qrPaymentEnabled && (
               <div className={styles.paymentOptions}>
                 <p className={styles.payLabel}>Pay with:</p>
                 <div className={styles.gatewayBtns}>
@@ -214,6 +214,11 @@ export default function BillRequest() {
                   Or pay cash / card at the counter.
                 </p>
               </div>
+            )}
+            {invoice.status === 'PENDING_PAYMENT' && !qrPaymentEnabled && (
+              <p className={styles.cashNote}>
+                Pay cash / card at the counter — online payment is not available.
+              </p>
             )}
             {(invoice.status === 'DRAFT' || invoice.status === 'FAILED') && (
               <p className={styles.waitingText}>

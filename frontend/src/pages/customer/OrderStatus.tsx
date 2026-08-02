@@ -19,7 +19,7 @@ const CURRENCY = 'NPR'
 export default function OrderStatus() {
   const navigate = useNavigate()
   const dispatch = useDispatch<AppDispatch>()
-  const { sessionToken } = useSession()
+  const { sessionToken, orderEnabled } = useSession()
 
   const { data: order, isLoading, isError } = useGetCurrentOrderQuery(undefined, {
     pollingInterval: 30_000,
@@ -114,6 +114,7 @@ export default function OrderStatus() {
                 <p className={styles.totalNote}>* Estimated — final total confirmed at billing.</p>
               </div>
             )}
+            {orderEnabled && (
             <Button
               variant="secondary"
               onClick={() => navigate('/menu')}
@@ -121,6 +122,8 @@ export default function OrderStatus() {
             >
               + Add More Items
             </Button>
+            )}
+            {orderEnabled && (
             <Button
               onClick={() => void handleRequestBill()}
               style={{ width: '100%' }}
@@ -128,6 +131,7 @@ export default function OrderStatus() {
             >
               {isRequestingBill ? 'Requesting…' : 'Request Bill'}
             </Button>
+            )}
           </>
         )}
         {order.status === 'MEAL_FINISHED' && (

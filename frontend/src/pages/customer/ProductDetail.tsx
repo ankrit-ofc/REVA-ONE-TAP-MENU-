@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 import { useMenu } from '@/features/menu/useMenu'
 import { useCart } from '@/features/cart/useCart'
+import { useSession } from '@/features/session/useSession'
 import { makeCartKey } from '@/features/cart/cartSlice'
 import Button from '@/components/common/Button'
 import Loader from '@/components/common/Loader'
@@ -30,6 +31,7 @@ export default function ProductDetail() {
   const navigate = useNavigate()
   const { findProduct, isLoading } = useMenu()
   const { addItem } = useCart()
+  const { orderEnabled, arEnabled } = useSession()
 
   const product = productId ? findProduct(productId) : undefined
 
@@ -181,7 +183,7 @@ export default function ProductDetail() {
 
         {/* Actions: order, then view in AR */}
         <div className={styles.actions}>
-          {orderMode === 'idle' ? (
+          {orderEnabled && (orderMode === 'idle' ? (
             <Button
               onClick={startOrder}
               style={{ width: '100%', fontSize: '1rem', padding: '0.9rem' }}
@@ -215,11 +217,11 @@ export default function ProductDetail() {
                 ✓
               </button>
             </div>
-          )}
+          ))}
 
           {/* Per-dish AR — only for products with a published model. Hidden-preloaded so
               the button launches AR on the second, real tap. */}
-          {product.model_glb_url && (
+          {arEnabled && product.model_glb_url && (
             <TableArView
               src={product.model_glb_url}
               iosSrc={product.model_usdz_url ?? undefined}

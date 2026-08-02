@@ -9,7 +9,7 @@ record_counter_payment  — CASH / CARD / COUNTER_WALLET collected at the counte
                           gateway_transaction_id).
 
 create_payment_intent   — Initiate a QR gateway payment (customer endpoint).
-                          Validates enable_qr_payment, transitions DRAFT →
+                          Validates restaurants.qr_pay_enabled, transitions DRAFT →
                           PENDING_PAYMENT, then calls gateway.create_intent().
 
 handle_webhook          — Called from the webhook endpoints after signature
@@ -47,7 +47,7 @@ from app.models.enums import (
 )
 from app.models.invoice import Invoice
 from app.models.order import Order, OrderItem
-from app.models.restaurant import RestaurantSettings
+from app.models.restaurant import Restaurant, RestaurantSettings
 from app.models.table import TableSession
 from app.models.user import User
 from app.payments.base import PaymentGateway
@@ -608,12 +608,16 @@ def create_payment_intent(
     Validates QR payment is enabled, verifies the invoice belongs to the
     session's table, transitions to PENDING_PAYMENT, then calls the gateway.
     """
-    settings = _load_settings(db, restaurant_id)
-    if settings is None or not settings.enable_qr_payment:
+    restaurant = db.get(Restaurant, restaurant_id)
+    if restaurant is None:
+        raise InvoiceError("Restaurant not found", status_code=404)
+    if not restaurant.qr_pay_enabled:
         raise InvoiceError(
             "QR gateway payment is not enabled for this restaurant",
             status_code=403,
         )
+
+    settings = _load_settings(db, restaurant_id)
 
     # Lock invoice
     invoice = db.execute(

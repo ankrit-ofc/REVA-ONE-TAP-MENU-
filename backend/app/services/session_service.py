@@ -66,5 +66,14 @@ def call_waiter(db: DBSession, session: TableSession) -> str:
     works any time the session is valid. Returns the table name so the caller can
     echo it back to the customer.
     """
+    from app.models.restaurant import Restaurant
+    from app.services.order_state import OrderError
+    from app.services.plan_features import require_call_waiter_enabled
+
+    restaurant = db.get(Restaurant, session.restaurant_id)
+    if restaurant is None:
+        raise OrderError("Restaurant not found", status_code=404)
+    require_call_waiter_enabled(restaurant)
+
     table_name, _call = waiter_call_service.create_call(db, session)
     return table_name

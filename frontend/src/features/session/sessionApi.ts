@@ -21,6 +21,10 @@ export const sessionApi = createApi({
               tableName: data.table_name,
               restaurantName: data.restaurant_name,
               expiresAt: data.expires_at,
+              orderEnabled: data.order_enabled,
+              callWaiterEnabled: data.call_waiter_enabled,
+              arEnabled: data.ar_enabled,
+              qrPaymentEnabled: data.qr_pay_enabled,
             }),
           )
         } catch { /* handled by caller */ }

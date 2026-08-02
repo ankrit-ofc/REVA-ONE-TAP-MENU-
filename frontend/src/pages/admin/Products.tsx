@@ -14,6 +14,7 @@ import {
   useListProductAddonsQuery,
   useMapAddonMutation,
   useUnmapAddonMutation,
+  useGetSettingsQuery,
 } from '@/features/admin/adminApi'
 import type { ProductResponse, VariantResponse, FoodType } from '@/lib/schemas/admin'
 import EntityCard from '@/components/admin/EntityCard'
@@ -187,6 +188,8 @@ interface ProductModalProps {
 
 function ProductModal({ product, categories, onClose }: ProductModalProps) {
   const isEdit = product != null
+  const { data: settings } = useGetSettingsQuery()
+  const planAllowsAr = settings?.ar_enabled !== false
   const [createProduct, { isLoading: creating }] = useCreateProductMutation()
   const [updateProduct, { isLoading: updating }] = useUpdateProductMutation()
   const [createVariant] = useCreateVariantMutation()
@@ -417,8 +420,15 @@ function ProductModal({ product, categories, onClose }: ProductModalProps) {
             ))}
 
           {/* 3D model (AR) — edit mode only; needs a saved product to attach views to. */}
-          {isEdit
+          {isEdit && planAllowsAr
             ? <Model3DForm productId={product.id} />
+            : isEdit && !planAllowsAr
+            ? (
+              <div className={ps.subSection}>
+                <span className={ps.subTitle}>3D Model (AR)</span>
+                <span className={ps.muted}>AR is not included in this restaurant&apos;s plan.</span>
+              </div>
+            )
             : (
               <div className={ps.subSection}>
                 <span className={ps.subTitle}>3D Model (AR)</span>

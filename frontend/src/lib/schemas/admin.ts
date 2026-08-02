@@ -133,7 +133,6 @@ export type ModelStatusResponse = z.infer<typeof modelStatusResponseSchema>
 export const settingsResponseSchema = z.object({
   id: z.string().uuid(),
   restaurant_id: z.string().uuid(),
-  enable_qr_payment: z.boolean(),
   waiter_can_accept_payment: z.boolean(),
   allow_order_reopen: z.boolean(),
   require_order_approval: z.boolean(),
@@ -153,6 +152,9 @@ export const settingsResponseSchema = z.object({
   banner_image_url: z.string().nullable(),
   // Payment QR shown at billing; set only via the payment-qr upload endpoint.
   payment_qr_url: z.string().nullable(),
+  // Read-only STORED restaurants flags (not editable on Settings).
+  ar_enabled: z.boolean().optional(),
+  qr_pay_enabled: z.boolean().optional(),
 })
 
 export const categoryCreateSchema = z.object({
@@ -175,7 +177,7 @@ export const productCreateSchema = z.object({
 })
 
 export const settingsUpdateSchema = z.object({
-  enable_qr_payment: z.boolean().optional(),
+  enable_qr_payment: z.boolean().optional(), // soft-deprecated; ignored by backend
   waiter_can_accept_payment: z.boolean().optional(),
   allow_order_reopen: z.boolean().optional(),
   require_order_approval: z.boolean().optional(),
