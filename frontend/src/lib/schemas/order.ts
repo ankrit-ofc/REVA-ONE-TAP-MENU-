@@ -42,7 +42,7 @@ export const orderItemCreateSchema = z.object({
   variant_id: z.string().uuid().nullable().optional(),
   addon_ids: z.array(z.string().uuid()).default([]),
   quantity: z.number().int().min(1).max(99),
-  special_instructions: z.string().max(500).nullable().optional(),
+  special_instructions: z.string().max(140).nullable().optional(),
 })
 
 export const placeOrderRequestSchema = z.object({

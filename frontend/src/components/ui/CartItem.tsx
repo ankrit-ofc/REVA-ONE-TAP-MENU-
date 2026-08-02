@@ -1,14 +1,18 @@
+import { useState } from 'react'
 import type { CartItem as CartItemType } from '@/features/cart/cartSlice'
 import { formatPrice } from '@/lib/currency'
+import ItemNoteEditor from './ItemNoteEditor'
 import styles from './CartItem.module.css'
 
 interface Props {
   item: CartItemType
   currency: string
   onQuantityChange: (key: string, qty: number) => void
+  onNoteChange: (key: string, note: string) => void
 }
 
-export default function CartItem({ item, currency, onQuantityChange }: Props) {
+export default function CartItem({ item, currency, onQuantityChange, onNoteChange }: Props) {
+  const [isEditingNote, setIsEditingNote] = useState(false)
   const linePrice = (item.unitPrice + item.addonPriceTotal) * item.quantity
 
   return (
@@ -21,10 +25,29 @@ export default function CartItem({ item, currency, onQuantityChange }: Props) {
         {item.addonNames.length > 0 && (
           <div className={styles.addons}>+ {item.addonNames.join(', ')}</div>
         )}
-        {item.specialInstructions && (
+        {item.specialInstructions && !isEditingNote && (
           <div className={styles.instructions}>
             &ldquo;{item.specialInstructions}&rdquo;
           </div>
+        )}
+        {!isEditingNote && (
+          <button
+            type="button"
+            className={styles.noteToggle}
+            onClick={() => setIsEditingNote(true)}
+          >
+            {item.specialInstructions ? 'Edit note' : '+ Add note'}
+          </button>
+        )}
+        {isEditingNote && (
+          <ItemNoteEditor
+            value={item.specialInstructions}
+            onCancel={() => setIsEditingNote(false)}
+            onSave={(note) => {
+              onNoteChange(item.key, note)
+              setIsEditingNote(false)
+            }}
+          />
         )}
       </div>
 
