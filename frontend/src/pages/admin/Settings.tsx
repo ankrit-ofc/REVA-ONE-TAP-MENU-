@@ -37,7 +37,10 @@ function geoMessage(e: unknown): string {
   return 'Could not get your location.'
 }
 
-type SettingsForm = Omit<SettingsResponse, 'id' | 'restaurant_id'>
+type SettingsForm = Omit<
+  SettingsResponse,
+  'id' | 'restaurant_id' | 'ar_enabled' | 'qr_pay_enabled'
+>
 
 const BANNER_MAX_MB = 25
 const BANNER_TYPES = ['image/jpeg', 'image/png', 'image/webp']
@@ -195,7 +198,6 @@ export default function AdminSettings() {
   useEffect(() => {
     if (settings) {
       setForm({
-        enable_qr_payment: settings.enable_qr_payment,
         waiter_can_accept_payment: settings.waiter_can_accept_payment,
         allow_order_reopen: settings.allow_order_reopen,
         require_order_approval: settings.require_order_approval,
@@ -249,7 +251,6 @@ export default function AdminSettings() {
 
     // Convert nulls → undefined for the optional update fields.
     const payload: SettingsUpdate = {
-      enable_qr_payment: form.enable_qr_payment,
       waiter_can_accept_payment: form.waiter_can_accept_payment,
       allow_order_reopen: form.allow_order_reopen,
       require_order_approval: form.require_order_approval,
@@ -284,14 +285,16 @@ export default function AdminSettings() {
       <form onSubmit={(e) => void handleSubmit(e)} className={styles.form}>
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>Payments</h2>
-          <label className={styles.toggle}>
-            <span className={styles.toggleLabel}>Enable QR Payment (gateway)</span>
-            <input
-              type="checkbox"
-              checked={form.enable_qr_payment}
-              onChange={(e) => setForm({ ...form, enable_qr_payment: e.target.checked })}
-            />
-          </label>
+          {settings?.qr_pay_enabled === false && (
+            <p className={styles.hint}>
+              Online QR payment is off for this restaurant (set by platform / plan).
+            </p>
+          )}
+          {settings?.qr_pay_enabled === true && (
+            <p className={styles.hint}>
+              Online QR payment is on (platform-controlled). Guests can pay via eSewa / Khalti / Fonepay when an invoice is pending.
+            </p>
+          )}
           <label className={styles.toggle}>
             <span className={styles.toggleLabel}>Waiter can accept payment</span>
             <input

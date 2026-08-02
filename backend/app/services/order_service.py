@@ -29,7 +29,7 @@ from app.models.audit_log import AuditLog
 from app.models.enums import OrderItemStatus, OrderStatus, Role
 from app.models.order import Order, OrderItem, OrderItemAddon
 from app.models.product import Product, ProductAddonMapping, ProductVariant
-from app.models.restaurant import RestaurantSettings
+from app.models.restaurant import Restaurant, RestaurantSettings
 from app.models.table import Table, TableSession
 from app.realtime.events import (
     BillRequestedEvent,
@@ -47,6 +47,7 @@ from app.services.order_state import (
     assert_valid_item_transition,
     assert_valid_order_transition,
 )
+from app.services.plan_features import require_order_enabled
 
 
 # ── Internal helpers ──────────────────────────────────────────────────────────
@@ -82,6 +83,11 @@ def place_or_append(
     """
     restaurant_id: uuid.UUID = session.restaurant_id
     table_id: uuid.UUID = session.table_id
+
+    restaurant = db.get(Restaurant, restaurant_id)
+    if restaurant is None:
+        raise OrderError("Restaurant not found", status_code=404)
+    require_order_enabled(restaurant)
 
     # 1. Lock the table row — prevents concurrent "create first order" race.
     table = db.execute(
@@ -394,6 +400,11 @@ def request_bill(db: Session, session: TableSession) -> Order:
     unlocks staff's "move to billing" — see transition_order) and emits a
     `bill.requested` event to waiter + counter. Idempotent; 404 if no live order.
     """
+    restaurant = db.get(Restaurant, session.restaurant_id)
+    if restaurant is None:
+        raise OrderError("Restaurant not found", status_code=404)
+    require_order_enabled(restaurant)
+
     order = db.execute(
         select(Order).where(
             Order.table_id == session.table_id,

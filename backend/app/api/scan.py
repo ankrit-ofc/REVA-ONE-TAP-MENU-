@@ -14,6 +14,7 @@ from app.models.restaurant import Restaurant, RestaurantSettings
 from app.models.table import Table
 from app.schemas.session import ScanRequest, SessionResponse
 from app.services import session_service
+from app.services.plan_features import stored_features
 
 router = APIRouter(tags=["scan"])
 
@@ -94,6 +95,7 @@ def scan_qr(
     # transaction (committing detaches the ORM objects).
     restaurant_name = restaurant.name
     table_name = table.name
+    features = stored_features(restaurant)
 
     raw_token, session = session_service.create_or_reuse_session(db, table)
 
@@ -102,4 +104,8 @@ def scan_qr(
         table_name=table_name,
         restaurant_name=restaurant_name,
         expires_at=session.expires_at,
+        order_enabled=features.order_enabled,
+        call_waiter_enabled=features.call_waiter_enabled,
+        ar_enabled=features.ar_enabled,
+        qr_pay_enabled=features.qr_pay_enabled,
     )

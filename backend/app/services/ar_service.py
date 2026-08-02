@@ -311,6 +311,14 @@ def set_published(
     product = _get_product_or_404(db, restaurant_id, product_id)
 
     if published:
+        from app.models.restaurant import Restaurant
+        from app.services.plan_features import require_ar_enabled
+
+        restaurant = db.get(Restaurant, restaurant_id)
+        if restaurant is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Restaurant not found")
+        require_ar_enabled(restaurant)
+
         if product.model_status != ArModelStatus.READY or not product.model_glb_url:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,

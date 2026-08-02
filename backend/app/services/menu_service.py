@@ -20,7 +20,7 @@ from sqlalchemy.orm import Session, selectinload
 from app.models.audit_log import AuditLog
 from app.models.category import Category
 from app.models.product import Product, ProductAddon, ProductAddonMapping, ProductVariant
-from app.models.restaurant import RestaurantSettings
+from app.models.restaurant import Restaurant, RestaurantSettings
 from app.models.user import User
 from app.schemas.menu import (
     AddonCreate,
@@ -39,6 +39,7 @@ from app.schemas.menu import (
     VariantPublic,
     VariantUpdate,
 )
+from app.services.plan_features import stored_features
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -840,7 +841,7 @@ def get_or_create_settings(db: Session, restaurant_id: uuid.UUID) -> RestaurantS
 
 
 _SETTINGS_FIELDS = (
-    "enable_qr_payment",
+    # enable_qr_payment intentionally omitted — soft-deprecated; ignored if sent.
     "waiter_can_accept_payment",
     "allow_order_reopen",
     "require_order_approval",
@@ -1006,7 +1007,7 @@ def remove_payment_qr(
 # Customer-facing menu read
 # ──────────────────────────────────────────────────────────────────────────────
 
-def _product_public(p: Product) -> ProductPublic:
+def _product_public(p: Product, *, ar_allowed: bool = True) -> ProductPublic:
     """Customer-facing view of one product, with active variants/addons."""
     variants = [
         VariantPublic(id=v.id, name=v.name, price=v.price)
@@ -1018,8 +1019,9 @@ def _product_public(p: Product) -> ProductPublic:
         for m in p.addon_mappings
         if m.addon.is_active
     ]
-    # Only expose AR model URLs for a PUBLISHED model (publish requires READY + GLB).
-    ar_published = p.model_published and bool(p.model_glb_url)
+    # Only expose AR model URLs when the STORED restaurant.ar_enabled is on
+    # AND the product model is published.
+    ar_published = ar_allowed and p.model_published and bool(p.model_glb_url)
     return ProductPublic(
         id=p.id,
         name=p.name,
@@ -1037,16 +1039,18 @@ def _product_public(p: Product) -> ProductPublic:
     )
 
 
-def _public_products(cat: Category) -> list[ProductPublic]:
+def _public_products(cat: Category, *, ar_allowed: bool = True) -> list[ProductPublic]:
     """Active + available products of a category, with active variants/addons."""
     return [
-        _product_public(p)
+        _product_public(p, ar_allowed=ar_allowed)
         for p in cat.products
         if p.is_active and p.is_available
     ]
 
 
-def get_todays_specials(db: Session, restaurant_id: uuid.UUID) -> list[ProductPublic]:
+def get_todays_specials(
+    db: Session, restaurant_id: uuid.UUID, *, ar_allowed: bool = True
+) -> list[ProductPublic]:
     """Featured products for THIS restaurant only: flagged AND active AND
     available. Deactivated/hidden products never appear even if still flagged."""
     rows = db.execute(
@@ -1065,10 +1069,12 @@ def get_todays_specials(db: Session, restaurant_id: uuid.UUID) -> list[ProductPu
         )
         .order_by(Product.name)
     ).scalars().all()
-    return [_product_public(p) for p in rows]
+    return [_product_public(p, ar_allowed=ar_allowed) for p in rows]
 
 
-def get_customer_menu(db: Session, restaurant_id: uuid.UUID) -> list[CategoryPublic]:
+def get_customer_menu(
+    db: Session, restaurant_id: uuid.UUID, *, ar_allowed: bool = True
+) -> list[CategoryPublic]:
     """
     Returns the menu as a nested tree of active + available categories, each carrying
     its own active/available products and its subcategories (children). A category is
@@ -1114,7 +1120,7 @@ def get_customer_menu(db: Session, restaurant_id: uuid.UUID) -> list[CategoryPub
             key=lambda c: (c.display_order, c.name.lower()),
         )
         child_nodes = [n for c in kids if (n := build(c)) is not None]
-        products = _public_products(cat)
+        products = _public_products(cat, ar_allowed=ar_allowed)
         # Prune: a category with no products anywhere in its subtree doesn't render.
         if not products and not child_nodes:
             return None
@@ -1133,8 +1139,16 @@ def get_customer_menu(db: Session, restaurant_id: uuid.UUID) -> list[CategoryPub
 def get_customer_menu_page(db: Session, restaurant_id: uuid.UUID) -> MenuPublic:
     """The whole GET /menu payload: hero banner + today's specials + category tree."""
     settings = get_or_create_settings(db, restaurant_id)
+    restaurant = db.get(Restaurant, restaurant_id)
+    if restaurant is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Restaurant not found")
+    flags = stored_features(restaurant)
     return MenuPublic(
         banner_image_url=settings.banner_image_url,
-        specials=get_todays_specials(db, restaurant_id),
-        categories=get_customer_menu(db, restaurant_id),
+        specials=get_todays_specials(db, restaurant_id, ar_allowed=flags.ar_enabled),
+        categories=get_customer_menu(db, restaurant_id, ar_allowed=flags.ar_enabled),
+        order_enabled=flags.order_enabled,
+        call_waiter_enabled=flags.call_waiter_enabled,
+        ar_enabled=flags.ar_enabled,
+        qr_pay_enabled=flags.qr_pay_enabled,
     )

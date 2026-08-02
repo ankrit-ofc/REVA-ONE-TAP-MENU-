@@ -10,7 +10,14 @@ import styles from './CustomerLayout.module.css'
 const CURRENCY = 'NPR'
 
 export default function CustomerLayout() {
-  const { restaurantName, tableName, invalidate, isInvalidating } = useSession()
+  const {
+    restaurantName,
+    tableName,
+    invalidate,
+    isInvalidating,
+    orderEnabled,
+    callWaiterEnabled,
+  } = useSession()
   const { totalItems, estimatedTotal } = useCart()
   const { theme } = useTheme()
   const navigate = useNavigate()
@@ -22,7 +29,7 @@ export default function CustomerLayout() {
   const [waiterFailed, setWaiterFailed] = useState(false)
   const [ringing, setRinging] = useState(false)
 
-  const showCartBar = totalItems > 0 && pathname === '/menu'
+  const showCartBar = orderEnabled && totalItems > 0 && pathname === '/menu'
 
   async function handleCallWaiter() {
     if (isCalling || waiterCooldown) return
@@ -80,6 +87,7 @@ export default function CustomerLayout() {
         <div className={styles.appbarRight}>
           {/* Labeled action — an unlabeled icon read as decoration, so the word
               "Call Waiter" carries the affordance and the bell reinforces it. */}
+          {callWaiterEnabled && (
           <button
             className={`${styles.callBtn} ${ringing ? styles.callRinging : ''}`}
             onClick={() => void handleCallWaiter()}
@@ -98,7 +106,9 @@ export default function CustomerLayout() {
               {isCalling ? 'Calling…' : waiterCooldown ? 'Notified ✓' : 'Call Waiter'}
             </span>
           </button>
+          )}
 
+          {orderEnabled && (
           <button
             className={styles.iconBtn}
             onClick={() => navigate('/cart')}
@@ -112,6 +122,7 @@ export default function CustomerLayout() {
             </svg>
             {totalItems > 0 && <span className={styles.appbarBadge}>{totalItems}</span>}
           </button>
+          )}
         </div>
       </header>
 

@@ -21,6 +21,12 @@ class SessionResponse(BaseModel):
     table_name: str
     restaurant_name: str
     expires_at: datetime
+    # STORED restaurants.* flags (source of truth). Missing on old backends →
+    # clients treat as enabled.
+    order_enabled: bool
+    call_waiter_enabled: bool
+    ar_enabled: bool
+    qr_pay_enabled: bool
 
 
 class InvalidateRequest(BaseModel):

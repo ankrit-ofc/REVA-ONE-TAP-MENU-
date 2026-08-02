@@ -176,6 +176,8 @@ class AddonMappingResponse(BaseModel):
 
 class SettingsUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
+    # SOFT-DEPRECATED: accepted so staff-mobile clients do not 422, but IGNORED
+    # by update_settings. Sole truth is restaurants.qr_pay_enabled (superadmin).
     enable_qr_payment: bool | None = None
     waiter_can_accept_payment: bool | None = None
     allow_order_reopen: bool | None = None
@@ -204,7 +206,7 @@ class SettingsResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID
     restaurant_id: uuid.UUID
-    enable_qr_payment: bool
+    # enable_qr_payment removed from response — sole truth is restaurants.qr_pay_enabled.
     waiter_can_accept_payment: bool
     allow_order_reopen: bool
     require_order_approval: bool
@@ -226,6 +228,9 @@ class SettingsResponse(BaseModel):
     banner_image_url: str | None
     # Payment QR shown to guests at billing; set only via POST /admin/settings/payment-qr.
     payment_qr_url: str | None
+    # Read-only STORED restaurants flags (for admin UI; not editable here).
+    ar_enabled: bool = True
+    qr_pay_enabled: bool = True
 
 
 class PaymentQrResponse(BaseModel):
@@ -297,3 +302,8 @@ class MenuPublic(BaseModel):
     banner_image_url: str | None
     specials: list[ProductPublic]
     categories: list[CategoryPublic]
+    # STORED restaurants.* flags — refreshed on every GET /menu.
+    order_enabled: bool
+    call_waiter_enabled: bool
+    ar_enabled: bool
+    qr_pay_enabled: bool

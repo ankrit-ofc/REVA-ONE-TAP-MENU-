@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from app.core.deps import get_db, require_role, tenant_scope
 from app.models.enums import Role
+from app.models.restaurant import Restaurant
 from app.models.user import User
 from app.schemas.menu import SettingsResponse, SettingsUpdate
 from app.services import image_service, kot_print_service, menu_service
@@ -24,6 +25,17 @@ _RidDep = Annotated[uuid.UUID, Depends(tenant_scope)]
 _DbDep = Annotated[Session, Depends(get_db)]
 
 
+def _settings_response(db: Session, restaurant_id: uuid.UUID, settings) -> SettingsResponse:
+    restaurant = db.get(Restaurant, restaurant_id)
+    base = SettingsResponse.model_validate(settings)
+    return base.model_copy(
+        update={
+            "ar_enabled": bool(restaurant.ar_enabled) if restaurant else True,
+            "qr_pay_enabled": bool(restaurant.qr_pay_enabled) if restaurant else True,
+        }
+    )
+
+
 @router.get("/settings", response_model=SettingsResponse)
 def get_settings(
     restaurant_id: _RidDep,
@@ -31,7 +43,7 @@ def get_settings(
     db: _DbDep,
 ) -> SettingsResponse:
     settings = menu_service.get_or_create_settings(db, restaurant_id)
-    return SettingsResponse.model_validate(settings)
+    return _settings_response(db, restaurant_id, settings)
 
 
 @router.put("/settings", response_model=SettingsResponse)
@@ -41,8 +53,9 @@ def update_settings(
     user: _AdminDep,
     db: _DbDep,
 ) -> SettingsResponse:
+    # enable_qr_payment on SettingsUpdate is accept-and-ignore (soft-deprecated).
     settings = menu_service.update_settings(db, restaurant_id, data, actor=user)
-    return SettingsResponse.model_validate(settings)
+    return _settings_response(db, restaurant_id, settings)
 
 
 @router.post("/settings/banner-image", response_model=SettingsResponse)
@@ -52,12 +65,6 @@ def upload_banner_image(
     user: _AdminDep,
     db: _DbDep,
 ) -> SettingsResponse:
-    """
-    Sets the customer-menu hero banner. Multipart upload validated by magic
-    bytes (JPEG/PNG/WebP only), max 25 MB, max 2400x1200, EXIF stripped, then
-    stored under a UUID filename in this tenant's media path. banner_image_url
-    is only ever set by this endpoint — never accepted from the client. Audited.
-    """
     raw = file.file.read()
     try:
         banner_url = image_service.validate_and_store_banner(raw, restaurant_id)
@@ -68,8 +75,8 @@ def upload_banner_image(
     previous_url = settings.banner_image_url
     settings = menu_service.set_banner_image(db, restaurant_id, banner_url, actor=user)
     if previous_url:
-        image_service.delete_image(previous_url)  # best-effort cleanup of the replaced file
-    return SettingsResponse.model_validate(settings)
+        image_service.delete_image(previous_url)
+    return _settings_response(db, restaurant_id, settings)
 
 
 @router.delete("/settings/banner-image", response_model=SettingsResponse)
@@ -78,13 +85,12 @@ def remove_banner_image(
     user: _AdminDep,
     db: _DbDep,
 ) -> SettingsResponse:
-    """Removes the hero banner (customer page falls back to the stock image). Audited."""
     settings = menu_service.get_or_create_settings(db, restaurant_id)
     previous_url = settings.banner_image_url
     settings = menu_service.remove_banner_image(db, restaurant_id, actor=user)
     if previous_url:
         image_service.delete_image(previous_url)
-    return SettingsResponse.model_validate(settings)
+    return _settings_response(db, restaurant_id, settings)
 
 
 @router.post("/settings/payment-qr", response_model=SettingsResponse)
@@ -94,13 +100,6 @@ def upload_payment_qr(
     user: _AdminDep,
     db: _DbDep,
 ) -> SettingsResponse:
-    """
-    Sets the payment QR staff display to guests at billing. Multipart upload
-    validated by magic bytes (JPEG/PNG/WebP only), max 25 MB, max 1200x1200,
-    EXIF stripped, stored uncropped as lossless PNG under a UUID filename in
-    this tenant's media path. payment_qr_url is only ever set by this endpoint
-    — never accepted from the client. Audited.
-    """
     raw = file.file.read()
     try:
         qr_url = image_service.validate_and_store_payment_qr(raw, restaurant_id)
@@ -111,8 +110,8 @@ def upload_payment_qr(
     previous_url = settings.payment_qr_url
     settings = menu_service.set_payment_qr(db, restaurant_id, qr_url, actor=user)
     if previous_url:
-        image_service.delete_image(previous_url)  # best-effort cleanup of the replaced file
-    return SettingsResponse.model_validate(settings)
+        image_service.delete_image(previous_url)
+    return _settings_response(db, restaurant_id, settings)
 
 
 @router.delete("/settings/payment-qr", response_model=SettingsResponse)
@@ -121,13 +120,12 @@ def remove_payment_qr(
     user: _AdminDep,
     db: _DbDep,
 ) -> SettingsResponse:
-    """Removes the payment QR (the Billing screen then shows none). Audited."""
     settings = menu_service.get_or_create_settings(db, restaurant_id)
     previous_url = settings.payment_qr_url
     settings = menu_service.remove_payment_qr(db, restaurant_id, actor=user)
     if previous_url:
         image_service.delete_image(previous_url)
-    return SettingsResponse.model_validate(settings)
+    return _settings_response(db, restaurant_id, settings)
 
 
 @router.post("/settings/kot-worker-token", response_model=SettingsResponse)
@@ -136,9 +134,7 @@ def rotate_kot_worker_token(
     user: _AdminDep,
     db: _DbDep,
 ) -> SettingsResponse:
-    """Generate (or replace) the token the kot-printer worker authenticates
-    with. Rotating invalidates the previous token immediately; audited."""
     menu_service.get_or_create_settings(db, restaurant_id)
     kot_print_service.rotate_worker_token(db, restaurant_id, actor=user)
     settings = menu_service.get_or_create_settings(db, restaurant_id)
-    return SettingsResponse.model_validate(settings)
+    return _settings_response(db, restaurant_id, settings)

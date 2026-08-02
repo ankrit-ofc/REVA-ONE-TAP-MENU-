@@ -130,5 +130,10 @@ def call_waiter_endpoint(
     Customer rings the waiters' dashboards for their table. Notify-only and
     order-independent — works any time the session is valid. Returns the table name.
     """
-    table_name = session_service.call_waiter(db, session)
+    from app.services.order_state import OrderError
+
+    try:
+        table_name = session_service.call_waiter(db, session)
+    except OrderError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=str(exc))
     return {"table_name": table_name}

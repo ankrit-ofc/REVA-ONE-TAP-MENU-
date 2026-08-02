@@ -10,12 +10,17 @@ export const scanRequestSchema = z.object({
 
 export type ScanRequest = z.infer<typeof scanRequestSchema>
 
-/** Mirrors backend SessionResponse. */
+/** Mirrors backend SessionResponse. Flags are COMPUTED server-side. Optional for
+ * backward compat with older backends — treat missing as enabled. */
 export const sessionResponseSchema = z.object({
   session_token: z.string().min(1),
   table_name: z.string(),
   restaurant_name: z.string(),
   expires_at: z.string().datetime({ offset: true }),
+  order_enabled: z.boolean().optional(),
+  call_waiter_enabled: z.boolean().optional(),
+  ar_enabled: z.boolean().optional(),
+  qr_pay_enabled: z.boolean().optional(),
 })
 
 export type SessionResponse = z.infer<typeof sessionResponseSchema>

@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useCart } from '@/features/cart/useCart'
 import { usePlaceOrAppendMutation } from '@/features/orders/ordersApi'
+import { useSession } from '@/features/session/useSession'
 import CartItemCard from '@/components/ui/CartItem'
 import PriceSummary from '@/components/ui/PriceSummary'
 import Button from '@/components/common/Button'
@@ -10,11 +11,12 @@ const CURRENCY = 'NPR'
 
 export default function Cart() {
   const navigate = useNavigate()
+  const { orderEnabled } = useSession()
   const { items, estimatedTotal, estimatedTax, isEmpty, updateQuantity, clearCart } = useCart()
   const [placeOrAppend, { isLoading, error }] = usePlaceOrAppendMutation()
 
   async function handlePlaceOrder() {
-    if (isEmpty) return
+    if (isEmpty || !orderEnabled) return
 
     const requestBody = {
       items: items.map((item) => ({
@@ -33,6 +35,17 @@ export default function Cart() {
     } catch {
       // error displayed below
     }
+  }
+
+  if (!orderEnabled) {
+    return (
+      <div className={styles.empty}>
+        <p>Ordering is not available at this restaurant.</p>
+        <Button variant="secondary" onClick={() => navigate('/menu')}>
+          Browse Menu
+        </Button>
+      </div>
+    )
   }
 
   if (isEmpty) {
