@@ -38,6 +38,12 @@ def _build(t: Table, restaurant_id: uuid.UUID) -> TableResponse:
 router = APIRouter(prefix="/admin/tables", tags=["admin-tables"])
 
 _AdminDep = Annotated[User, Depends(require_role(Role.ADMIN))]
+# Floor staff need the full table roster for Available/Occupied cards (mobile
+# Tables tab). Writes stay ADMIN-only below. Prefer GET /waiter/tables when
+# deployed — it omits QR tokens; this widening is the interim unlock on prod.
+_FloorReadDep = Annotated[
+    User, Depends(require_role(Role.ADMIN, Role.WAITER, Role.COUNTER))
+]
 _RidDep = Annotated[uuid.UUID, Depends(tenant_scope)]
 _DbDep = Annotated[Session, Depends(get_db)]
 
@@ -45,7 +51,7 @@ _DbDep = Annotated[Session, Depends(get_db)]
 @router.get("", response_model=list[TableResponse])
 def list_tables(
     restaurant_id: _RidDep,
-    _user: _AdminDep,
+    _user: _FloorReadDep,
     db: _DbDep,
 ) -> list[TableResponse]:
     tables = table_service.list_tables(db, restaurant_id)
