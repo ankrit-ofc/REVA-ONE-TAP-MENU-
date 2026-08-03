@@ -1,8 +1,11 @@
 import uuid
+from datetime import datetime
 from decimal import Decimal
 from typing import Optional, TYPE_CHECKING
 
-from sqlalchemy import CheckConstraint, Enum as SAEnum, ForeignKey, Numeric, Text, UniqueConstraint
+from sqlalchemy import (
+    CheckConstraint, DateTime, Enum as SAEnum, ForeignKey, Numeric, Text, UniqueConstraint,
+)
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -43,5 +46,16 @@ class Invoice(Base, TimestampMixin, TenantMixin):
     tax_total: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False, server_default="0")
     total: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     gateway_transaction_id: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    # The diner who asked for an emailed receipt. THIS is the analytics link:
+    # repeat visits and lifetime spend are GROUP BY customer_id over invoices,
+    # one bill = one payer. Nullable — most invoices have no captured contact.
+    customer_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("customers.id", ondelete="RESTRICT"), nullable=True
+    )
+    # Send-once guard for the emailed receipt. Stamped under the invoice row lock
+    # BEFORE dispatch, so two concurrent callers can never both send.
+    receipt_sent_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     order: Mapped["Order"] = relationship("Order", back_populates="invoices")

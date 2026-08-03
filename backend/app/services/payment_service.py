@@ -53,7 +53,7 @@ from app.models.user import User
 from app.payments.base import PaymentGateway
 from app.realtime.events import InvoicePaidEvent, OrderClosedEvent
 from app.realtime.manager import _fire, manager as rt_manager
-from app.services import numbering_service
+from app.services import numbering_service, receipt_email
 from app.services.order_state import assert_valid_order_transition
 from app.services.payment_state import InvoiceError, assert_valid_invoice_transition
 
@@ -243,6 +243,10 @@ def record_counter_payment(
     )
     _fire(rt_manager.broadcast_to_roles(_rid_str, _closed_ev, [Role.COUNTER]))
     _fire(rt_manager.broadcast_to_table(_rid_str, _tid_str, _closed_ev))
+
+    # Emailed receipt — post-commit and fully swallowed, so it can never affect
+    # the payment that just succeeded. No-ops when no contact was captured.
+    receipt_email.send_receipt_safely(db, restaurant_id, invoice.id)
 
     return invoice
 
@@ -488,6 +492,9 @@ def quick_bill_and_close(
         discount=Decimal("0.00"),
         tax_total=tax_total,
         total=total,
+        # Same carrier copy as invoice_service.generate_invoice — quick-bill
+        # mints its own invoice, so it is a second place this can be forgotten.
+        customer_id=order.customer_id,
     )
     db.add(invoice)
     db.add(AuditLog(
@@ -592,6 +599,10 @@ def quick_bill_and_close(
     )
     _fire(rt_manager.broadcast_to_roles(_rid_str, _closed_ev, [Role.COUNTER, Role.WAITER]))
     _fire(rt_manager.broadcast_to_table(_rid_str, _tid_str, _closed_ev))
+
+    # Emailed receipt — see record_counter_payment. Quick-bill is the path that
+    # both mints the invoice and settles it, so the send belongs here too.
+    receipt_email.send_receipt_safely(db, restaurant_id, invoice.id)
 
     return invoice
 

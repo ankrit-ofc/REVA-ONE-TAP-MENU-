@@ -1,10 +1,12 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
 import { useGetCurrentOrderQuery, useRequestBillMutation, ordersApi } from '@/features/orders/ordersApi'
 import { useCustomerRealtime } from '@/features/realtime/useRealtime'
 import { useSession } from '@/features/session/useSession'
 import { endCustomerSession } from '@/features/session/endSession'
+import { isContactCaptured } from '@/features/session/qrStorage'
+import ReceiptContactSheet from '@/components/customer/ReceiptContactSheet'
 import OrderItemStatusCard from '@/components/ui/OrderItemStatus'
 import Button from '@/components/common/Button'
 import Loader from '@/components/common/Loader'
@@ -25,15 +27,23 @@ export default function OrderStatus() {
     pollingInterval: 30_000,
   })
   const [requestBill, { isLoading: isRequestingBill }] = useRequestBillMutation()
+  const [showContactSheet, setShowContactSheet] = useState(false)
 
-  // Signal staff (notify-only), then show the bill page regardless of the result.
+  // Signal staff (notify-only), then offer the emailed receipt. The bill request
+  // is fired FIRST and its result is ignored, so the contact form can never
+  // become a gate in front of it — skipping, failing, or ignoring the sheet all
+  // still leave the guest with a requested bill.
   async function handleRequestBill() {
     try {
       await requestBill().unwrap()
     } catch {
       // best-effort signal; the bill page still loads
     }
-    navigate('/bill')
+    if (isContactCaptured()) {
+      navigate('/bill')
+      return
+    }
+    setShowContactSheet(true)
   }
 
   // Invalidate the order cache whenever a WS item/order event arrives.
@@ -66,6 +76,22 @@ export default function OrderStatus() {
   }, [order?.status, navigate])
 
   if (isLoading) return <Loader fullscreen message="Loading your order…" />
+
+  // The bill has ALREADY been requested by the time this renders — the sheet is
+  // an offer layered on top, and either action below continues to the bill page.
+  if (showContactSheet) {
+    return (
+      <div className={styles.page}>
+        <ReceiptContactSheet
+          skipLabel="No thanks, just show my bill"
+          onDone={() => {
+            setShowContactSheet(false)
+            navigate('/bill')
+          }}
+        />
+      </div>
+    )
+  }
 
   if (isError || !order) {
     return (

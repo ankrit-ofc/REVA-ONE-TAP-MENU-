@@ -14,7 +14,11 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useScanMutation } from '@/features/session/sessionApi'
 import { scanWithGeofence } from '@/features/session/geofenceScan'
 import { GeolocationError } from '@/lib/geolocation'
-import { setStoredQrToken, clearSessionEnded } from '@/features/session/qrStorage'
+import {
+  setStoredQrToken,
+  clearSessionEnded,
+  clearContactCaptured,
+} from '@/features/session/qrStorage'
 import { setSessionToken } from '@/services/api'
 import Loader from '@/components/common/Loader'
 import styles from './Scan.module.css'
@@ -107,8 +111,10 @@ export default function Scan() {
     setError(null)
     setBusy(true)
     // A real physical re-scan starts fresh — clear any "session ended" marker left
-    // by a previous paid session so a new session can be established.
+    // by a previous paid session so a new session can be established, and the
+    // receipt-contact marker so the next party is offered the form again.
     clearSessionEnded()
+    clearContactCaptured()
     try {
       const data = await scanWithGeofence(scan, token)
       // Set the token synchronously before navigating so the first GET /menu

@@ -10,15 +10,17 @@ from sqlalchemy.orm import Session
 
 from app.core import security
 from app.core.config import settings
-from app.core.deps import get_current_session, get_db
+from app.core.deps import get_contact_capture_session, get_current_session, get_db
 from app.core.limiter import limiter
 from app.models.enums import Role, SessionStatus
 from app.models.table import TableSession
 from app.models.user import User
 from app.realtime import tickets
 from app.schemas.auth import WsTicketResponse
+from app.schemas.customer import CustomerContactAck, CustomerContactRequest
 from app.schemas.session import InvalidateRequest
-from app.services import session_service
+from app.services import customer_service, session_service
+from app.services.customer_service import CustomerCaptureError
 
 router = APIRouter(prefix="/session", tags=["session"])
 
@@ -117,6 +119,33 @@ def create_ws_ticket(
     """
     ticket = tickets.issue_ticket("customer", session.id, session.restaurant_id)
     return WsTicketResponse(ticket=ticket, expires_in=tickets.WS_TICKET_TTL_SECONDS)
+
+
+@router.post("/contact", response_model=CustomerContactAck)
+@limiter.limit(settings.RATE_LIMIT_ORDERS)
+def capture_contact_endpoint(
+    request: Request,
+    body: CustomerContactRequest,
+    session: Annotated[TableSession, Depends(get_contact_capture_session)],
+    db: Annotated[Session, Depends(get_db)],
+) -> CustomerContactAck:
+    """
+    Customer submits their contact details so we can email them their receipt.
+
+    WRITE-ONLY BY DESIGN: the response is a bare {"status": "ok"} and never
+    echoes stored data, so this endpoint cannot be used to look up whether an
+    address is known to a restaurant, or to read another diner's details.
+
+    restaurant_id and table_id come from the validated session token only.
+    Accepts a session invalidated within the grace window, because paying kills
+    the session before the customer reaches the post-payment form — see
+    deps.get_contact_capture_session.
+    """
+    try:
+        customer_service.capture_contact(db, session, body)
+    except CustomerCaptureError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=str(exc))
+    return CustomerContactAck()
 
 
 @router.post("/call-waiter")

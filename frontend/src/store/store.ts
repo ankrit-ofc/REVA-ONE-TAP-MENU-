@@ -6,6 +6,7 @@ import sessionReducer from '@/features/session/sessionSlice'
 import { menuApi } from '@/features/menu/menuApi'
 import { ordersApi } from '@/features/orders/ordersApi'
 import { invoicesApi } from '@/features/invoices/invoicesApi'
+import { customerApi } from '@/features/customer/customerApi'
 import cartReducer from '@/features/cart/cartSlice'
 import uiReducer from '@/features/ui/uiSlice'
 import { kitchenApi } from '@/features/kitchen/kitchenApi'
@@ -26,6 +27,7 @@ export const store = configureStore({
     [menuApi.reducerPath]: menuApi.reducer,
     [ordersApi.reducerPath]: ordersApi.reducer,
     [invoicesApi.reducerPath]: invoicesApi.reducer,
+    [customerApi.reducerPath]: customerApi.reducer,
     [kitchenApi.reducerPath]: kitchenApi.reducer,
     [waiterApi.reducerPath]: waiterApi.reducer,
     [counterApi.reducerPath]: counterApi.reducer,
@@ -40,6 +42,7 @@ export const store = configureStore({
       .concat(menuApi.middleware)
       .concat(ordersApi.middleware)
       .concat(invoicesApi.middleware)
+      .concat(customerApi.middleware)
       .concat(kitchenApi.middleware)
       .concat(waiterApi.middleware)
       .concat(counterApi.middleware)

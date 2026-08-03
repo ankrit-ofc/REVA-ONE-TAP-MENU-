@@ -327,6 +327,9 @@ def generate_invoice(
         discount=discount,
         tax_total=tax_total,
         total=total,
+        # Carry a contact captured at "Request Bill" time (when no invoice
+        # existed yet) onto the invoice, which is the durable analytics link.
+        customer_id=order.customer_id,
     )
     db.add(invoice)
 

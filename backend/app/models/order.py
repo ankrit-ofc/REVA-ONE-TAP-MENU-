@@ -42,6 +42,15 @@ class Order(Base, TimestampMixin, TenantMixin):
     bill_requested_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+    # Contact-capture CARRIER only — not the analytics link (that is
+    # invoices.customer_id). The customer submits their email when they tap
+    # "Request Bill", which is before staff generate the invoice, so there is no
+    # invoice row to point at yet. The value is copied onto the invoice at
+    # generation time (invoice_service.generate_invoice and
+    # payment_service.quick_bill_and_close). Never exposed in a response schema.
+    customer_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("customers.id", ondelete="RESTRICT"), nullable=True
+    )
 
     table: Mapped["Table"] = relationship("Table", back_populates="orders")
     items: Mapped[list["OrderItem"]] = relationship("OrderItem", back_populates="order")
