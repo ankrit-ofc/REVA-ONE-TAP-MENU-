@@ -75,3 +75,37 @@ export const clearSessionEnded = (): void => {
     // ignore
   }
 }
+
+/**
+ * "Receipt contact already captured" marker for the current visit.
+ *
+ * The contact form has two entry points (Request Bill, and the payment-received
+ * screen) and must never be shown twice. A React state flag would not survive
+ * the gateway redirect out to eSewa/Khalti and back, so the marker lives in
+ * sessionStorage. Cleared by a genuine re-scan, exactly like the ended marker.
+ */
+const CONTACT_CAPTURED_KEY = 'qr_contact_captured'
+
+export const markContactCaptured = (): void => {
+  try {
+    sessionStorage.setItem(CONTACT_CAPTURED_KEY, '1')
+  } catch {
+    // ignore
+  }
+}
+
+export const isContactCaptured = (): boolean => {
+  try {
+    return sessionStorage.getItem(CONTACT_CAPTURED_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+export const clearContactCaptured = (): void => {
+  try {
+    sessionStorage.removeItem(CONTACT_CAPTURED_KEY)
+  } catch {
+    // ignore
+  }
+}

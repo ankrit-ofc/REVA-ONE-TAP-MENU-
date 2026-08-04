@@ -5,6 +5,7 @@ from app.models.user import User  # noqa: F401
 from app.models.category import Category  # noqa: F401
 from app.models.product import Product, ProductVariant, ProductAddon, ProductAddonMapping  # noqa: F401
 from app.models.ar import GenerationJob, ModelAnnotation, ProductViewImage  # noqa: F401
+from app.models.customer import Customer  # noqa: F401
 from app.models.table import Table, TableSession  # noqa: F401
 from app.models.waiter_call import WaiterCall  # noqa: F401
 from app.models.order import Order, OrderItem, OrderItemAddon  # noqa: F401

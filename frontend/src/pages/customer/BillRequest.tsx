@@ -19,6 +19,8 @@ import { useGetCurrentOrderQuery } from '@/features/orders/ordersApi'
 import { useCustomerRealtime } from '@/features/realtime/useRealtime'
 import { useSession } from '@/features/session/useSession'
 import { endCustomerSession } from '@/features/session/endSession'
+import { isContactCaptured } from '@/features/session/qrStorage'
+import ReceiptContactSheet from '@/components/customer/ReceiptContactSheet'
 import type { AppDispatch } from '@/store/store'
 import PriceSummary from '@/components/ui/PriceSummary'
 import Button from '@/components/common/Button'
@@ -37,6 +39,11 @@ export default function BillRequest() {
 
   const [paid, setPaid] = useState(false)
   const [paidInfo, setPaidInfo] = useState<{ invoiceNumber?: string; total?: number }>({})
+  // Payment invalidates the session and endCustomerSession clears the in-memory
+  // token, so keep a copy for the write-only contact POST (accepted inside the
+  // backend's grace window). Captured before endCustomerSession runs.
+  const [tokenForContact, setTokenForContact] = useState<string | null>(null)
+  const [contactDone, setContactDone] = useState(() => isContactCaptured())
 
   // Stop polling/refetching once paid — the session is invalidated and the call
   // would only 401. We render the terminal screen from the event instead.
@@ -61,11 +68,13 @@ export default function BillRequest() {
       const num = typeof event['invoice_number'] === 'string' ? event['invoice_number'] : undefined
       const total = typeof event['total'] === 'string' ? Number(event['total']) : undefined
       setPaidInfo({ invoiceNumber: num, total })
+      setTokenForContact(sessionToken)
       setPaid(true)
       // Hard-terminate the table session: the guard immediately shows the terminal
       // "session ended" screen, blocking any return to the menu (incl. refresh/back).
       endCustomerSession(dispatch, { invoiceNumber: num, total })
     } else if (event.type === 'order.closed') {
+      setTokenForContact(sessionToken)
       setPaid(true)
       endCustomerSession(dispatch)
     }
@@ -110,6 +119,16 @@ export default function BillRequest() {
           )}
           <p className={styles.thankNote}>Scan the table QR again to place a new order.</p>
         </div>
+
+        {/* Second entry point. Suppressed when the guest already gave us their
+            details at Request Bill — the form is never shown twice per visit. */}
+        {!contactDone && (
+          <ReceiptContactSheet
+            skipLabel="No thanks"
+            sessionToken={tokenForContact ?? sessionToken}
+            onDone={() => setContactDone(true)}
+          />
+        )}
       </div>
     )
   }

@@ -1,6 +1,6 @@
 import uuid
 from collections.abc import Callable, Generator
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
 import jwt
@@ -10,6 +10,7 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from app.core import security
+from app.core.config import settings
 from app.db.session import SessionLocal
 from app.models.enums import Role, SessionStatus
 from app.models.table import TableSession
@@ -148,6 +149,75 @@ def get_current_session(
         db.commit()
 
     if session.status != SessionStatus.ACTIVE:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Session expired or invalidated",
+        )
+
+    db.execute(
+        text("SELECT set_config('app.current_restaurant_id', :rid, TRUE)"),
+        {"rid": str(session.restaurant_id)},
+    )
+
+    return session
+
+
+def get_contact_capture_session(
+    x_session_token: Annotated[str | None, Header(alias="X-Session-Token")] = None,
+    db: Annotated[Session, Depends(get_db)] = None,
+) -> TableSession:
+    """
+    Session auth for the WRITE-ONLY contact-capture endpoint, and nothing else.
+
+    Identical to get_current_session except that it also accepts a session
+    INVALIDATED within CONTACT_CAPTURE_GRACE_MINUTES. That widening exists for
+    exactly one reason: paying closes the order and invalidates the table's
+    sessions (payment_service._close_order_and_reset_table) in the same
+    transaction that marks the invoice PAID — so by the time the customer sees
+    the "payment received" screen and types their email, their token is already
+    dead. Without the window the second capture entry point cannot work at all.
+
+    Why the widening is safe:
+      - The endpoint using it returns {"status": "ok"} and never any stored data,
+        so a replayed token grants no read access to anything.
+      - It still sets the RLS GUC from the token's own restaurant_id, so a
+        grace-window write is tenant-scoped exactly like a live one.
+      - customer_service resolves the target invoice by
+        `created_at <= session.invalidated_at`, so a stale token can only ever
+        touch the visit it belonged to — never a later party's bill.
+      - EXPIRED sessions (TTL lapsed, never paid) are NOT accepted; only
+        INVALIDATED ones, which is the state payment leaves behind.
+    """
+    if x_session_token is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="X-Session-Token header missing",
+        )
+
+    session: TableSession | None = db.execute(
+        select(TableSession).where(TableSession.token == x_session_token)
+    ).scalar_one_or_none()
+
+    if session is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid session token",
+        )
+
+    now = datetime.now(timezone.utc)
+
+    if session.status == SessionStatus.ACTIVE and session.expires_at <= now:
+        session.status = SessionStatus.EXPIRED
+        db.commit()
+
+    if session.status == SessionStatus.INVALIDATED:
+        cutoff = now - timedelta(minutes=settings.CONTACT_CAPTURE_GRACE_MINUTES)
+        if session.invalidated_at is None or session.invalidated_at <= cutoff:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Session expired or invalidated",
+            )
+    elif session.status != SessionStatus.ACTIVE:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Session expired or invalidated",

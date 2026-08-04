@@ -111,6 +111,22 @@ class Settings(BaseSettings):
     SMTP_FROM: str = "no-reply@localhost"
     SMTP_USE_TLS: bool = True
 
+    # ── Resend (customer receipt emails) ─────────────────────────────────────────
+    # Same "empty key = feature dark, app still boots" pattern as EXPO_ACCESS_TOKEN
+    # below. When RESEND_API_KEY is empty the receipt service logs what it WOULD
+    # have sent (invoice id + redacted recipient) and returns successfully, so the
+    # whole capture flow is testable before Resend is configured.
+    RESEND_API_KEY: str = ""
+    RESEND_FROM: str = "receipts@localhost"
+    RESEND_API_URL: str = "https://api.resend.com/emails"
+
+    # How long after a table session is invalidated the customer may still submit
+    # their contact details. Payment invalidates the session (payment_service
+    # ._close_order_and_reset_table) BEFORE the "payment received" screen renders,
+    # so without a grace window the post-payment capture form could never submit.
+    # The window is write-only and read-nothing — see deps.get_contact_capture_session.
+    CONTACT_CAPTURE_GRACE_MINUTES: int = 30
+
     # ── Push notifications (Expo Push → FCM/APNs) ────────────────────────────────
     # Staff order/waiter-call alerts delivered even when the app is closed. Dark by
     # default; flip EXPO_PUSH_ENABLED=true once FCM credentials are configured in
