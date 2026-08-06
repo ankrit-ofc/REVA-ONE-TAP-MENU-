@@ -34,8 +34,8 @@
   justify-content: space-between;
   padding: 0.6rem 1rem;
   min-height: 3rem;
-  background: var(--color-primary-deep);
-  color: #fff;
+  background: var(--menu-surface-deep, var(--color-primary-deep));
+  color: var(--menu-surface-deep-ink, #fff);
   position: fixed;
   top: 0;
   left: 50%;
@@ -194,8 +194,8 @@
   height: 1rem;
   padding: 0 0.25rem;
   border-radius: var(--radius-pill);
-  background: var(--color-gold);
-  color: #1a1a1a;
+  background: var(--menu-accent, var(--color-gold));
+  color: var(--menu-accent-ink, #1a1a1a);
   font-size: 0.625rem;
   font-weight: 800;
   display: flex;
@@ -239,8 +239,8 @@
 }
 
 .cartCount {
-  background: var(--color-gold);
-  color: #1a1a1a;
+  background: var(--menu-accent, var(--color-gold));
+  color: var(--menu-accent-ink, #1a1a1a);
   border-radius: var(--radius-pill);
   min-width: 1.4rem;
   height: 1.4rem;

@@ -12,6 +12,9 @@ export function useSession() {
   const callWaiterEnabled = session.callWaiterEnabled !== false
   const arEnabled = session.arEnabled !== false
   const qrPaymentEnabled = session.qrPaymentEnabled !== false
+  // Missing template/colour → classic, today's rendering, never a themed one.
+  const menuTemplate = session.menuTemplate ?? 'classic'
+  const menuAccentColor = session.menuAccentColor
 
   return {
     ...session,
@@ -19,6 +22,8 @@ export function useSession() {
     callWaiterEnabled,
     arEnabled,
     qrPaymentEnabled,
+    menuTemplate,
+    menuAccentColor,
     hasSession: session.sessionToken !== null,
     isScanning,
     isInvalidating,

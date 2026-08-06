@@ -24,6 +24,8 @@ export const menuApi = createApi({
               callWaiterEnabled: data.call_waiter_enabled,
               arEnabled: data.ar_enabled,
               qrPaymentEnabled: data.qr_pay_enabled,
+              menuTemplate: data.menu_template,
+              menuAccentColor: data.menu_accent_color,
             }),
           )
         } catch {

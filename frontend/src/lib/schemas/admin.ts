@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { menuTemplateSchema, HEX_COLOR_PATTERN } from './menu'
 
 export const categoryResponseSchema = z.object({
   id: z.string().uuid(),
@@ -152,6 +153,9 @@ export const settingsResponseSchema = z.object({
   banner_image_url: z.string().nullable(),
   // Payment QR shown at billing; set only via the payment-qr upload endpoint.
   payment_qr_url: z.string().nullable(),
+  // Customer-menu presentation (admin Settings → "Edit menu").
+  menu_template: menuTemplateSchema,
+  menu_accent_color: z.string().nullable(),
   // Read-only STORED restaurants flags (not editable on Settings).
   ar_enabled: z.boolean().optional(),
   qr_pay_enabled: z.boolean().optional(),
@@ -220,6 +224,8 @@ export const settingsUpdateSchema = z.object({
   bill_copies: z.number().optional(),
   kot_print_mode: z.enum(['browser', 'worker']).optional(),
   kot_printer_name: z.string().max(120).optional(),
+  menu_template: menuTemplateSchema.optional(),
+  menu_accent_color: z.string().regex(HEX_COLOR_PATTERN).optional(),
 })
 
 // Counter-readable subset of the printer settings.

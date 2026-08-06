@@ -1,5 +1,15 @@
 import { z } from 'zod'
 
+// Six customer-menu layouts (admin Settings → "Edit menu"). "classic" is
+// today's existing thumbnail-left list and the server_default — theming is
+// opt-in, so a restaurant that never picks a template keeps rendering
+// classic exactly as it does today. Mirrors backend MENU_TEMPLATES
+// (app/schemas/menu.py) — keep in sync.
+export const MENU_TEMPLATES = ['classic', 'photo_grid', 'elegant_list', 'compact_list', 'magazine', 'bold_cards'] as const
+export const menuTemplateSchema = z.enum(MENU_TEMPLATES)
+export type MenuTemplate = z.infer<typeof menuTemplateSchema>
+export const HEX_COLOR_PATTERN = /^#[0-9A-Fa-f]{6}$/
+
 export const addonPublicSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
@@ -68,6 +78,10 @@ export const menuResponseSchema = z.object({
   call_waiter_enabled: z.boolean().optional(),
   ar_enabled: z.boolean().optional(),
   qr_pay_enabled: z.boolean().optional(),
+  // Menu theming. Falls back to classic / no accent when missing (older
+  // cached responses, or a backend that hasn't deployed this yet).
+  menu_template: menuTemplateSchema.optional(),
+  menu_accent_color: z.string().nullable().optional(),
 })
 
 export type MenuResponse = z.infer<typeof menuResponseSchema>

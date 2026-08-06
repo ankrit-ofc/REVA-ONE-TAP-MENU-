@@ -877,6 +877,8 @@ _SETTINGS_FIELDS = (
     "bill_copies",
     "kot_print_mode",
     "kot_printer_name",
+    "menu_template",
+    "menu_accent_color",
 )
 
 
@@ -1172,4 +1174,6 @@ def get_customer_menu_page(db: Session, restaurant_id: uuid.UUID) -> MenuPublic:
         call_waiter_enabled=flags.call_waiter_enabled,
         ar_enabled=flags.ar_enabled,
         qr_pay_enabled=flags.qr_pay_enabled,
+        menu_template=settings.menu_template,
+        menu_accent_color=settings.menu_accent_color,
     )

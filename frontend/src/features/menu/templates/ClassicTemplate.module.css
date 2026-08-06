@@ -1,3 +1,17 @@
+/* Ported 1:1 from the pre-theming Menu.module.css .list grid, so classic
+   reproduces exactly today's layout: 1 column on phones, 2 on tablet+. */
+.list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.6rem;
+}
+
+@media (min-width: 768px) {
+  .list {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 .card {
   background: var(--color-surface);
   border-radius: var(--radius-md);
@@ -105,7 +119,7 @@
 
 .price {
   font-size: 0.72rem;
-  color: var(--color-primary);
+  color: var(--menu-accent-text, var(--color-primary));
   font-weight: 800;
   white-space: nowrap;
   min-width: 0;
@@ -141,150 +155,3 @@
 .vegBeverage .vegDot { background: var(--color-beverage); }
 .vegSmoke { border-color: var(--color-smoke); }
 .vegSmoke .vegDot { background: var(--color-smoke); }
-
-/* Action buttons */
-.addBtn {
-  flex-shrink: 0;
-  width: 1.45rem;
-  height: 1.45rem;
-  border-radius: var(--radius-pill);
-  background: var(--color-primary);
-  color: #fff;
-  border: none;
-  font-size: 0.9rem;
-  font-weight: 700;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.addBtn:active { background: var(--color-primary-dark); }
-
-.chooseBtn {
-  flex-shrink: 0;
-  height: 1.45rem;
-  min-width: 48px;
-  padding: 0 0.55rem;
-  border-radius: var(--radius-pill);
-  background: var(--color-surface);
-  color: var(--color-primary);
-  border: 1.5px solid var(--color-primary);
-  font-size: 0.6rem;
-  font-weight: 700;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.chooseBtn:active { background: var(--color-tint); }
-
-/* Inline expansion panel */
-.panel {
-  border-top: 1px solid var(--color-border);
-  padding: 0.7rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.7rem;
-  background: var(--color-bg);
-}
-
-.section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.sectionTitle {
-  font-size: 0.65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--color-text-muted);
-}
-
-.options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
-
-.opt {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.32rem 0.55rem;
-  border-radius: var(--radius-sm);
-  border: 1.5px solid var(--color-border-strong);
-  background: var(--color-surface);
-  font-size: 0.7rem;
-  color: var(--color-text-soft);
-  cursor: pointer;
-}
-
-.optSel {
-  border-color: var(--color-primary);
-  background: var(--color-tint);
-  color: var(--color-primary-dark);
-  font-weight: 600;
-}
-
-.optPrice {
-  font-weight: 700;
-  font-size: 0.68rem;
-}
-
-.panelFooter {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.6rem;
-}
-
-.qty {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-}
-
-.qtyBtn {
-  width: 1.75rem;
-  height: 1.75rem;
-  border-radius: var(--radius-pill);
-  border: 1.5px solid var(--color-border-strong);
-  background: var(--color-surface);
-  font-size: 1rem;
-  cursor: pointer;
-  color: var(--color-text-soft);
-}
-
-.qtyNum {
-  min-width: 1.1rem;
-  text-align: center;
-  font-weight: 700;
-  font-size: 0.85rem;
-}
-
-.addConfirm {
-  flex: 1;
-  padding: 0.55rem;
-  border-radius: var(--radius-sm);
-  background: var(--color-primary);
-  color: #fff;
-  border: none;
-  font-size: 0.85rem;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.addConfirm:disabled {
-  background: var(--color-accent-soft);
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.hint {
-  font-size: 0.7rem;
-  color: var(--color-danger);
-}

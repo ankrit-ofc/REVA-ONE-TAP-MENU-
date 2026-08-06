@@ -1,0 +1,50 @@
+/* Veg / Non-veg / Egg square indicator (India-standard), shared by every template. */
+.veg {
+  width: 0.72rem;
+  height: 0.72rem;
+  border: 2px solid;
+  border-radius: 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.vegInnerDot {
+  width: 0.32rem;
+  height: 0.32rem;
+  border-radius: var(--radius-pill);
+}
+
+.vegVeg { border-color: var(--color-veg); }
+.vegVeg .vegInnerDot { background: var(--color-veg); }
+.vegNonVeg { border-color: var(--color-nonveg); }
+.vegNonVeg .vegInnerDot { background: var(--color-nonveg); }
+.vegEgg { border-color: var(--color-egg); }
+.vegEgg .vegInnerDot { background: var(--color-egg); }
+.vegBeverage { border-color: var(--color-beverage); }
+.vegBeverage .vegInnerDot { background: var(--color-beverage); }
+.vegSmoke { border-color: var(--color-smoke); }
+.vegSmoke .vegInnerDot { background: var(--color-smoke); }
+
+/* Fallback for items with no photo — every template needs this. */
+.imgPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  background: linear-gradient(135deg, var(--color-tint) 0%, var(--color-tint-strong) 100%);
+}
+
+/* Shared "open" affordance — accent-coloured button (in scope per the theming spec). */
+.openBtn {
+  flex-shrink: 0;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: var(--radius-pill);
+  background: var(--menu-accent, var(--color-primary));
+  color: var(--menu-accent-ink, #fff);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
