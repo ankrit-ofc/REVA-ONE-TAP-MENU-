@@ -1,4 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import type { AnnotationPublic } from '@/lib/schemas/menu'
+import { useHotspotFanOffsets } from '@/hooks/useHotspotFanOffsets'
+import styles from './TableArView.module.css'
 
 interface Props {
   /** URL to the .glb model (Android WebXR / desktop WebGL). */
@@ -9,6 +12,12 @@ interface Props {
   alt: string
   /** className applied to the action button so the page controls its look. */
   className?: string
+  /**
+   * Admin-verified nutrition hotspots (already filtered server-side to
+   * admin_verified + published — see menu_service._product_public). Absent/empty
+   * for a product with no tags: renders nothing extra, no layout shift.
+   */
+  annotations?: AnnotationPublic[] | null
 }
 
 /** The subset of the <model-viewer> element API we touch. */
@@ -16,6 +25,19 @@ type ModelViewerElement = HTMLElement & {
   loaded?: boolean
   canActivateAR?: boolean
   activateAR?: () => Promise<void>
+}
+
+function formatMacro(value: number | null): string | null {
+  if (value == null) return null
+  return Number.isInteger(value) ? String(value) : value.toFixed(1)
+}
+
+// A tag still at its DB default position — the admin never placed it (see the same
+// check in Model3DEditor.tsx). Customer annotations are already filtered server-side
+// to admin_verified, but a tag can in principle be verified before ever being placed,
+// so this guard is still needed: render nothing rather than a card at the mesh origin.
+function isUnplaced(a: Pick<AnnotationPublic, 'position_x' | 'position_y' | 'position_z'>): boolean {
+  return a.position_x === 0 && a.position_y === 0 && a.position_z === 0
 }
 
 /**
@@ -31,13 +53,39 @@ type ModelViewerElement = HTMLElement & {
  * AR engine: Android in-page WebXR (no Scene Viewer), iOS AR Quick Look via `ios-src`.
  * Desktop / no-AR devices can't open the camera, so the button reveals an inline 3D
  * orbit preview instead.
+ *
+ * Nutrition hotspots: each admin-verified, placed annotation renders as a floating
+ * card outside the dish — a small anchor dot exactly at the placed 3D point, a thin
+ * leader line, and a card with the component name + macros + allergens pushed radially
+ * outward from the viewer's center toward wherever the dot currently projects on
+ * screen (see useHotspotFanOffsets) so it clears the dish at any camera angle,
+ * including through auto-rotate. This is a `slot="hotspot-{id}"` child of
+ * `<model-viewer>`, which positions the anchor in screen space every frame — the card
+ * stays upright and readable at any orbit angle "for free" (it's normal DOM layout
+ * pinned to a projected 2D point, never 3D-rotated), both in the orbit preview and, per
+ * model-viewer's own AR DOM-overlay support, during a live WebXR session — untested
+ * here, no AR-capable device in this environment.
  */
-export default function TableArView({ src, iosSrc, alt, className }: Props) {
+export default function TableArView({ src, iosSrc, alt, className, annotations }: Props) {
   const [libReady, setLibReady] = useState(false)
   const [modelReady, setModelReady] = useState(false)
   const [, setCanAR] = useState(false)
   const [show3D, setShow3D] = useState(false)
   const ref = useRef<HTMLElement | null>(null)
+  const dotRefs = useRef<Map<string, HTMLElement>>(new Map())
+
+  const placed = (annotations ?? []).filter((a) => !isUnplaced(a))
+  const hasAnnotations = placed.length > 0
+  const placedIds = placed.map((a) => a.id)
+  // Only run the per-frame layout loop while the popup orbit preview is actually
+  // visible — the model-viewer stays mounted (eager-loading) even when hidden, and
+  // its 1px hidden box has no meaningful screen space to fan cards around.
+  const fanOffsets = useHotspotFanOffsets(ref, dotRefs, placedIds, {
+    radiusFactor: 0.42,
+    minRadius: 55,
+    maxRadius: 140,
+    active: show3D,
+  })
 
   // Lazy-load the model-viewer library (bundles three.js).
   useEffect(() => {
@@ -81,6 +129,8 @@ export default function TableArView({ src, iosSrc, alt, className }: Props) {
     }
   }
 
+  const closePopup = () => setShow3D(false)
+
   const busy = !libReady || !modelReady
   const label = busy ? 'Preparing 3D…' : 'View on my table'
 
@@ -98,7 +148,7 @@ export default function TableArView({ src, iosSrc, alt, className }: Props) {
           {show3D && (
             <button
               type="button"
-              onClick={() => setShow3D(false)}
+              onClick={closePopup}
               aria-label="Close 3D viewer"
               style={closeBtnStyle}
             >
@@ -125,7 +175,63 @@ export default function TableArView({ src, iosSrc, alt, className }: Props) {
               background: '#f1f5f9',
               borderRadius: '0.75rem',
             }}
-          />
+          >
+            {hasAnnotations &&
+              placed.map((a, i) => {
+                // The card is pushed OUTWARD from the viewer's center toward wherever
+                // the dot actually projects on screen right now — see
+                // useHotspotFanOffsets — so it clears the dish at any camera angle,
+                // including through auto-rotate. Fall back to the old top-start
+                // clockwise sweep until the hook's first frame lands, so there's no
+                // flash of the card sitting on top of the dish.
+                const fallbackAng = -Math.PI / 2 + (2 * Math.PI * i) / Math.max(1, placed.length)
+                const fallbackR = 95 // px — shorter than the admin editor's default: mobile viewport
+                const fo = fanOffsets[a.id]
+                const cardVars: CSSProperties = {
+                  ['--lx' as string]: `${fo?.lx ?? Math.cos(fallbackAng) * fallbackR}px`,
+                  ['--ly' as string]: `${fo?.ly ?? Math.sin(fallbackAng) * fallbackR}px`,
+                  ['--len' as string]: `${fo?.len ?? fallbackR}px`,
+                  ['--ang' as string]: `${fo?.ang ?? (fallbackAng * 180) / Math.PI}deg`,
+                }
+                const kcal = formatMacro(a.calories)
+                const protein = formatMacro(a.protein_g)
+                const carbs = formatMacro(a.carbs_g)
+                const fat = formatMacro(a.fat_g)
+                return (
+                  <div
+                    key={a.id}
+                    slot={`hotspot-${a.id}`}
+                    data-position={`${a.position_x} ${a.position_y} ${a.position_z}`}
+                    data-normal={`${a.normal_x} ${a.normal_y} ${a.normal_z}`}
+                    className={styles.callout}
+                    style={cardVars}
+                  >
+                    <span
+                      className={styles.dot}
+                      ref={(el) => {
+                        if (el) dotRefs.current.set(a.id, el)
+                        else dotRefs.current.delete(a.id)
+                      }}
+                    />
+                    <span className={styles.leader} />
+                    <div className={styles.card}>
+                      <p className={styles.cardLabel}>{a.label}</p>
+                      {(kcal || protein || carbs || fat) && (
+                        <div className={styles.cardMacros}>
+                          {kcal && <span>{kcal} kcal</span>}
+                          {protein && <span>P {protein}g</span>}
+                          {carbs && <span>C {carbs}g</span>}
+                          {fat && <span>F {fat}g</span>}
+                        </div>
+                      )}
+                      {a.allergens.length > 0 && (
+                        <p className={styles.cardAllergens}>Contains: {a.allergens.join(', ')}</p>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+          </model-viewer>
         </div>
       )}
     </>

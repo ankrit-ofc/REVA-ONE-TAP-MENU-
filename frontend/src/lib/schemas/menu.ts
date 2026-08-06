@@ -25,6 +25,27 @@ export const variantPublicSchema = z.object({
 export const foodTypePublicSchema = z.enum(['VEG', 'NON_VEG', 'EGG', 'BEVERAGE', 'SMOKE'])
 export type FoodTypePublic = z.infer<typeof foodTypePublicSchema>
 
+// Admin-verified per-component nutrition hotspot (customer-facing subset of the admin
+// AnnotationResponse — no product_id/source/timestamps). Mirrors backend AnnotationPublic
+// (app/schemas/menu.py). Only ever present alongside a published model.
+export const annotationPublicSchema = z.object({
+  id: z.string().uuid(),
+  label: z.string(),
+  position_x: z.coerce.number(),
+  position_y: z.coerce.number(),
+  position_z: z.coerce.number(),
+  normal_x: z.coerce.number(),
+  normal_y: z.coerce.number(),
+  normal_z: z.coerce.number(),
+  calories: z.coerce.number().nullable(),
+  protein_g: z.coerce.number().nullable(),
+  carbs_g: z.coerce.number().nullable(),
+  fat_g: z.coerce.number().nullable(),
+  allergens: z.array(z.string()),
+  status: z.enum(['AI_ESTIMATED', 'ADMIN_VERIFIED']),
+})
+export type AnnotationPublic = z.infer<typeof annotationPublicSchema>
+
 export const productPublicSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
@@ -40,6 +61,9 @@ export const productPublicSchema = z.object({
   // Present only when a model is published — drives the per-dish AR button.
   model_glb_url: z.string().nullable(),
   model_usdz_url: z.string().nullable(),
+  // Nutrition hotspots for the AR viewer. Optional + nullable so an older cached
+  // response (or a backend that hasn't deployed this field yet) never breaks the menu.
+  annotations: z.array(annotationPublicSchema).optional().nullable(),
 })
 
 export type AddonPublic = z.infer<typeof addonPublicSchema>

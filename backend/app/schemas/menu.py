@@ -7,7 +7,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.models.enums import FoodType
+from app.models.enums import AnnotationStatus, FoodType
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -311,6 +311,29 @@ class VariantPublic(BaseModel):
     price: Decimal
 
 
+class AnnotationPublic(BaseModel):
+    """Customer-facing view of a per-component nutrition hotspot. Only ever built from
+    admin_verified, active annotations on a published model — see menu_service._product_public.
+    Deliberately narrower than the admin AnnotationResponse (app/schemas/ar.py): no
+    product_id (redundant here), no source, no timestamps. `id` is kept (not in the
+    original field spec) because the frontend needs a stable key for the model-viewer
+    hotspot slot name and the React list key; it leaks nothing sensitive."""
+    id: uuid.UUID
+    label: str
+    position_x: float
+    position_y: float
+    position_z: float
+    normal_x: float
+    normal_y: float
+    normal_z: float
+    calories: Decimal | None
+    protein_g: Decimal | None
+    carbs_g: Decimal | None
+    fat_g: Decimal | None
+    allergens: list[str]
+    status: AnnotationStatus
+
+
 class ProductPublic(BaseModel):
     id: uuid.UUID
     name: str
@@ -328,6 +351,10 @@ class ProductPublic(BaseModel):
     # are present; unpublished/draft models are never exposed here.
     model_glb_url: str | None = None
     model_usdz_url: str | None = None
+    # Admin-verified nutrition hotspots for the AR viewer. Only present alongside a
+    # published model (same gate as model_glb_url above); optional/None everywhere else
+    # so older cached responses and non-AR products are unaffected.
+    annotations: list[AnnotationPublic] | None = None
 
 
 class CategoryPublic(BaseModel):

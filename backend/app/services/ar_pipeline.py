@@ -12,7 +12,6 @@ Providers are dummy stubs this milestone (no external calls / no new deps).
 """
 
 import logging
-import math
 import uuid
 from datetime import datetime, timezone
 
@@ -271,7 +270,15 @@ def _run_marking(db: Session, restaurant_id: uuid.UUID, product_id: uuid.UUID) -
 
 
 def _converge(db: Session, restaurant_id: uuid.UUID, product_id: uuid.UUID) -> None:
-    """When generation + marking are both DONE, auto-place hotspots and flip to READY."""
+    """When generation + marking are both DONE, flip to READY.
+
+    New annotations land at their DB default position (0,0,0) / normal (0,1,0) — see
+    ModelAnnotation in app/models/ar.py — which the admin editor treats as "not yet
+    placed" (no hotspot rendered on the model, a badge in the tag list instead) rather
+    than spreading them into a fake circle that implied a real position no one chose.
+    Real photo-to-mesh projection is a separate, larger piece of work; until then the
+    admin places each tag by clicking the model in the 3D Model Editor.
+    """
     kinds_done = set(db.execute(
         select(GenerationJob.kind).where(
             GenerationJob.product_id == product_id,
@@ -287,40 +294,9 @@ def _converge(db: Session, restaurant_id: uuid.UUID, product_id: uuid.UUID) -> N
     if not product.model_glb_url:
         return
 
-    _auto_project(db, restaurant_id, product_id)
-
     product.model_status = ArModelStatus.READY
     product.updated_at = _now()
     db.commit()
-
-
-def _auto_project(db: Session, restaurant_id: uuid.UUID, product_id: uuid.UUID) -> None:
-    """
-    Stub auto-projection: spread the hotspots evenly on the top surface so the admin
-    sees them placed and can drag them precisely in the editor (M4). Real projection
-    ray-casts the top photo's 2D centroids onto the mesh; that lands with the VLM work.
-    """
-    rows = db.execute(
-        select(ModelAnnotation).where(
-            ModelAnnotation.product_id == product_id,
-            ModelAnnotation.restaurant_id == restaurant_id,
-            ModelAnnotation.is_active.is_(True),
-            ModelAnnotation.position_x == 0,
-            ModelAnnotation.position_y == 0,
-            ModelAnnotation.position_z == 0,
-        )
-    ).scalars().all()
-    n = len(rows)
-    if n == 0:
-        return
-    radius = 0.08  # metres — inside a ~0.30 m pizza
-    for i, ann in enumerate(rows):
-        angle = (2 * math.pi * i) / n
-        ann.position_x = round(radius * math.cos(angle), 4)
-        ann.position_y = 0.03  # just above the top surface
-        ann.position_z = round(radius * math.sin(angle), 4)
-        ann.normal_x, ann.normal_y, ann.normal_z = 0.0, 1.0, 0.0
-        ann.updated_at = _now()
 
 
 def _fail_job(db: Session, job_id: uuid.UUID, error: str) -> None:

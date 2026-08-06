@@ -66,13 +66,6 @@
   border-right: 1px solid var(--color-border, #e5e7eb);
 }
 
-.viewer {
-  width: 100%;
-  height: 360px;
-  background: #f1f5f9;
-  border-radius: 0.6rem;
-}
-
 .viewerLoading {
   width: 100%;
   height: 360px;
@@ -89,6 +82,39 @@
   margin: 0.5rem 0 0;
   font-size: 0.72rem;
   color: var(--color-text-muted, #6b7280);
+}
+
+.placeHint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.placeHint .hint { margin: 0; }
+
+.cancelBtn {
+  flex-shrink: 0;
+  padding: 0.25rem 0.6rem;
+  border-radius: 0.4rem;
+  border: 1.5px solid var(--color-border-strong, #d1d5db);
+  background: #fff;
+  color: var(--color-text-soft, #374151);
+  font-size: 0.68rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.unplacedBadge {
+  flex-shrink: 0;
+  padding: 0.1rem 0.4rem;
+  border-radius: 0.35rem;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 0.62rem;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 /* Radial callouts. model-viewer positions each button at the component's projected
@@ -131,30 +157,66 @@
   pointer-events: none; /* let model clicks through; only dot/label select */
 }
 
+/* Small card (name + macros + allergens) pushed outward, clear of the dish, by
+   useHotspotFanOffsets — so admin placement previews exactly what the customer's
+   floating card (TableArView.tsx) will show. Semi-transparent dark + blur so the
+   dish/background shows through behind it while the text itself stays fully
+   legible (text colors below are opaque, not dimmed via CSS opacity). */
 .labelChip {
   position: absolute;
   left: var(--lx, 0);
   top: var(--ly, 0);
-  transform: translate(-50%, -50%); /* centre the chip on the radial end point */
-  white-space: nowrap;
+  transform: translate(-50%, -50%); /* centre the card on the radial end point */
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 5.5rem;
+  max-width: 9.5rem;
   font-size: 0.62rem;
   font-weight: 700;
-  padding: 0.12rem 0.4rem;
-  border-radius: 0.35rem;
+  padding: 0.3rem 0.5rem;
+  border-radius: 0.5rem;
   border: 1.5px solid currentColor;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  text-align: left;
+  white-space: normal;
 }
 
-/* AI-estimated tags read WHITE (dark line/border for legibility on a light model);
-   admin verification turns them green. Color is the only state indicator — the label
-   text is always just the food-part name. */
-.calloutAi { color: #334155; }
-.calloutAi .dot { background: #ffffff; }
-.calloutAi .labelChip { background: #ffffff; color: #1e293b; }
+.labelChipName {
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
-.calloutVerified { color: #16a34a; }
-.calloutVerified .dot { background: #16a34a; }
-.calloutVerified .labelChip { background: #16a34a; color: #ffffff; border-color: #16a34a; }
+.labelChipMacros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: currentColor; /* accent for verified tags, neutral for AI estimates */
+}
+
+.labelChipAllergens {
+  font-size: 0.55rem;
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+/* AI-estimated tags read neutral gray (dot + border); admin verification turns
+   them accent-colored. Color is the only state indicator — the card's dark-glass
+   background and text are identical either way. Accent falls back to the
+   pre-theming green when no restaurant accent colour is set, so this renders
+   identically to before for any restaurant that never picked one. */
+.calloutAi { color: #94a3b8; }
+.calloutAi .dot { background: #e2e8f0; }
+
+.calloutVerified { color: var(--menu-accent, var(--color-primary, #16a34a)); }
+.calloutVerified .dot { background: var(--menu-accent, var(--color-primary, #16a34a)); }
 
 .calloutSel { z-index: 5; }
 .calloutSel .dot { outline: 3px solid #fde047; }

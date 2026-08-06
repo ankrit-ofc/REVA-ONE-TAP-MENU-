@@ -23,6 +23,8 @@ declare global {
           'shadow-intensity'?: string | number
           exposure?: string | number
           'touch-action'?: string
+          'interaction-prompt'?: 'auto' | 'when-focused' | 'none'
+          'disable-tap'?: boolean
         },
         HTMLElement
       >
