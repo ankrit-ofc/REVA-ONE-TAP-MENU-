@@ -61,7 +61,7 @@
   padding: 0.85rem 1rem 0.35rem;
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--color-primary-deep, #0f2a21) 8%, var(--color-bg)) 0%,
+    var(--menu-surface-bg-tint, color-mix(in srgb, var(--color-primary-deep, #0f2a21) 8%, var(--color-bg))) 0%,
     var(--color-bg) 100%
   );
   border-bottom: 1px solid var(--color-border);
@@ -187,9 +187,9 @@
 }
 
 .chipActive {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-  color: #fff;
+  background: var(--menu-accent, var(--color-primary));
+  border-color: var(--menu-accent, var(--color-primary));
+  color: var(--menu-accent-ink, #fff);
 }
 
 .chipCount {
@@ -266,16 +266,16 @@
   padding: 0.26rem 0.8rem;
   border-radius: var(--radius-pill);
   border: none;
-  background: var(--color-tint);
+  background: var(--menu-tint, var(--color-tint));
   font-size: 0.7rem;
   font-weight: 600;
-  color: var(--color-text-soft);
+  color: var(--menu-tint-ink, var(--color-text-soft));
   cursor: pointer;
 }
 
 .filterActive {
-  background: var(--color-primary);
-  color: #fff;
+  background: var(--menu-accent, var(--color-primary));
+  color: var(--menu-accent-ink, #fff);
 }
 
 /* ── Product area ─────────────────────────────────────────────────────── */
@@ -290,20 +290,8 @@
 .listTitle {
   font-size: 0.9rem;
   font-weight: 800;
-  color: var(--color-text);
+  color: var(--menu-accent-text, var(--color-primary));
   margin: 0.4rem 0 0.5rem;
-}
-
-.list {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.6rem;
-}
-
-@media (min-width: 768px) {
-  .list {
-    grid-template-columns: 1fr 1fr;
-  }
 }
 
 /* ── States ───────────────────────────────────────────────────────────── */

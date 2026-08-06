@@ -10,6 +10,10 @@ interface SessionState {
   callWaiterEnabled: boolean | null
   arEnabled: boolean | null
   qrPaymentEnabled: boolean | null
+  /** Menu theming, set from GET /menu (setFeatureFlags only — /scan doesn't
+   *  carry it). null = not fetched yet; consumers fall back to defaults. */
+  menuTemplate: string | null
+  menuAccentColor: string | null
 }
 
 const initialState: SessionState = {
@@ -21,6 +25,8 @@ const initialState: SessionState = {
   callWaiterEnabled: null,
   arEnabled: null,
   qrPaymentEnabled: null,
+  menuTemplate: null,
+  menuAccentColor: null,
 }
 
 function flagOrNull(v: boolean | undefined): boolean | null {
@@ -60,6 +66,8 @@ const sessionSlice = createSlice({
         callWaiterEnabled?: boolean
         arEnabled?: boolean
         qrPaymentEnabled?: boolean
+        menuTemplate?: string
+        menuAccentColor?: string | null
       }>,
     ) {
       if (action.payload.orderEnabled !== undefined) {
@@ -74,6 +82,12 @@ const sessionSlice = createSlice({
       if (action.payload.qrPaymentEnabled !== undefined) {
         state.qrPaymentEnabled = action.payload.qrPaymentEnabled
       }
+      if (action.payload.menuTemplate !== undefined) {
+        state.menuTemplate = action.payload.menuTemplate
+      }
+      if (action.payload.menuAccentColor !== undefined) {
+        state.menuAccentColor = action.payload.menuAccentColor
+      }
     },
     clearSession(state) {
       state.sessionToken = null
@@ -84,6 +98,8 @@ const sessionSlice = createSlice({
       state.callWaiterEnabled = null
       state.arEnabled = null
       state.qrPaymentEnabled = null
+      state.menuTemplate = null
+      state.menuAccentColor = null
     },
   },
 })

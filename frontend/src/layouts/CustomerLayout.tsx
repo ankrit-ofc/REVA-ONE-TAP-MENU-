@@ -6,6 +6,7 @@ import { useCallWaiterMutation } from '@/features/session/sessionApi'
 import { useCart } from '@/features/cart/useCart'
 import { useTheme } from '@/features/ui/useTheme'
 import { formatPrice } from '@/lib/currency'
+import { deriveMenuTheme } from '@/lib/menuAccent'
 import styles from './CustomerLayout.module.css'
 
 const CURRENCY = 'NPR'
@@ -48,6 +49,7 @@ export default function CustomerLayout() {
     orderEnabled,
     callWaiterEnabled,
     qrPaymentEnabled,
+    menuAccentColor,
   } = useSession()
   const { totalItems, estimatedTotal } = useCart()
   const { theme } = useTheme()
@@ -100,7 +102,7 @@ export default function CustomerLayout() {
   }
 
   return (
-    <div className={styles.root} data-theme={theme}>
+    <div className={styles.root} data-theme={theme} style={deriveMenuTheme(menuAccentColor, theme)}>
       {/* ── Top app bar (fixed) ─────────────────────────────────────────── */}
       <header className={styles.appbar}>
         <button

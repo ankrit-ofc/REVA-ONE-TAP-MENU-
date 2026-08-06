@@ -8,7 +8,9 @@ import {
   useRemovePaymentQrMutation,
 } from '@/features/admin/adminApi'
 import type { SettingsResponse, SettingsUpdate } from '@/lib/schemas/admin'
+import { HEX_COLOR_PATTERN } from '@/lib/schemas/menu'
 import { getDevicePosition, GeolocationError } from '@/lib/geolocation'
+import MenuThemeSection from './MenuThemeSection'
 import styles from './Settings.module.css'
 
 function errDetail(e: unknown): string {
@@ -219,6 +221,8 @@ export default function AdminSettings() {
         // not this form.
         banner_image_url: settings.banner_image_url,
         payment_qr_url: settings.payment_qr_url,
+        menu_template: settings.menu_template,
+        menu_accent_color: settings.menu_accent_color,
       })
     }
   }, [settings])
@@ -248,6 +252,10 @@ export default function AdminSettings() {
       return
     }
     if (!(form.geofence_radius_meters > 0)) { setErr('Radius must be greater than 0.'); return }
+    if (form.menu_accent_color && !HEX_COLOR_PATTERN.test(form.menu_accent_color)) {
+      setErr('Accent colour must be a hex code like #1D9E75.')
+      return
+    }
 
     // Convert nulls → undefined for the optional update fields.
     const payload: SettingsUpdate = {
@@ -260,6 +268,8 @@ export default function AdminSettings() {
       latitude: form.latitude ?? undefined,
       longitude: form.longitude ?? undefined,
       geofence_radius_meters: form.geofence_radius_meters,
+      menu_template: form.menu_template,
+      menu_accent_color: form.menu_accent_color ?? undefined,
     }
     try {
       await update(payload).unwrap()
@@ -283,6 +293,13 @@ export default function AdminSettings() {
       <PaymentQrSection qrUrl={settings?.payment_qr_url ?? null} />
 
       <form onSubmit={(e) => void handleSubmit(e)} className={styles.form}>
+        <MenuThemeSection
+          template={form.menu_template}
+          accentColor={form.menu_accent_color}
+          onTemplateChange={(t) => setForm({ ...form, menu_template: t })}
+          onAccentColorChange={(c) => setForm({ ...form, menu_accent_color: c })}
+        />
+
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>Payments</h2>
           {settings?.qr_pay_enabled === false && (

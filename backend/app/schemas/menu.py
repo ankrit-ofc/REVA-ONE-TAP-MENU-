@@ -201,6 +201,17 @@ class AddonMappingResponse(BaseModel):
 # Restaurant Settings
 # ──────────────────────────────────────────────────────────────────────────────
 
+# Six customer-menu layouts (admin Settings → "Edit menu"). "classic" is the
+# thumbnail-left list every restaurant already renders today — it is the
+# server_default so theming stays opt-in and no existing restaurant's menu
+# changes appearance until an admin actively picks one of the other five.
+# Shared by the admin update/response schemas and the customer-facing
+# MenuPublic payload.
+MenuTemplate = Literal["classic", "photo_grid", "elegant_list", "compact_list", "magazine", "bold_cards"]
+MENU_TEMPLATES: tuple[str, ...] = ("classic", "photo_grid", "elegant_list", "compact_list", "magazine", "bold_cards")
+_HEX_COLOR_PATTERN = r"^#[0-9A-Fa-f]{6}$"
+
+
 class SettingsUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
     # SOFT-DEPRECATED: accepted so staff-mobile clients do not 422, but IGNORED
@@ -227,6 +238,9 @@ class SettingsUpdate(BaseModel):
     kot_print_mode: Literal["browser", "worker"] | None = None
     # Windows printer name the worker routes tickets to. "" clears it.
     kot_printer_name: Annotated[str, Field(max_length=120)] | None = None
+    # Customer-menu presentation (admin Settings → "Edit menu").
+    menu_template: MenuTemplate | None = None
+    menu_accent_color: Annotated[str, Field(pattern=_HEX_COLOR_PATTERN)] | None = None
 
 
 class SettingsResponse(BaseModel):
@@ -255,6 +269,9 @@ class SettingsResponse(BaseModel):
     banner_image_url: str | None
     # Payment QR shown to guests at billing; set only via POST /admin/settings/payment-qr.
     payment_qr_url: str | None
+    # Customer-menu presentation (admin Settings → "Edit menu").
+    menu_template: str
+    menu_accent_color: str | None
     # Read-only STORED restaurants flags (for admin UI; not editable here).
     ar_enabled: bool = True
     qr_pay_enabled: bool = True
@@ -334,3 +351,7 @@ class MenuPublic(BaseModel):
     call_waiter_enabled: bool
     ar_enabled: bool
     qr_pay_enabled: bool
+    # Menu theming (admin Settings → "Edit menu"). menu_accent_color NULL →
+    # client falls back to its built-in default accent.
+    menu_template: str
+    menu_accent_color: str | None

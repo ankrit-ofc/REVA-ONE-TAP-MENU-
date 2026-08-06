@@ -3,7 +3,7 @@ import { useMenu } from '@/features/menu/useMenu'
 import SpecialsCarousel from '@/features/menu/SpecialsCarousel'
 import { useSession } from '@/features/session/useSession'
 import { useTheme } from '@/features/ui/useTheme'
-import ProductCard from '@/components/ui/ProductCard'
+import { resolveMenuTemplate } from '@/features/menu/templates'
 import Loader from '@/components/common/Loader'
 import type { CategoryPublic, FoodTypePublic, ProductPublic } from '@/lib/schemas/menu'
 import styles from './Menu.module.css'
@@ -47,7 +47,8 @@ interface Group { name: string; products: ProductPublic[] }
 
 export default function Menu() {
   const { categories, specials, bannerImageUrl, isLoading, isError } = useMenu()
-  const { restaurantName } = useSession()
+  const { restaurantName, menuTemplate } = useSession()
+  const Template = resolveMenuTemplate(menuTemplate)
   const { theme, toggle } = useTheme()
   const [path, setPath] = useState<string[]>([])
   const [filter, setFilter] = useState<Filter>('ALL')
@@ -137,10 +138,6 @@ export default function Menu() {
 
   const breadcrumb = chain.map((n) => n.name).join(' › ')
   const bodyCount = applyVeg(bodyAll).length
-
-  const card = (p: ProductPublic, prefix = '') => (
-    <ProductCard key={`${prefix}${p.id}`} product={p} currency={CURRENCY} />
-  )
 
   return (
     <div className={styles.page}>
@@ -261,7 +258,7 @@ export default function Menu() {
       <div className={styles.menuArea}>
         {isSearching ? (
           applyVeg(searchResults).length > 0 ? (
-            <div className={styles.list}>{applyVeg(searchResults).map((p) => card(p))}</div>
+            <Template products={applyVeg(searchResults)} currency={CURRENCY} />
           ) : (
             <p className={styles.emptyCategory}>No dishes match “{query.trim()}”.</p>
           )
@@ -271,12 +268,12 @@ export default function Menu() {
           </p>
         ) : vegGroups.length === 1 ? (
           // Leaf / single group → flat list, no header.
-          <div className={styles.list}>{vegGroups[0].products.map((p) => card(p, `${vegGroups[0].name}-`))}</div>
+          <Template products={vegGroups[0].products} currency={CURRENCY} />
         ) : (
           vegGroups.map((g) => (
             <section key={g.name} className={styles.group} aria-label={g.name}>
               <h2 className={styles.listTitle}>{g.name}</h2>
-              <div className={styles.list}>{g.products.map((p) => card(p, `${g.name}-`))}</div>
+              <Template products={g.products} currency={CURRENCY} />
             </section>
           ))
         )}

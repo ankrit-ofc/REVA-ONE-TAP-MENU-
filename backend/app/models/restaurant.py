@@ -90,4 +90,13 @@ class RestaurantSettings(Base, TimestampMixin, TenantMixin):
     # never accepted from the client. NULL → no QR configured.
     payment_qr_url: Mapped[str | None] = mapped_column(Text, nullable=True)
 
+    # Customer-menu presentation. menu_template picks one of six layouts
+    # (see MENU_TEMPLATES); "classic" is today's thumbnail-left list and the
+    # default, so theming is opt-in and no restaurant's menu changes on
+    # deploy until an admin picks a different template. menu_accent_color is
+    # a hex colour applied to buttons/headings/chips/price/cart badge only.
+    # NULL accent → client default. Both are admin-editable via SettingsUpdate.
+    menu_template: Mapped[str] = mapped_column(String(20), nullable=False, server_default="classic")
+    menu_accent_color: Mapped[str | None] = mapped_column(String(7), nullable=True)
+
     restaurant: Mapped["Restaurant"] = relationship("Restaurant", back_populates="settings")
