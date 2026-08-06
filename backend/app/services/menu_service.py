@@ -19,6 +19,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.models.audit_log import AuditLog
 from app.models.category import Category
+from app.models.enums import AnnotationStatus
 from app.models.product import Product, ProductAddon, ProductAddonMapping, ProductVariant
 from app.models.restaurant import Restaurant, RestaurantSettings
 from app.models.user import User
@@ -27,6 +28,7 @@ from app.schemas.menu import (
     AddonMappingCreate,
     AddonPublic,
     AddonUpdate,
+    AnnotationPublic,
     CategoryCreate,
     CategoryPublic,
     CategoryUpdate,
@@ -1045,6 +1047,33 @@ def _product_public(p: Product, *, ar_allowed: bool = True) -> ProductPublic:
     # Only expose AR model URLs when the STORED restaurant.ar_enabled is on
     # AND the product model is published.
     ar_published = ar_allowed and p.model_published and bool(p.model_glb_url)
+    # Same gate as the model URLs above, plus: only admin_verified, active tags.
+    # AI drafts (ai_estimated) never reach a customer — wrong nutrition info is worse
+    # than none (see AR/ar-3d-model-nutrition.md guardrails).
+    annotations = (
+        [
+            AnnotationPublic(
+                id=a.id,
+                label=a.label,
+                position_x=a.position_x,
+                position_y=a.position_y,
+                position_z=a.position_z,
+                normal_x=a.normal_x,
+                normal_y=a.normal_y,
+                normal_z=a.normal_z,
+                calories=a.calories,
+                protein_g=a.protein_g,
+                carbs_g=a.carbs_g,
+                fat_g=a.fat_g,
+                allergens=a.allergens,
+                status=a.status,
+            )
+            for a in p.annotations
+            if a.is_active and a.status == AnnotationStatus.ADMIN_VERIFIED
+        ]
+        if ar_published
+        else None
+    )
     return ProductPublic(
         id=p.id,
         name=p.name,
@@ -1059,6 +1088,7 @@ def _product_public(p: Product, *, ar_allowed: bool = True) -> ProductPublic:
         addons=addons,
         model_glb_url=p.model_glb_url if ar_published else None,
         model_usdz_url=p.model_usdz_url if ar_published else None,
+        annotations=annotations,
     )
 
 
@@ -1089,6 +1119,7 @@ def get_todays_specials(
             selectinload(Product.addon_mappings).options(
                 selectinload(ProductAddonMapping.addon)
             ),
+            selectinload(Product.annotations),
         )
         .order_by(Product.name)
     ).scalars().all()
@@ -1121,6 +1152,7 @@ def get_customer_menu(
                 selectinload(Product.addon_mappings).options(
                     selectinload(ProductAddonMapping.addon)
                 ),
+                selectinload(Product.annotations),
             )
         )
     ).scalars().all()

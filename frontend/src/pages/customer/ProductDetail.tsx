@@ -257,6 +257,7 @@ export default function ProductDetail() {
               iosSrc={product.model_usdz_url ?? undefined}
               alt={product.name}
               className={styles.tableBtn}
+              annotations={product.annotations}
             />
           )}
         </div>

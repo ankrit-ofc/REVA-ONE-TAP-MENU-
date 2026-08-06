@@ -1,0 +1,84 @@
+/* Floating nutrition card per component — slotted into <model-viewer>, which pins it
+   to a projected 2D point every frame. That's normal DOM layout (never 3D-rotated), so
+   the card stays upright and readable at any orbit angle "for free" — no extra CSS
+   needed to fight rotation. Themed via the shared --menu-accent custom property (set at
+   CustomerLayout root by deriveMenuTheme); falls back to --color-primary when no accent
+   is picked, so an untouched restaurant renders identically to the app's other accented
+   controls (see ProductDetail.module.css .tableBtn). */
+.callout {
+  position: relative;
+  width: 0;
+  height: 0;
+}
+
+.dot {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 9999px;
+  background: var(--menu-accent, var(--color-primary));
+  border: 2px solid #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  transform: translate(-50%, -50%);
+}
+
+/* Straight line from the dot out to the card, at this tag's own fanned angle. */
+.leader {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--len, 84px);
+  height: 1.5px;
+  background: var(--menu-accent, var(--color-primary));
+  opacity: 0.7;
+  transform-origin: 0 50%;
+  transform: rotate(var(--ang, 0deg));
+}
+
+/* Semi-transparent dark + blur so the scene shows through behind the card while
+   the text itself stays fully legible (colors below are opaque, not dimmed via
+   CSS opacity). */
+.card {
+  position: absolute;
+  left: var(--lx, 0);
+  top: var(--ly, 0);
+  transform: translate(-50%, -50%);
+  min-width: 5.5rem;
+  max-width: 8.5rem;
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1.5px solid var(--menu-accent, var(--color-primary));
+  border-radius: 0.6rem;
+  padding: 0.4rem 0.6rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  text-align: left;
+}
+
+.cardLabel {
+  margin: 0 0 0.15rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cardMacros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--menu-accent, var(--color-primary));
+}
+
+.cardAllergens {
+  margin: 0.15rem 0 0;
+  font-size: 0.56rem;
+  font-weight: 600;
+  color: #cbd5e1;
+}
