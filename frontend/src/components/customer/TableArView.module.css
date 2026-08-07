@@ -47,9 +47,7 @@
   transform: translate(-50%, -50%);
   min-width: 5.5rem;
   max-width: 8.5rem;
-  background: rgba(15, 23, 42, 0.72);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(15, 23, 42, 0.92);
   border: 1.5px solid var(--menu-accent, var(--color-primary));
   border-radius: 0.6rem;
   padding: 0.4rem 0.6rem;
