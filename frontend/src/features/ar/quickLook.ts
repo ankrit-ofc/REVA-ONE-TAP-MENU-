@@ -39,7 +39,10 @@ export const supportsQuickLookAR: boolean = (() => {
   }
 })()
 
-const CUSTOM_HEIGHT = 'medium'
+// "large" — the grid layout at /ar-banner is sized to fit within it without
+// scrolling (Apple's banner view doesn't scroll; see ar_banner.py's
+// _MAX_VISIBLE comment for the overflow-cap reasoning).
+const CUSTOM_HEIGHT = 'large'
 
 /**
  * Launch AR Quick Look for `usdzUrl` with a custom nutrition banner backed by
