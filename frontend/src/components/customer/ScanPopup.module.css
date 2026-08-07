@@ -1,15 +1,19 @@
 /* ── Overlay + glass card ─────────────────────────────────────────────────
    Page-level modal (NOT inside model-viewer's shadow DOM), so backdrop-filter
-   works on iOS Safari. Dims the menu behind with the same tint the app's
-   other overlays already use; the card itself is the "glass" — a darker,
-   blurred version of that same colour family, hence the light-on-dark type
-   below (this project's --color-text/-muted tokens assume a light card and
-   don't apply here). */
+   works on iOS Safari. The glass tint tracks --menu-surface-deep — the same
+   theme-derived dark chrome colour the top app bar already uses (see
+   CustomerLayout.module.css's .appbar and lib/menuAccent.ts's deriveSurfaceDeep).
+   That derivation caps lightness at a fixed dark target regardless of the
+   picked accent's own lightness, so a restaurant that picks a pale colour
+   still gets a dark-enough glass for the white(-ish) text below — text tracks
+   --menu-surface-deep-ink rather than assuming white, for the same reason.
+   Borders/dividers stay plain translucent white: they read fine over any hue
+   of dark glass, so tying them to the accent would only add risk. */
 .overlay {
   position: fixed;
   inset: 0;
   z-index: 90;
-  background: rgba(15, 42, 33, 0.45);
+  background: color-mix(in srgb, var(--menu-surface-deep, #0f2a21) 45%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -22,7 +26,7 @@
   max-height: 90vh;
   overflow-y: auto;
   position: relative;
-  background: rgba(15, 42, 33, 0.78);
+  background: color-mix(in srgb, var(--menu-surface-deep, #0f2a21) 78%, transparent);
   -webkit-backdrop-filter: blur(20px);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.18);
@@ -46,7 +50,7 @@
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.12);
   border: 1px solid rgba(255, 255, 255, 0.22);
-  color: rgba(255, 255, 255, 0.9);
+  color: color-mix(in srgb, var(--menu-surface-deep-ink, #fff) 90%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -85,7 +89,7 @@
   font-size: 1.6875rem;
   font-weight: 600;
   letter-spacing: 0.02em;
-  color: #fff;
+  color: var(--menu-surface-deep-ink, #fff);
   line-height: 1.15;
 }
 
@@ -94,7 +98,7 @@
   text-align: center;
   font-size: 0.625rem;
   letter-spacing: 0.08em;
-  color: rgba(255, 255, 255, 0.6);
+  color: color-mix(in srgb, var(--menu-surface-deep-ink, #fff) 60%, transparent);
 }
 
 /* ── Illustration + speech bubble ─────────────────────────────────────── */
@@ -128,7 +132,7 @@
   font-weight: 500;
   font-style: italic;
   line-height: 1.4;
-  color: #fff;
+  color: var(--menu-surface-deep-ink, #fff);
 }
 
 .kicker {
@@ -142,7 +146,7 @@
 .tagline {
   margin: 0.25rem 1.125rem 0;
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.75);
+  color: color-mix(in srgb, var(--menu-surface-deep-ink, #fff) 75%, transparent);
   line-height: 1.5;
 }
 
@@ -160,7 +164,7 @@
   font-size: 0.6875rem;
   letter-spacing: 0.12em;
   font-weight: 600;
-  color: #fff;
+  color: var(--menu-surface-deep-ink, #fff);
 }
 
 /* ── Product rows ──────────────────────────────────────────────────────── */
@@ -197,13 +201,13 @@
   margin: 0;
   font-size: 0.8125rem;
   font-weight: 600;
-  color: #fff;
+  color: var(--menu-surface-deep-ink, #fff);
 }
 
 .productDesc {
   margin: 0.0625rem 0 0;
   font-size: 0.6875rem;
-  color: rgba(255, 255, 255, 0.65);
+  color: color-mix(in srgb, var(--menu-surface-deep-ink, #fff) 65%, transparent);
 }
 
 .priceChip {
@@ -235,5 +239,5 @@
   margin: 0.5rem 1.125rem 1rem;
   text-align: center;
   font-size: 0.6875rem;
-  color: rgba(255, 255, 255, 0.6);
+  color: color-mix(in srgb, var(--menu-surface-deep-ink, #fff) 60%, transparent);
 }

@@ -1,0 +1,54 @@
+/* Live-preview toggle — mirrors MenuThemeSection.module.css's own toggle
+   widget (same names/values), since each section owns its small chrome
+   rather than sharing a utility module for a ~15-line widget. */
+.previewLabelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.25rem;
+}
+
+.previewLabel {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+}
+
+.themeToggle {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.themeToggleBtn {
+  padding: 0.25rem 0.65rem;
+  border-radius: 0.4rem;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.themeToggleBtnActive {
+  border-color: #7c3aed;
+  background: #f5f3ff;
+  color: #7c3aed;
+}
+
+/* Bounded demo stage the glass card sits on — a neutral tint (not the accent
+   itself) so the card's translucency/blur has something to show against,
+   the same role MenuThemeSection.module.css's .preview plays for templates. */
+.stage {
+  background: var(--menu-surface-bg-tint, var(--color-tint));
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 1.5rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+  transition: background 0.15s ease;
+}
