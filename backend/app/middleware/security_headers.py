@@ -25,13 +25,28 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
 
         response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-        # Pure JSON API — no scripts, images, or frames served from here.
-        response.headers["Content-Security-Policy"] = (
-            "default-src 'none'; frame-ancestors 'none'"
-        )
         response.headers["X-Permitted-Cross-Domain-Policies"] = "none"
+
+        if request.url.path.startswith("/ar-banner/"):
+            # AR Quick Look's custom-banner web view embeds this page inside its
+            # own native UI — functionally a frame load. The blanket DENY /
+            # frame-ancestors 'none' below would make Apple's banner silently
+            # fail to render, so this one route gets a narrower, purpose-built
+            # policy instead: still no scripts ever (default-src 'none'), just
+            # enough to render a static, inline-styled card (style-src/img-src)
+            # and be embeddable by anyone (frame-ancestors *) — the content is
+            # public, read-only nutrition text, nothing an embedder could trick
+            # a user into doing.
+            response.headers["Content-Security-Policy"] = (
+                "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; frame-ancestors *"
+            )
+        else:
+            response.headers["X-Frame-Options"] = "DENY"
+            # Pure JSON API — no scripts, images, or frames served from here.
+            response.headers["Content-Security-Policy"] = (
+                "default-src 'none'; frame-ancestors 'none'"
+            )
 
         if settings.ENVIRONMENT == "production":
             response.headers["Strict-Transport-Security"] = (

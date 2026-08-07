@@ -27,7 +27,7 @@
 	# /counter and /counter/devices are ALSO React routes (routes/AppRoutes.tsx),
 	# so a blanket /counter/* would send a browser navigation to those pages at
 	# the backend and break the web counter surface. Per-path entries only.
-	@always_api path /webhooks/* /ws/* /media/* /printworker/* /health /health/* /push/* /counter/payment-qr /counter/print-config /counter/orders /counter/order-history
+	@always_api path /webhooks/* /ws/* /media/* /printworker/* /health /health/* /push/* /counter/payment-qr /counter/print-config /counter/orders /counter/order-history /ar-banner/*
 	handle @always_api {
 		reverse_proxy backend:8000
 	}

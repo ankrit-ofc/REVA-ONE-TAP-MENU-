@@ -1106,6 +1106,38 @@ def remove_popup_illustration(
 # Customer-facing menu read
 # ──────────────────────────────────────────────────────────────────────────────
 
+def get_public_annotations(p: Product, *, ar_published: bool) -> list[AnnotationPublic] | None:
+    """Admin-verified, active nutrition hotspots for a product — the single
+    filter every customer-facing surface must share (GET /menu's
+    ProductPublic.annotations, and GET /ar-banner's Quick Look banner). AI
+    drafts (ai_estimated) never reach a customer — wrong nutrition info is
+    worse than none (see AR/ar-3d-model-nutrition.md guardrails). None (not
+    an empty list) when the model itself isn't published/AR-allowed, so
+    callers can distinguish "no AR here" from "AR here, nothing verified yet"."""
+    if not ar_published:
+        return None
+    return [
+        AnnotationPublic(
+            id=a.id,
+            label=a.label,
+            position_x=a.position_x,
+            position_y=a.position_y,
+            position_z=a.position_z,
+            normal_x=a.normal_x,
+            normal_y=a.normal_y,
+            normal_z=a.normal_z,
+            calories=a.calories,
+            protein_g=a.protein_g,
+            carbs_g=a.carbs_g,
+            fat_g=a.fat_g,
+            allergens=a.allergens,
+            status=a.status,
+        )
+        for a in p.annotations
+        if a.is_active and a.status == AnnotationStatus.ADMIN_VERIFIED
+    ]
+
+
 def _product_public(p: Product, *, ar_allowed: bool = True) -> ProductPublic:
     """Customer-facing view of one product, with active variants/addons."""
     variants = [
@@ -1121,33 +1153,7 @@ def _product_public(p: Product, *, ar_allowed: bool = True) -> ProductPublic:
     # Only expose AR model URLs when the STORED restaurant.ar_enabled is on
     # AND the product model is published.
     ar_published = ar_allowed and p.model_published and bool(p.model_glb_url)
-    # Same gate as the model URLs above, plus: only admin_verified, active tags.
-    # AI drafts (ai_estimated) never reach a customer — wrong nutrition info is worse
-    # than none (see AR/ar-3d-model-nutrition.md guardrails).
-    annotations = (
-        [
-            AnnotationPublic(
-                id=a.id,
-                label=a.label,
-                position_x=a.position_x,
-                position_y=a.position_y,
-                position_z=a.position_z,
-                normal_x=a.normal_x,
-                normal_y=a.normal_y,
-                normal_z=a.normal_z,
-                calories=a.calories,
-                protein_g=a.protein_g,
-                carbs_g=a.carbs_g,
-                fat_g=a.fat_g,
-                allergens=a.allergens,
-                status=a.status,
-            )
-            for a in p.annotations
-            if a.is_active and a.status == AnnotationStatus.ADMIN_VERIFIED
-        ]
-        if ar_published
-        else None
-    )
+    annotations = get_public_annotations(p, ar_published=ar_published)
     return ProductPublic(
         id=p.id,
         name=p.name,

@@ -32,6 +32,15 @@ export default defineConfig({
           return null
         },
       },
+      // /ar-banner is never a React route (unlike the shared prefixes above) —
+      // it must always reach the backend, even for a real page navigation
+      // (Accept: text/html), which is exactly how AR Quick Look's banner web
+      // view loads it. So this gets its own rule with no bypass(), mirroring
+      // prod's Caddyfile @always_api (unconditional) rather than @api.
+      '^/ar-banner': {
+        target: process.env.BACKEND_URL ?? 'http://localhost:8000',
+        changeOrigin: true,
+      },
       '/ws': {
         target: (process.env.BACKEND_URL ?? 'http://localhost:8000').replace('http', 'ws'),
         ws: true,

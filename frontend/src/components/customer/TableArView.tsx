@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import type { AnnotationPublic } from '@/lib/schemas/menu'
 import { useHotspotFanOffsets } from '@/hooks/useHotspotFanOffsets'
+import { supportsQuickLookAR, launchQuickLook } from '@/features/ar/quickLook'
 import styles from './TableArView.module.css'
 
 interface Props {
@@ -8,6 +9,13 @@ interface Props {
   src: string
   /** URL to the .usdz model for iOS AR Quick Look. */
   iosSrc?: string
+  /** Product id — used to build the GET /ar-banner/{productId} URL for the
+   *  Quick Look custom banner. Only needed on the iOS Quick Look path. */
+  productId: string
+  /** Product photo shown as the Quick Look loading poster; falls back to a
+   *  transparent pixel when absent (see quickLook.ts — the rel="ar" anchor
+   *  requires an <img> child regardless). */
+  posterUrl?: string | null
   /** Accessible description of the dish (model alt text). */
   alt: string
   /** className applied to the action button so the page controls its look. */
@@ -50,9 +58,14 @@ function isUnplaced(a: Pick<AnnotationPublic, 'position_x' | 'position_y' | 'pos
  * with transient activation — and the camera opens on the first try. (Auto-launching
  * from the async `load` callback fails because that has no user activation.)
  *
- * AR engine: Android in-page WebXR (no Scene Viewer), iOS AR Quick Look via `ios-src`.
- * Desktop / no-AR devices can't open the camera, so the button reveals an inline 3D
- * orbit preview instead.
+ * AR engine: Android in-page WebXR (no Scene Viewer). iOS launches native AR Quick
+ * Look ourselves (see quickLook.ts) with a custom nutrition banner — NOT via
+ * `<model-viewer>`'s own `ios-src` handoff, which is deliberately left off the element
+ * (Quick Look can't render model-viewer's DOM hotspot overlays, so nutrition tags never
+ * showed there; the custom banner is how they show for iOS now, as a bottom sheet
+ * instead of 3D-anchored cards). Desktop / no-AR devices can't open the camera, so the
+ * button reveals an inline 3D orbit preview instead — same as un-launchable iOS
+ * (older versions, in-app browsers) via the `supportsQuickLookAR` capability check.
  *
  * Nutrition hotspots: each admin-verified, placed annotation renders as a floating
  * card outside the dish — a small anchor dot exactly at the placed 3D point, a thin
@@ -66,13 +79,18 @@ function isUnplaced(a: Pick<AnnotationPublic, 'position_x' | 'position_y' | 'pos
  * model-viewer's own AR DOM-overlay support, during a live WebXR session — untested
  * here, no AR-capable device in this environment.
  */
-export default function TableArView({ src, alt, className, annotations }: Props) {
+export default function TableArView({ src, iosSrc, productId, posterUrl, alt, className, annotations }: Props) {
   const [libReady, setLibReady] = useState(false)
   const [modelReady, setModelReady] = useState(false)
   const [, setCanAR] = useState(false)
   const [show3D, setShow3D] = useState(false)
   const ref = useRef<HTMLElement | null>(null)
   const dotRefs = useRef<Map<string, HTMLElement>>(new Map())
+
+  // iOS Quick Look doesn't need model-viewer's hidden .glb eager-load at all —
+  // it fetches the .usdz itself once launched — so the button shouldn't sit in
+  // "Preparing 3D…" waiting on a download it'll never use.
+  const canQuickLook = supportsQuickLookAR && Boolean(iosSrc)
 
   const placed = (annotations ?? []).filter((a) => !isUnplaced(a))
   const hasAnnotations = placed.length > 0
@@ -117,6 +135,18 @@ export default function TableArView({ src, alt, className, annotations }: Props)
   }, [libReady])
 
   const handleClick = () => {
+    // Must run first and stay synchronous: this is the same tap's user gesture,
+    // and iOS Safari only honours the Quick Look launch inside that same tick.
+    if (supportsQuickLookAR && iosSrc) {
+      try {
+        launchQuickLook(iosSrc, productId, posterUrl)
+      } catch {
+        // Same fallback as the WebXR branch below: if the launch itself throws,
+        // don't strand the customer on a dead tap.
+        setShow3D(true)
+      }
+      return
+    }
     const el = ref.current as ModelViewerElement | null
     if (!el) return
     if (el.canActivateAR && el.activateAR) {
@@ -131,7 +161,7 @@ export default function TableArView({ src, alt, className, annotations }: Props)
 
   const closePopup = () => setShow3D(false)
 
-  const busy = !libReady || !modelReady
+  const busy = canQuickLook ? false : !libReady || !modelReady
   const label = busy ? 'Preparing 3D…' : 'View on my table'
 
   return (
