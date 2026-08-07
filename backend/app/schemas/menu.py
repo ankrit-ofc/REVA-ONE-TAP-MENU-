@@ -241,6 +241,10 @@ class SettingsUpdate(BaseModel):
     # Customer-menu presentation (admin Settings → "Edit menu").
     menu_template: MenuTemplate | None = None
     menu_accent_color: Annotated[str, Field(pattern=_HEX_COLOR_PATTERN)] | None = None
+    # Heading for the customer menu's "Today's Special" section. Whitespace-only
+    # (including "") is normalized to NULL by update_settings, restoring the
+    # default "Today's Special" text.
+    specials_section_title: Annotated[str, Field(max_length=80)] | None = None
 
 
 class SettingsResponse(BaseModel):
@@ -272,6 +276,7 @@ class SettingsResponse(BaseModel):
     # Customer-menu presentation (admin Settings → "Edit menu").
     menu_template: str
     menu_accent_color: str | None
+    specials_section_title: str | None
     # Read-only STORED restaurants flags (for admin UI; not editable here).
     ar_enabled: bool = True
     qr_pay_enabled: bool = True
@@ -382,3 +387,6 @@ class MenuPublic(BaseModel):
     # client falls back to its built-in default accent.
     menu_template: str
     menu_accent_color: str | None
+    # "Today's Special" section heading. NULL → client falls back to the
+    # default "Today's Special" text.
+    specials_section_title: str | None
