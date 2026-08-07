@@ -196,6 +196,84 @@
   gap: 0.5rem;
 }
 
+/* ── Scan popup: illustration + featured-product picker ───────────────── */
+.illustrationPreview {
+  width: 140px;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+  display: block;
+}
+
+.illustrationEmpty {
+  width: 140px;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 0.75rem;
+  box-sizing: border-box;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 0.5rem;
+  color: #94a3b8;
+  font-size: 0.72rem;
+  font-style: italic;
+}
+
+.pickerList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.pickerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.625rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+}
+
+.pickerName {
+  font-size: 0.8125rem;
+  color: #1e293b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pickerActions {
+  display: flex;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.pickerBtn {
+  width: 1.75rem;
+  height: 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  color: #1e293b;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.375rem;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.pickerBtn:hover:not(:disabled) { background: #e2e8f0; }
+.pickerBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
 @media (min-width: 768px) {
   .root {
     padding: 1.5rem;

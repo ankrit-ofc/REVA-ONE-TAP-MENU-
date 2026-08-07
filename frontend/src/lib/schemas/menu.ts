@@ -110,6 +110,20 @@ export const menuResponseSchema = z.object({
   // missing/null (older cached responses, or a backend that hasn't deployed
   // this yet).
   specials_section_title: z.string().nullable().optional(),
+  // Promotional scan popup. Missing/false popup_enabled (older cached
+  // responses, or a backend that hasn't deployed this yet) → popup never shows.
+  popup_enabled: z.boolean().optional(),
+  popup_badge_text: z.string().nullable().optional(),
+  popup_headline: z.string().nullable().optional(),
+  popup_masthead_subline: z.string().nullable().optional(),
+  popup_bubble_text: z.string().nullable().optional(),
+  popup_kicker: z.string().nullable().optional(),
+  popup_tagline: z.string().nullable().optional(),
+  popup_section_label: z.string().nullable().optional(),
+  popup_cta_text: z.string().nullable().optional(),
+  popup_footer_text: z.string().nullable().optional(),
+  popup_illustration_url: z.string().nullable().optional(),
+  popup_product_ids: z.array(z.string()).optional(),
 })
 
 export type MenuResponse = z.infer<typeof menuResponseSchema>

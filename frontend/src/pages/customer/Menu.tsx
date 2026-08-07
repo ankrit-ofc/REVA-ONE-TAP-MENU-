@@ -1,9 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useMenu } from '@/features/menu/useMenu'
 import SpecialsCarousel from '@/features/menu/SpecialsCarousel'
+import ScanPopup from '@/components/customer/ScanPopup'
 import { useSession } from '@/features/session/useSession'
 import { useTheme } from '@/features/ui/useTheme'
 import { resolveMenuTemplate } from '@/features/menu/templates'
+import { hasSeenPopup, markPopupSeen } from '@/features/session/qrStorage'
 import Loader from '@/components/common/Loader'
 import type { CategoryPublic, FoodTypePublic, ProductPublic } from '@/lib/schemas/menu'
 import styles from './Menu.module.css'
@@ -46,13 +48,38 @@ function resolvePath(roots: CategoryPublic[], path: string[]): CategoryPublic[] 
 interface Group { name: string; products: ProductPublic[] }
 
 export default function Menu() {
-  const { categories, specials, bannerImageUrl, specialsSectionTitle, isLoading, isError } = useMenu()
+  const {
+    categories, specials, bannerImageUrl, specialsSectionTitle,
+    popupEnabled, popupProductIds, findProduct,
+    isLoading, isError,
+  } = useMenu()
   const { restaurantName, menuTemplate } = useSession()
   const Template = resolveMenuTemplate(menuTemplate)
   const { theme, toggle } = useTheme()
   const [path, setPath] = useState<string[]>([])
   const [filter, setFilter] = useState<Filter>('ALL')
   const [query, setQuery] = useState('')
+
+  // Scan popup: shown at most once per table session, on first menu load.
+  // Decided once data has arrived (isLoading false) so popupEnabled/products
+  // aren't judged against their pre-fetch defaults; the ref guard stops a
+  // later settings refetch from re-deciding mid-session.
+  const [showPopup, setShowPopup] = useState(false)
+  const popupDecided = useRef(false)
+  const popupProducts = popupProductIds
+    .map((id) => findProduct(id))
+    .filter((p): p is ProductPublic => p !== undefined)
+    .slice(0, 5)
+
+  useEffect(() => {
+    if (popupDecided.current || isLoading) return
+    popupDecided.current = true
+    if (popupEnabled && !hasSeenPopup() && popupProducts.length > 0) {
+      markPopupSeen()
+      setShowPopup(true)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading])
 
   if (isLoading) return <Loader fullscreen message="Loading menu…" />
 
@@ -278,6 +305,10 @@ export default function Menu() {
           ))
         )}
       </div>
+
+      {showPopup && (
+        <ScanPopup products={popupProducts} onClose={() => setShowPopup(false)} />
+      )}
     </div>
   )
 }

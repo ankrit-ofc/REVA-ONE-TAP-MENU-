@@ -128,6 +128,41 @@ def remove_payment_qr(
     return _settings_response(db, restaurant_id, settings)
 
 
+@router.post("/settings/popup-illustration", response_model=SettingsResponse)
+def upload_popup_illustration(
+    file: UploadFile,
+    restaurant_id: _RidDep,
+    user: _AdminDep,
+    db: _DbDep,
+) -> SettingsResponse:
+    raw = file.file.read()
+    try:
+        illustration_url = image_service.validate_and_store_popup_illustration(raw, restaurant_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+
+    settings = menu_service.get_or_create_settings(db, restaurant_id)
+    previous_url = settings.popup_illustration_url
+    settings = menu_service.set_popup_illustration(db, restaurant_id, illustration_url, actor=user)
+    if previous_url:
+        image_service.delete_image(previous_url)
+    return _settings_response(db, restaurant_id, settings)
+
+
+@router.delete("/settings/popup-illustration", response_model=SettingsResponse)
+def remove_popup_illustration(
+    restaurant_id: _RidDep,
+    user: _AdminDep,
+    db: _DbDep,
+) -> SettingsResponse:
+    settings = menu_service.get_or_create_settings(db, restaurant_id)
+    previous_url = settings.popup_illustration_url
+    settings = menu_service.remove_popup_illustration(db, restaurant_id, actor=user)
+    if previous_url:
+        image_service.delete_image(previous_url)
+    return _settings_response(db, restaurant_id, settings)
+
+
 @router.post("/settings/kot-worker-token", response_model=SettingsResponse)
 def rotate_kot_worker_token(
     restaurant_id: _RidDep,

@@ -157,6 +157,20 @@ export const settingsResponseSchema = z.object({
   menu_template: menuTemplateSchema,
   menu_accent_color: z.string().nullable(),
   specials_section_title: z.string().nullable(),
+  // Promotional popup (admin Menu Design → "Scan popup").
+  popup_enabled: z.boolean(),
+  popup_badge_text: z.string().nullable(),
+  popup_headline: z.string().nullable(),
+  popup_masthead_subline: z.string().nullable(),
+  popup_bubble_text: z.string().nullable(),
+  popup_kicker: z.string().nullable(),
+  popup_tagline: z.string().nullable(),
+  popup_section_label: z.string().nullable(),
+  popup_cta_text: z.string().nullable(),
+  popup_footer_text: z.string().nullable(),
+  // Set only via the popup-illustration upload endpoint.
+  popup_illustration_url: z.string().nullable(),
+  popup_product_ids: z.array(z.string().uuid()),
   // Read-only STORED restaurants flags (not editable on Settings).
   ar_enabled: z.boolean().optional(),
   qr_pay_enabled: z.boolean().optional(),
@@ -228,6 +242,17 @@ export const settingsUpdateSchema = z.object({
   menu_template: menuTemplateSchema.optional(),
   menu_accent_color: z.string().regex(HEX_COLOR_PATTERN).optional(),
   specials_section_title: z.string().max(80).optional(),
+  popup_enabled: z.boolean().optional(),
+  popup_badge_text: z.string().max(30).optional(),
+  popup_headline: z.string().max(60).optional(),
+  popup_masthead_subline: z.string().max(80).optional(),
+  popup_bubble_text: z.string().max(100).optional(),
+  popup_kicker: z.string().max(60).optional(),
+  popup_tagline: z.string().max(100).optional(),
+  popup_section_label: z.string().max(40).optional(),
+  popup_cta_text: z.string().max(40).optional(),
+  popup_footer_text: z.string().max(80).optional(),
+  popup_product_ids: z.array(z.string().uuid()).max(5).optional(),
 })
 
 // Counter-readable subset of the printer settings.

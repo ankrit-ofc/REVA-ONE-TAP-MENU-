@@ -109,3 +109,36 @@ export const clearContactCaptured = (): void => {
     // ignore
   }
 }
+
+/**
+ * "Scan popup already shown" marker for the current visit.
+ *
+ * The promotional popup must show at most once per table session — this
+ * marker survives reload/navigation within the tab and is cleared by a
+ * genuine re-scan, exactly like the contact-captured marker above.
+ */
+const POPUP_SEEN_KEY = 'qr_popup_seen'
+
+export const markPopupSeen = (): void => {
+  try {
+    sessionStorage.setItem(POPUP_SEEN_KEY, '1')
+  } catch {
+    // ignore
+  }
+}
+
+export const hasSeenPopup = (): boolean => {
+  try {
+    return sessionStorage.getItem(POPUP_SEEN_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+export const clearPopupSeen = (): void => {
+  try {
+    sessionStorage.removeItem(POPUP_SEEN_KEY)
+  } catch {
+    // ignore
+  }
+}

@@ -1,0 +1,239 @@
+/* ── Overlay + glass card ─────────────────────────────────────────────────
+   Page-level modal (NOT inside model-viewer's shadow DOM), so backdrop-filter
+   works on iOS Safari. Dims the menu behind with the same tint the app's
+   other overlays already use; the card itself is the "glass" — a darker,
+   blurred version of that same colour family, hence the light-on-dark type
+   below (this project's --color-text/-muted tokens assume a light card and
+   don't apply here). */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: rgba(15, 42, 33, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+}
+
+.panel {
+  width: 100%;
+  max-width: 22.5rem;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  background: rgba(15, 42, 33, 0.78);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 0.875rem;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+  animation: popupIn 0.18s ease-out;
+}
+
+@keyframes popupIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.close {
+  position: absolute;
+  top: 0.625rem;
+  right: 0.625rem;
+  z-index: 2;
+  width: 1.875rem;
+  height: 1.875rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+
+.close:active {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ── Masthead ──────────────────────────────────────────────────────────── */
+.masthead {
+  padding: 1rem 1.125rem 0.625rem;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.85);
+}
+
+.badge {
+  display: inline-block;
+  font-size: 0.625rem;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  color: #fca5a5;
+  background: rgba(220, 38, 38, 0.28);
+  padding: 0.1875rem 0.5rem;
+  border-radius: 0.2rem;
+}
+
+.headline {
+  margin: 0.5rem 0 0.125rem;
+  text-align: center;
+  /* Practical newspaper-serif translation — this project loads no serif/
+     display webfont (--font-serif is aliased to Inter elsewhere), so this
+     is a system stack scoped to this module only. */
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #fff;
+  line-height: 1.15;
+}
+
+.subline {
+  margin: 0 0 0.375rem;
+  text-align: center;
+  font-size: 0.625rem;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* ── Illustration + speech bubble ─────────────────────────────────────── */
+.bubbleRow {
+  display: flex;
+  gap: 0.625rem;
+  align-items: flex-start;
+  padding: 0.875rem 1.125rem 0.25rem;
+}
+
+.illustration {
+  flex-shrink: 0;
+  width: 6rem;
+  max-height: 7.5rem;
+  object-fit: contain;
+  border-radius: 0.5rem;
+}
+
+.bubble {
+  flex: 1;
+  min-width: 0;
+  border: 1.5px solid rgba(255, 255, 255, 0.55);
+  border-radius: 0.75rem;
+  padding: 0.625rem 0.75rem;
+}
+
+.bubbleText {
+  margin: 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  font-style: italic;
+  line-height: 1.4;
+  color: #fff;
+}
+
+.kicker {
+  margin: 0.625rem 1.125rem 0;
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  color: #fca5a5;
+}
+
+.tagline {
+  margin: 0.25rem 1.125rem 0;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.75);
+  line-height: 1.5;
+}
+
+/* ── Section divider ───────────────────────────────────────────────────── */
+.divider {
+  margin: 0.625rem 1.125rem 0;
+  border-top: 0.5px solid rgba(255, 255, 255, 0.25);
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.25);
+  padding: 0.25rem 0;
+  text-align: center;
+}
+
+.dividerLabel {
+  margin: 0;
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  font-weight: 600;
+  color: #fff;
+}
+
+/* ── Product rows ──────────────────────────────────────────────────────── */
+.products {
+  padding: 0.375rem 1.125rem 0.125rem;
+}
+
+.productRow {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.5625rem 0;
+  border-bottom: 0.5px dashed rgba(255, 255, 255, 0.22);
+}
+
+.productRow:last-child {
+  border-bottom: none;
+}
+
+.productImg {
+  flex-shrink: 0;
+  width: 2.875rem;
+  height: 2.875rem;
+  border-radius: 0.5rem;
+  object-fit: cover;
+}
+
+.productInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.productName {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.productDesc {
+  margin: 0.0625rem 0 0;
+  font-size: 0.6875rem;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.priceChip {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #fca5a5;
+  background: rgba(220, 38, 38, 0.22);
+  padding: 0.1875rem 0.5rem;
+  border-radius: 0.2rem;
+}
+
+/* ── CTA + footer ──────────────────────────────────────────────────────── */
+.cta {
+  display: block;
+  width: calc(100% - 2.25rem);
+  margin: 0.5rem 1.125rem 1rem;
+  background: var(--menu-accent, var(--color-primary));
+  color: var(--menu-accent-ink, #fff);
+  border: none;
+  border-radius: 0.625rem;
+  padding: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.footer {
+  margin: 0.5rem 1.125rem 1rem;
+  text-align: center;
+  font-size: 0.6875rem;
+  color: rgba(255, 255, 255, 0.6);
+}

@@ -2,7 +2,7 @@ import uuid
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, Enum as SAEnum, Float, Integer, String, Text, UniqueConstraint
-from sqlalchemy.dialects.postgresql import UUID as PGUUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -103,5 +103,28 @@ class RestaurantSettings(Base, TimestampMixin, TenantMixin):
     # falls back to the default "Today's Special" text. Admin-editable via
     # SettingsUpdate; whitespace-only input is normalized to NULL on write.
     specials_section_title: Mapped[str | None] = mapped_column(String(80), nullable=True)
+
+    # Promotional popup shown on first menu load of a table session (admin
+    # Menu Design → "Scan popup"). popup_enabled gates it; every popup_*_text
+    # field is NULL/whitespace = hidden on the customer side, except headline
+    # (falls back to restaurant name) and cta_text (falls back to "See the
+    # menu"). popup_illustration_url is set only by the backend upload
+    # handler, mirroring banner_image_url — never accepted from the client
+    # directly. popup_product_ids is an ordered JSON array of up to 5 product
+    # UUID strings (order matters; products are never hard-deleted in this
+    # codebase, so a stale id just stops resolving via the customer menu
+    # tree — no FK needed).
+    popup_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+    popup_badge_text: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    popup_headline: Mapped[str | None] = mapped_column(String(60), nullable=True)
+    popup_masthead_subline: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    popup_bubble_text: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    popup_kicker: Mapped[str | None] = mapped_column(String(60), nullable=True)
+    popup_tagline: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    popup_section_label: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    popup_cta_text: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    popup_footer_text: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    popup_illustration_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    popup_product_ids: Mapped[list[str]] = mapped_column(JSONB, nullable=False, server_default="[]")
 
     restaurant: Mapped["Restaurant"] = relationship("Restaurant", back_populates="settings")

@@ -18,6 +18,7 @@ import {
   setStoredQrToken,
   clearSessionEnded,
   clearContactCaptured,
+  clearPopupSeen,
 } from '@/features/session/qrStorage'
 import { setSessionToken } from '@/services/api'
 import Loader from '@/components/common/Loader'
@@ -111,10 +112,12 @@ export default function Scan() {
     setError(null)
     setBusy(true)
     // A real physical re-scan starts fresh — clear any "session ended" marker left
-    // by a previous paid session so a new session can be established, and the
-    // receipt-contact marker so the next party is offered the form again.
+    // by a previous paid session so a new session can be established, the
+    // receipt-contact marker so the next party is offered the form again, and
+    // the popup-seen marker so the next party sees the promo popup too.
     clearSessionEnded()
     clearContactCaptured()
+    clearPopupSeen()
     try {
       const data = await scanWithGeofence(scan, token)
       // Set the token synchronously before navigating so the first GET /menu
