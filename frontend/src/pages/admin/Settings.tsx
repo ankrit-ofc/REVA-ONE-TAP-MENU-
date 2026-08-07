@@ -146,13 +146,25 @@ export default function AdminSettings() {
         kot_worker_token: settings.kot_worker_token,
         // Managed by the payment-QR upload/remove endpoints below, not this form.
         payment_qr_url: settings.payment_qr_url,
-        // Menu banner, specials title, and menu theme moved to the Menu Design
-        // page; carried here only to satisfy the form type (not edited or sent
-        // by this page).
+        // Menu banner, specials title, menu theme, and the scan popup all live
+        // on the Menu Design page; carried here only to satisfy the form type
+        // (not edited or sent by this page).
         banner_image_url: settings.banner_image_url,
         menu_template: settings.menu_template,
         menu_accent_color: settings.menu_accent_color,
         specials_section_title: settings.specials_section_title,
+        popup_enabled: settings.popup_enabled,
+        popup_badge_text: settings.popup_badge_text,
+        popup_headline: settings.popup_headline,
+        popup_masthead_subline: settings.popup_masthead_subline,
+        popup_bubble_text: settings.popup_bubble_text,
+        popup_kicker: settings.popup_kicker,
+        popup_tagline: settings.popup_tagline,
+        popup_section_label: settings.popup_section_label,
+        popup_cta_text: settings.popup_cta_text,
+        popup_footer_text: settings.popup_footer_text,
+        popup_illustration_url: settings.popup_illustration_url,
+        popup_product_ids: settings.popup_product_ids,
       })
     }
   }, [settings])

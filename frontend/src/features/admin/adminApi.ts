@@ -368,6 +368,18 @@ export const adminApi = createApi({
       query: () => ({ method: 'DELETE', url: '/admin/settings/payment-qr' }),
       invalidatesTags: ['Settings'],
     }),
+    uploadPopupIllustration: builder.mutation<SettingsResponse, File>({
+      query: (file) => {
+        const form = new FormData()
+        form.append('file', file)
+        return { method: 'POST', url: '/admin/settings/popup-illustration', data: form }
+      },
+      invalidatesTags: ['Settings'],
+    }),
+    removePopupIllustration: builder.mutation<SettingsResponse, void>({
+      query: () => ({ method: 'DELETE', url: '/admin/settings/popup-illustration' }),
+      invalidatesTags: ['Settings'],
+    }),
     // ── Staff ──────────────────────────────────────────────────────────────
     listStaff: builder.query<StaffResponse[], void>({
       query: () => ({ method: 'GET', url: '/admin/staff' }),
@@ -459,6 +471,8 @@ export const {
   useRemoveBannerImageMutation,
   useUploadPaymentQrMutation,
   useRemovePaymentQrMutation,
+  useUploadPopupIllustrationMutation,
+  useRemovePopupIllustrationMutation,
   useListStaffQuery,
   useCreateStaffMutation,
   useUpdateStaffMutation,

@@ -882,6 +882,29 @@ _SETTINGS_FIELDS = (
     "menu_template",
     "menu_accent_color",
     "specials_section_title",
+    "popup_enabled",
+    "popup_badge_text",
+    "popup_headline",
+    "popup_masthead_subline",
+    "popup_bubble_text",
+    "popup_kicker",
+    "popup_tagline",
+    "popup_section_label",
+    "popup_cta_text",
+    "popup_footer_text",
+    "popup_product_ids",
+)
+
+_POPUP_TEXT_FIELDS = (
+    "popup_badge_text",
+    "popup_headline",
+    "popup_masthead_subline",
+    "popup_bubble_text",
+    "popup_kicker",
+    "popup_tagline",
+    "popup_section_label",
+    "popup_cta_text",
+    "popup_footer_text",
 )
 
 
@@ -909,8 +932,10 @@ def update_settings(
         new = getattr(data, field)
         if new is None:
             continue
-        if field in ("kot_printer_name", "specials_section_title"):
+        if field in ("kot_printer_name", "specials_section_title", *_POPUP_TEXT_FIELDS):
             new = new.strip() or None  # whitespace-only clears the value
+        elif field == "popup_product_ids":
+            new = [str(pid) for pid in new]
         old = getattr(settings, field)
         if new != old:
             previous[field] = old
@@ -1023,6 +1048,54 @@ def remove_payment_qr(
         action="PAYMENT_QR_REMOVE",
         previous_value={"payment_qr_url": previous_url},
         new_value={"payment_qr_url": None},
+    )
+    db.commit()
+    db.refresh(settings)
+    return settings
+
+
+def set_popup_illustration(
+    db: Session, restaurant_id: uuid.UUID, popup_illustration_url: str, actor: User
+) -> RestaurantSettings:
+    """Point the scan popup's illustration slot at a freshly stored upload. The
+    URL comes from image_service.validate_and_store_popup_illustration only —
+    never from the client."""
+    settings = get_or_create_settings(db, restaurant_id)
+    previous_url = settings.popup_illustration_url
+    settings.popup_illustration_url = popup_illustration_url
+    settings.updated_at = _now()
+    _audit(
+        db,
+        restaurant_id=restaurant_id,
+        actor=actor,
+        entity_type="restaurant_settings",
+        entity_id=settings.id,
+        action="POPUP_ILLUSTRATION_SET",
+        previous_value={"popup_illustration_url": previous_url},
+        new_value={"popup_illustration_url": popup_illustration_url},
+    )
+    db.commit()
+    db.refresh(settings)
+    return settings
+
+
+def remove_popup_illustration(
+    db: Session, restaurant_id: uuid.UUID, actor: User
+) -> RestaurantSettings:
+    """Null out the popup illustration (the popup hides that slot)."""
+    settings = get_or_create_settings(db, restaurant_id)
+    previous_url = settings.popup_illustration_url
+    settings.popup_illustration_url = None
+    settings.updated_at = _now()
+    _audit(
+        db,
+        restaurant_id=restaurant_id,
+        actor=actor,
+        entity_type="restaurant_settings",
+        entity_id=settings.id,
+        action="POPUP_ILLUSTRATION_REMOVE",
+        previous_value={"popup_illustration_url": previous_url},
+        new_value={"popup_illustration_url": None},
     )
     db.commit()
     db.refresh(settings)
@@ -1210,4 +1283,16 @@ def get_customer_menu_page(db: Session, restaurant_id: uuid.UUID) -> MenuPublic:
         menu_template=settings.menu_template,
         menu_accent_color=settings.menu_accent_color,
         specials_section_title=settings.specials_section_title,
+        popup_enabled=settings.popup_enabled,
+        popup_badge_text=settings.popup_badge_text,
+        popup_headline=settings.popup_headline,
+        popup_masthead_subline=settings.popup_masthead_subline,
+        popup_bubble_text=settings.popup_bubble_text,
+        popup_kicker=settings.popup_kicker,
+        popup_tagline=settings.popup_tagline,
+        popup_section_label=settings.popup_section_label,
+        popup_cta_text=settings.popup_cta_text,
+        popup_footer_text=settings.popup_footer_text,
+        popup_illustration_url=settings.popup_illustration_url,
+        popup_product_ids=settings.popup_product_ids,
     )

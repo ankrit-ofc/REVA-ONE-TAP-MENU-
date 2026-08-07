@@ -245,6 +245,23 @@ class SettingsUpdate(BaseModel):
     # (including "") is normalized to NULL by update_settings, restoring the
     # default "Today's Special" text.
     specials_section_title: Annotated[str, Field(max_length=80)] | None = None
+    # Promotional popup (admin Menu Design → "Scan popup"). Every *_text field
+    # below is whitespace-normalized to NULL by update_settings, same rule as
+    # specials_section_title. popup_illustration_url is intentionally absent
+    # here — set only via POST /admin/settings/popup-illustration, mirroring
+    # banner_image_url.
+    popup_enabled: bool | None = None
+    popup_badge_text: Annotated[str, Field(max_length=30)] | None = None
+    popup_headline: Annotated[str, Field(max_length=60)] | None = None
+    popup_masthead_subline: Annotated[str, Field(max_length=80)] | None = None
+    popup_bubble_text: Annotated[str, Field(max_length=100)] | None = None
+    popup_kicker: Annotated[str, Field(max_length=60)] | None = None
+    popup_tagline: Annotated[str, Field(max_length=100)] | None = None
+    popup_section_label: Annotated[str, Field(max_length=40)] | None = None
+    popup_cta_text: Annotated[str, Field(max_length=40)] | None = None
+    popup_footer_text: Annotated[str, Field(max_length=80)] | None = None
+    # Ordered list of up to 5 featured product ids.
+    popup_product_ids: Annotated[list[uuid.UUID], Field(max_length=5)] | None = None
 
 
 class SettingsResponse(BaseModel):
@@ -277,6 +294,20 @@ class SettingsResponse(BaseModel):
     menu_template: str
     menu_accent_color: str | None
     specials_section_title: str | None
+    # Promotional popup (admin Menu Design → "Scan popup").
+    popup_enabled: bool
+    popup_badge_text: str | None
+    popup_headline: str | None
+    popup_masthead_subline: str | None
+    popup_bubble_text: str | None
+    popup_kicker: str | None
+    popup_tagline: str | None
+    popup_section_label: str | None
+    popup_cta_text: str | None
+    popup_footer_text: str | None
+    # Set only via POST /admin/settings/popup-illustration.
+    popup_illustration_url: str | None
+    popup_product_ids: list[uuid.UUID]
     # Read-only STORED restaurants flags (for admin UI; not editable here).
     ar_enabled: bool = True
     qr_pay_enabled: bool = True
@@ -390,3 +421,21 @@ class MenuPublic(BaseModel):
     # "Today's Special" section heading. NULL → client falls back to the
     # default "Today's Special" text.
     specials_section_title: str | None
+    # Promotional popup shown on first menu load of a table session (admin
+    # Menu Design → "Scan popup"). Client renders it only when popup_enabled
+    # and at least one of popup_product_ids resolves against categories/
+    # specials above. popup_headline NULL falls back to the restaurant name;
+    # popup_cta_text NULL falls back to "See the menu"; every other popup_*
+    # field NULL/blank hides that element entirely.
+    popup_enabled: bool
+    popup_badge_text: str | None
+    popup_headline: str | None
+    popup_masthead_subline: str | None
+    popup_bubble_text: str | None
+    popup_kicker: str | None
+    popup_tagline: str | None
+    popup_section_label: str | None
+    popup_cta_text: str | None
+    popup_footer_text: str | None
+    popup_illustration_url: str | None
+    popup_product_ids: list[uuid.UUID]
