@@ -881,6 +881,7 @@ _SETTINGS_FIELDS = (
     "kot_printer_name",
     "menu_template",
     "menu_accent_color",
+    "specials_section_title",
 )
 
 
@@ -908,8 +909,8 @@ def update_settings(
         new = getattr(data, field)
         if new is None:
             continue
-        if field == "kot_printer_name":
-            new = new.strip() or None  # "" clears the printer name
+        if field in ("kot_printer_name", "specials_section_title"):
+            new = new.strip() or None  # whitespace-only clears the value
         old = getattr(settings, field)
         if new != old:
             previous[field] = old
@@ -1208,4 +1209,5 @@ def get_customer_menu_page(db: Session, restaurant_id: uuid.UUID) -> MenuPublic:
         qr_pay_enabled=flags.qr_pay_enabled,
         menu_template=settings.menu_template,
         menu_accent_color=settings.menu_accent_color,
+        specials_section_title=settings.specials_section_title,
     )

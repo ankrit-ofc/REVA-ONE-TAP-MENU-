@@ -26,6 +26,7 @@ export function useMenu() {
     categories: data?.categories ?? [],
     specials: data?.specials ?? [],
     bannerImageUrl: data?.banner_image_url ?? null,
+    specialsSectionTitle: data?.specials_section_title ?? null,
     isLoading,
     isError,
     refetch,

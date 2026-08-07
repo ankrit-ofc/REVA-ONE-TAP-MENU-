@@ -46,7 +46,7 @@ function resolvePath(roots: CategoryPublic[], path: string[]): CategoryPublic[] 
 interface Group { name: string; products: ProductPublic[] }
 
 export default function Menu() {
-  const { categories, specials, bannerImageUrl, isLoading, isError } = useMenu()
+  const { categories, specials, bannerImageUrl, specialsSectionTitle, isLoading, isError } = useMenu()
   const { restaurantName, menuTemplate } = useSession()
   const Template = resolveMenuTemplate(menuTemplate)
   const { theme, toggle } = useTheme()
@@ -182,7 +182,7 @@ export default function Menu() {
       {specials.length > 0 && (
         <section className={styles.specials} aria-label="Today's Special">
           <h2 className={styles.specialsTitle}>
-            <span aria-hidden="true">⭐</span> Today&rsquo;s Special
+            <span aria-hidden="true">⭐</span> {specialsSectionTitle || 'Today’s Special'}
           </h2>
           <SpecialsCarousel specials={specials} currency={CURRENCY} />
         </section>

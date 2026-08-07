@@ -156,6 +156,7 @@ export const settingsResponseSchema = z.object({
   // Customer-menu presentation (admin Settings → "Edit menu").
   menu_template: menuTemplateSchema,
   menu_accent_color: z.string().nullable(),
+  specials_section_title: z.string().nullable(),
   // Read-only STORED restaurants flags (not editable on Settings).
   ar_enabled: z.boolean().optional(),
   qr_pay_enabled: z.boolean().optional(),
@@ -226,6 +227,7 @@ export const settingsUpdateSchema = z.object({
   kot_printer_name: z.string().max(120).optional(),
   menu_template: menuTemplateSchema.optional(),
   menu_accent_color: z.string().regex(HEX_COLOR_PATTERN).optional(),
+  specials_section_title: z.string().max(80).optional(),
 })
 
 // Counter-readable subset of the printer settings.

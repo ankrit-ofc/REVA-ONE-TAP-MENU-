@@ -48,8 +48,18 @@ const BANNER_MAX_MB = 25
 const BANNER_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 
 /** Menu hero banner: upload with preview, replace, remove. Uploads apply
- *  immediately (the backend validates content, size, and dimensions). */
-function BannerSection({ bannerUrl }: { bannerUrl: string | null }) {
+ *  immediately (the backend validates content, size, and dimensions).
+ *  Also hosts the "Today's Special" section title — saved with the rest of
+ *  the form via the "Save Settings" button below, not applied immediately. */
+function BannerSection({
+  bannerUrl,
+  specialsSectionTitle,
+  onSpecialsSectionTitleChange,
+}: {
+  bannerUrl: string | null
+  specialsSectionTitle: string | null
+  onSpecialsSectionTitleChange: (value: string) => void
+}) {
   const [upload, { isLoading: uploading }] = useUploadBannerImageMutation()
   const [remove, { isLoading: removing }] = useRemoveBannerImageMutation()
   const fileRef = useRef<HTMLInputElement>(null)
@@ -108,6 +118,20 @@ function BannerSection({ bannerUrl }: { bannerUrl: string | null }) {
         <p className={styles.hint}>
           Shown as the hero photo on the customer menu. JPEG, PNG, or WebP up to
           {' '}{BANNER_MAX_MB} MB and at most 2400×1200 px — a wide landscape image works best.
+        </p>
+      </div>
+      <div className={styles.field}>
+        <label className={styles.fieldLabel}>Specials section title</label>
+        <input
+          className={styles.input}
+          value={specialsSectionTitle ?? ''}
+          onChange={(e) => onSpecialsSectionTitleChange(e.target.value.slice(0, 80))}
+          maxLength={80}
+          placeholder="Today's Special"
+        />
+        <p className={styles.hint}>
+          Heading shown above the featured dishes on the customer menu. Leave blank
+          to use the default "Today's Special". Saved with the button below.
         </p>
       </div>
     </section>
@@ -223,6 +247,7 @@ export default function AdminSettings() {
         payment_qr_url: settings.payment_qr_url,
         menu_template: settings.menu_template,
         menu_accent_color: settings.menu_accent_color,
+        specials_section_title: settings.specials_section_title,
       })
     }
   }, [settings])
@@ -270,6 +295,9 @@ export default function AdminSettings() {
       geofence_radius_meters: form.geofence_radius_meters,
       menu_template: form.menu_template,
       menu_accent_color: form.menu_accent_color ?? undefined,
+      // Always sent (trimmed); backend normalizes whitespace-only to NULL,
+      // which is how the field is cleared back to the default title.
+      specials_section_title: (form.specials_section_title ?? '').trim(),
     }
     try {
       await update(payload).unwrap()
@@ -289,7 +317,11 @@ export default function AdminSettings() {
     <div className={styles.root}>
       <h1 className={styles.title}>Restaurant Settings</h1>
 
-      <BannerSection bannerUrl={settings?.banner_image_url ?? null} />
+      <BannerSection
+        bannerUrl={settings?.banner_image_url ?? null}
+        specialsSectionTitle={form.specials_section_title}
+        onSpecialsSectionTitleChange={(v) => setForm({ ...form, specials_section_title: v })}
+      />
       <PaymentQrSection qrUrl={settings?.payment_qr_url ?? null} />
 
       <form onSubmit={(e) => void handleSubmit(e)} className={styles.form}>

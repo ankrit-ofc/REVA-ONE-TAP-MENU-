@@ -99,4 +99,9 @@ class RestaurantSettings(Base, TimestampMixin, TenantMixin):
     menu_template: Mapped[str] = mapped_column(String(20), nullable=False, server_default="classic")
     menu_accent_color: Mapped[str | None] = mapped_column(String(7), nullable=True)
 
+    # Heading for the customer menu's "Today's Special" section. NULL → client
+    # falls back to the default "Today's Special" text. Admin-editable via
+    # SettingsUpdate; whitespace-only input is normalized to NULL on write.
+    specials_section_title: Mapped[str | None] = mapped_column(String(80), nullable=True)
+
     restaurant: Mapped["Restaurant"] = relationship("Restaurant", back_populates="settings")

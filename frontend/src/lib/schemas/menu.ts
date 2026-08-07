@@ -106,6 +106,10 @@ export const menuResponseSchema = z.object({
   // cached responses, or a backend that hasn't deployed this yet).
   menu_template: menuTemplateSchema.optional(),
   menu_accent_color: z.string().nullable().optional(),
+  // "Today's Special" section heading. Falls back to the default text when
+  // missing/null (older cached responses, or a backend that hasn't deployed
+  // this yet).
+  specials_section_title: z.string().nullable().optional(),
 })
 
 export type MenuResponse = z.infer<typeof menuResponseSchema>
