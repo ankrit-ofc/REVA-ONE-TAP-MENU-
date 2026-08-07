@@ -255,6 +255,8 @@ export default function ProductDetail() {
             <TableArView
               src={product.model_glb_url}
               iosSrc={product.model_usdz_url ?? undefined}
+              productId={product.id}
+              posterUrl={product.image_url}
               alt={product.name}
               className={styles.tableBtn}
               annotations={product.annotations}
