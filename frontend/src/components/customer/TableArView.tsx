@@ -66,7 +66,7 @@ function isUnplaced(a: Pick<AnnotationPublic, 'position_x' | 'position_y' | 'pos
  * model-viewer's own AR DOM-overlay support, during a live WebXR session — untested
  * here, no AR-capable device in this environment.
  */
-export default function TableArView({ src, iosSrc, alt, className, annotations }: Props) {
+export default function TableArView({ src, alt, className, annotations }: Props) {
   const [libReady, setLibReady] = useState(false)
   const [modelReady, setModelReady] = useState(false)
   const [, setCanAR] = useState(false)
@@ -158,13 +158,12 @@ export default function TableArView({ src, iosSrc, alt, className, annotations }
           <model-viewer
             ref={ref}
             src={src}
-            ios-src={iosSrc}
             alt={alt}
             loading="eager"
             camera-controls
             auto-rotate
             ar
-            ar-modes="webxr quick-look"
+            ar-modes="webxr"
             ar-scale="auto"
             ar-placement="floor"
             shadow-intensity="1"
