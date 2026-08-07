@@ -52,6 +52,7 @@ import AdminProductImport from '@/pages/admin/ProductImport'
 import AdminAddons from '@/pages/admin/Addons'
 import AdminStaff from '@/pages/admin/Staff'
 import AdminTables from '@/pages/admin/Tables'
+import AdminMenuDesign from '@/pages/admin/MenuDesign'
 import AdminSettings from '@/pages/admin/Settings'
 
 // Superadmin surface (9g — placeholder; backend endpoints not yet built)
@@ -125,6 +126,7 @@ export default function AppRoutes() {
           <Route path="/admin/staff" element={<AdminStaff />} />
           <Route path="/admin/tables" element={<AdminTables />} />
           <Route path="/admin/devices" element={<Devices />} />
+          <Route path="/admin/menu-design" element={<AdminMenuDesign />} />
           <Route path="/admin/settings" element={<AdminSettings />} />
         </Route>
       </Route>

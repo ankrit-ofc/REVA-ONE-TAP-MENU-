@@ -6,6 +6,7 @@ import {
   FolderTree,
   LayoutDashboard,
   LogOut,
+  Palette,
   PackagePlus,
   PanelLeft,
   Printer,
@@ -37,6 +38,7 @@ const NAV_ITEMS = [
   { to: '/admin/staff', label: 'Staff', icon: Users },
   { to: '/admin/tables', label: 'Tables', icon: Armchair },
   { to: '/admin/devices', label: 'Devices', icon: Printer },
+  { to: '/admin/menu-design', label: 'Menu design', icon: Palette },
   { to: '/admin/settings', label: 'Settings', icon: Settings },
 ]
 
