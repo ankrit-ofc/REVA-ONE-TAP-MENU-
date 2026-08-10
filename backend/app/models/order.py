@@ -51,6 +51,25 @@ class Order(Base, TimestampMixin, TenantMixin):
     customer_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         PGUUID(as_uuid=True), ForeignKey("customers.id", ondelete="RESTRICT"), nullable=True
     )
+    # The table session this order was opened from — the visit key that
+    # table_id alone cannot give (one table hosts many parties a day).
+    #
+    # Nullable and NEVER backfilled. Rows written before this column existed
+    # stay NULL, because the only way to reconstruct them would be to guess from
+    # table_id + a session time window — the exact heuristic this column exists
+    # to replace. A guessed value in an exact-looking column is worse than a
+    # NULL, so every consumer must treat NULL as "before instrumentation" and
+    # exclude it from denominators rather than assume it means "no session".
+    #
+    # Set once at order creation (order_service.place_or_append), never updated:
+    # appending a second round to an OPEN order keeps the original session, which
+    # is what makes it a visit key rather than a last-touch marker.
+    session_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("table_sessions.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
+    )
 
     table: Mapped["Table"] = relationship("Table", back_populates="orders")
     items: Mapped[list["OrderItem"]] = relationship("OrderItem", back_populates="order")
