@@ -116,6 +116,9 @@ def place_or_append(
             table_id=table_id,
             order_number=order_number,
             status=OrderStatus.OPEN,
+            # Stamp the visit. Only set on creation — a later round appends to
+            # this same order and must keep the session that opened it.
+            session_id=session.id,
         )
         db.add(order)
         db.flush()
