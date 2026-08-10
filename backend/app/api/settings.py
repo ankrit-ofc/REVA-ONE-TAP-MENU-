@@ -6,17 +6,20 @@ exist yet (new restaurants won't always have a row from day one).
 """
 
 import uuid
+from datetime import datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_db, require_role, tenant_scope
+from app.jobs import nightly_report
 from app.models.enums import Role
 from app.models.restaurant import Restaurant
 from app.models.user import User
-from app.schemas.menu import SettingsResponse, SettingsUpdate
-from app.services import image_service, kot_print_service, menu_service
+from app.schemas.menu import DailyReportTestResponse, SettingsResponse, SettingsUpdate
+from app.services import daily_report_service, image_service, kot_print_service, menu_service
+from app.services.customer_service import redact_email
 
 router = APIRouter(prefix="/admin", tags=["admin-settings"])
 
@@ -161,6 +164,49 @@ def remove_popup_illustration(
     if previous_url:
         image_service.delete_image(previous_url)
     return _settings_response(db, restaurant_id, settings)
+
+
+@router.post("/settings/daily-report/test", response_model=DailyReportTestResponse)
+def send_test_daily_report(
+    restaurant_id: _RidDep,
+    user: _AdminDep,
+    db: _DbDep,
+) -> DailyReportTestResponse:
+    """
+    Send this restaurant's report for today, right now, to the configured
+    recipients — so an admin can verify delivery and content without waiting
+    for closing time.
+
+    Bypasses the daily_report_sends ledger (`force=True`) so a test never
+    consumes today's real send or marks it as already delivered. Unlike the
+    scheduler, delivery errors surface here: a test that silently "succeeds"
+    while Resend rejects the message would defeat the point.
+    """
+    recipients = nightly_report.resolve_recipients(db, restaurant_id)
+    if not recipients:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=(
+                "No recipient for the daily report. Set one in Settings, or add "
+                "an active admin user with an email address."
+            ),
+        )
+    tz = daily_report_service.restaurant_tz(db, restaurant_id)
+    today_local = datetime.now(tz).date()
+    try:
+        _status, delivered = nightly_report.send_for_restaurant(
+            db, restaurant_id, today_local, force=True
+        )
+    except Exception as exc:  # noqa: BLE001 — a test send must report its failure
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Could not send the test report: {exc}",
+        )
+    return DailyReportTestResponse(
+        sent_to=[redact_email(r) for r in recipients],
+        report_date=today_local,
+        delivered=delivered,
+    )
 
 
 @router.post("/settings/kot-worker-token", response_model=SettingsResponse)

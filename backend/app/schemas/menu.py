@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import date, datetime, time
 from decimal import Decimal
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from app.models.enums import AnnotationStatus, FoodType
 
@@ -262,6 +262,26 @@ class SettingsUpdate(BaseModel):
     popup_footer_text: Annotated[str, Field(max_length=80)] | None = None
     # Ordered list of up to 5 featured product ids.
     popup_product_ids: Annotated[list[uuid.UUID], Field(max_length=5)] | None = None
+    # Nightly One-Liner (admin Settings → "Daily report"). closing_time is a
+    # LOCAL wall-clock time read against `timezone` above. recipient is
+    # whitespace-normalized to NULL by update_settings, which restores the
+    # default of "every active ADMIN user".
+    daily_report_enabled: bool | None = None
+    daily_report_closing_time: time | None = None
+    # `""` is the documented way to clear the override (same convention as
+    # kot_printer_name); EmailStr rejects anything else malformed with a 422.
+    daily_report_recipient: Annotated[EmailStr, Field(max_length=255)] | Literal[""] | None = None
+
+
+class DailyReportTestResponse(BaseModel):
+    """Result of a manual test send. Addresses come back REDACTED — the admin
+    only needs to confirm which mailbox was used, not to read it in full."""
+    model_config = ConfigDict(from_attributes=True)
+    sent_to: list[str]
+    report_date: date
+    # False when the email provider is unconfigured and the message was only
+    # logged. The UI must say so rather than claiming a successful send.
+    delivered: bool
 
 
 class SettingsResponse(BaseModel):
@@ -308,6 +328,10 @@ class SettingsResponse(BaseModel):
     # Set only via POST /admin/settings/popup-illustration.
     popup_illustration_url: str | None
     popup_product_ids: list[uuid.UUID]
+    # Nightly One-Liner (admin Settings → "Daily report").
+    daily_report_enabled: bool
+    daily_report_closing_time: time
+    daily_report_recipient: str | None
     # Read-only STORED restaurants flags (for admin UI; not editable here).
     ar_enabled: bool = True
     qr_pay_enabled: bool = True

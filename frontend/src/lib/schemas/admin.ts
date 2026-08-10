@@ -171,6 +171,11 @@ export const settingsResponseSchema = z.object({
   // Set only via the popup-illustration upload endpoint.
   popup_illustration_url: z.string().nullable(),
   popup_product_ids: z.array(z.string().uuid()),
+  // Nightly One-Liner (admin Settings → "Daily report"). closing_time is a
+  // local wall-clock "HH:MM:SS" read against `timezone` above, never UTC.
+  daily_report_enabled: z.boolean(),
+  daily_report_closing_time: z.string(),
+  daily_report_recipient: z.string().nullable(),
   // Read-only STORED restaurants flags (not editable on Settings).
   ar_enabled: z.boolean().optional(),
   qr_pay_enabled: z.boolean().optional(),
@@ -253,6 +258,17 @@ export const settingsUpdateSchema = z.object({
   popup_cta_text: z.string().max(40).optional(),
   popup_footer_text: z.string().max(80).optional(),
   popup_product_ids: z.array(z.string().uuid()).max(5).optional(),
+  daily_report_enabled: z.boolean().optional(),
+  // "HH:MM" from <input type="time"> is accepted by the backend's time field.
+  daily_report_closing_time: z.string().optional(),
+  // "" clears the override and restores "all active admins" (backend contract).
+  daily_report_recipient: z.string().max(255).optional(),
+})
+
+export const dailyReportTestResponseSchema = z.object({
+  sent_to: z.array(z.string()),
+  report_date: z.string(),
+  delivered: z.boolean(),
 })
 
 // Counter-readable subset of the printer settings.
@@ -335,5 +351,6 @@ export type SettingsResponse = z.infer<typeof settingsResponseSchema>
 export type CategoryCreate = z.infer<typeof categoryCreateSchema>
 export type ProductCreate = z.infer<typeof productCreateSchema>
 export type SettingsUpdate = z.infer<typeof settingsUpdateSchema>
+export type DailyReportTestResponse = z.infer<typeof dailyReportTestResponseSchema>
 export type StaffResponse = z.infer<typeof staffResponseSchema>
 export type TableResponse = z.infer<typeof tableResponseSchema>

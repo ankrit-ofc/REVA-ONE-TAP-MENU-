@@ -1,7 +1,10 @@
 import uuid
+from datetime import time
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, Enum as SAEnum, Float, Integer, String, Text, UniqueConstraint
+from sqlalchemy import (
+    Boolean, Enum as SAEnum, Float, Integer, String, Text, Time, UniqueConstraint,
+)
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -126,5 +129,16 @@ class RestaurantSettings(Base, TimestampMixin, TenantMixin):
     popup_footer_text: Mapped[str | None] = mapped_column(String(80), nullable=True)
     popup_illustration_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     popup_product_ids: Mapped[list[str]] = mapped_column(JSONB, nullable=False, server_default="[]")
+
+    # Nightly One-Liner: the daily summary email sent to the owner at closing
+    # time. daily_report_closing_time is a LOCAL wall-clock time, interpreted in
+    # this restaurant's `timezone` above — never UTC. The two must be read
+    # together, which is why both live in the same settings row and the same
+    # admin page section. NULL recipient → all active ADMIN users of the tenant.
+    daily_report_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+    daily_report_closing_time: Mapped[time] = mapped_column(
+        Time(timezone=False), nullable=False, server_default="22:00"
+    )
+    daily_report_recipient: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     restaurant: Mapped["Restaurant"] = relationship("Restaurant", back_populates="settings")

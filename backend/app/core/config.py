@@ -120,6 +120,19 @@ class Settings(BaseSettings):
     RESEND_FROM: str = "receipts@localhost"
     RESEND_API_URL: str = "https://api.resend.com/emails"
 
+    # Sender for owner-facing operational mail (the Nightly One-Liner). Kept
+    # separate from RESEND_FROM on purpose: diner receipts and owner reports are
+    # different audiences with different unsubscribe expectations, and a bounce
+    # or spam complaint on one should not damage the other's sending reputation.
+    # Shares RESEND_API_KEY — one provider account, two From addresses.
+    REPORTS_FROM: str = "reports@localhost"
+
+    # Nightly One-Liner scheduler. The loop wakes every TICK_SECONDS and sends to
+    # any restaurant whose local closing time has passed and has no ledger row
+    # for its local date. 60s means a report lands within a minute of closing.
+    DAILY_REPORT_TICK_SECONDS: int = 60
+    DAILY_REPORT_MAX_ATTEMPTS: int = 3
+
     # How long after a table session is invalidated the customer may still submit
     # their contact details. Payment invalidates the session (payment_service
     # ._close_order_and_reset_table) BEFORE the "payment received" screen renders,
