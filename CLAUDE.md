@@ -31,6 +31,23 @@ The STAFF MOBILE APP is a separate repo (reva-tap-analysis) shipping via eas bui
 
 ## Git hygiene — non-negotiable
 
+- **Sync BEFORE investigating, planning, or coding — not just before branching.**
+  This repo has several contributors and ships multiple PRs a day. Start every
+  session with
+  `git switch main && git fetch origin && git pull --ff-only origin main`,
+  then confirm the checkout is actually current: the latest file in
+  `backend/alembic/versions/` and the presence of recently merged features.
+  Planning against a stale checkout yields wrong conclusions about existing
+  patterns, a migration number that collides, and a PR that conflicts on arrival.
+  If `git pull --ff-only` refuses, stop and report — never force it.
+- **`git ls-tree` / `git grep` / `git log` against `origin/main` read a LOCAL
+  cached ref, not the server.** They contact nothing and are only as fresh as the
+  last `git fetch`. **Never conclude a feature is absent from the codebase
+  without fetching first.** A session investigating the nightly-report feature
+  read a seven-day-old `origin/main` and reported `specials_section_title`,
+  `popup_*`, and `MenuDesign.tsx` as "not in this repo at any commit" — all three
+  were merged and live. `git ls-remote origin` is the one command that does hit
+  the server; use it to check freshness without pulling.
 - **Identity must be configured before committing.** Every machine sets
   `user.name`, `user.email`, and `user.useConfigOnly true` globally. Without
   the last one git silently invents an address from username@hostname, which
