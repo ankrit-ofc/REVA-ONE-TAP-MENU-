@@ -47,15 +47,21 @@ _err_logger = logging.getLogger("app.errors")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    from app.jobs import nightly_report
     from app.realtime.manager import _set_loop, start_heartbeat, stop_heartbeat
     loop = asyncio.get_running_loop()
     _set_loop(loop)
     # Keep idle WebSockets alive through proxies (Cloudflare ~100s idle timeout)
     # so staff notifications keep flowing during quiet stretches.
     start_heartbeat(loop)
+    # Nightly One-Liner: ticks every minute and mails each restaurant its daily
+    # summary once its LOCAL closing time has passed. Idempotent via the
+    # daily_report_sends ledger, so a restart here can never double-send.
+    nightly_report.start(loop)
     try:
         yield
     finally:
+        await nightly_report.stop()
         await stop_heartbeat()
 
 

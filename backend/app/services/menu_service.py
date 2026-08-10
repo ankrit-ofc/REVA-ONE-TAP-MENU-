@@ -893,6 +893,9 @@ _SETTINGS_FIELDS = (
     "popup_cta_text",
     "popup_footer_text",
     "popup_product_ids",
+    "daily_report_enabled",
+    "daily_report_closing_time",
+    "daily_report_recipient",
 )
 
 _POPUP_TEXT_FIELDS = (
@@ -932,7 +935,12 @@ def update_settings(
         new = getattr(data, field)
         if new is None:
             continue
-        if field in ("kot_printer_name", "specials_section_title", *_POPUP_TEXT_FIELDS):
+        if field in (
+            "kot_printer_name",
+            "specials_section_title",
+            "daily_report_recipient",
+            *_POPUP_TEXT_FIELDS,
+        ):
             new = new.strip() or None  # whitespace-only clears the value
         elif field == "popup_product_ids":
             new = [str(pid) for pid in new]

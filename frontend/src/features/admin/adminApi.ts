@@ -29,6 +29,7 @@ import {
   type CategoryCreate,
   type ProductCreate,
   type SettingsUpdate,
+  type DailyReportTestResponse,
   type StaffResponse,
   type TableResponse,
   type FoodType,
@@ -340,6 +341,11 @@ export const adminApi = createApi({
       query: (body) => ({ method: 'PUT', url: '/admin/settings', data: body }),
       invalidatesTags: ['Settings'],
     }),
+    // Sends today's report immediately to the configured recipients. Bypasses
+    // the send ledger, so it never consumes the real nightly send.
+    sendTestDailyReport: builder.mutation<DailyReportTestResponse, void>({
+      query: () => ({ method: 'POST', url: '/admin/settings/daily-report/test' }),
+    }),
     rotateKotWorkerToken: builder.mutation<SettingsResponse, void>({
       query: () => ({ method: 'POST', url: '/admin/settings/kot-worker-token' }),
       invalidatesTags: ['Settings'],
@@ -466,6 +472,7 @@ export const {
   useUnmapAddonMutation,
   useGetSettingsQuery,
   useUpdateSettingsMutation,
+  useSendTestDailyReportMutation,
   useRotateKotWorkerTokenMutation,
   useUploadBannerImageMutation,
   useRemoveBannerImageMutation,

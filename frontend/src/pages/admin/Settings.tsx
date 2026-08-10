@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import {
   useGetSettingsQuery,
   useUpdateSettingsMutation,
+  useSendTestDailyReportMutation,
   useUploadPaymentQrMutation,
   useRemovePaymentQrMutation,
 } from '@/features/admin/adminApi'
@@ -9,12 +10,12 @@ import type { SettingsResponse, SettingsUpdate } from '@/lib/schemas/admin'
 import { getDevicePosition, GeolocationError } from '@/lib/geolocation'
 import styles from './Settings.module.css'
 
-function errDetail(e: unknown): string {
+function errDetail(e: unknown, fallback = 'Save failed'): string {
   if (typeof e === 'object' && e !== null && 'data' in e) {
     const d = (e as { data?: { detail?: string } }).data
     if (d?.detail) return d.detail
   }
-  return 'Save failed'
+  return fallback
 }
 
 function geoMessage(e: unknown): string {
@@ -123,6 +124,9 @@ export default function AdminSettings() {
   const [err, setErr] = useState<string | null>(null)
   const [geoBusy, setGeoBusy] = useState(false)
   const [geoErr, setGeoErr] = useState<string | null>(null)
+  const [sendTestReport, { isLoading: testBusy }] = useSendTestDailyReportMutation()
+  const [testMsg, setTestMsg] = useState<string | null>(null)
+  const [testErr, setTestErr] = useState<string | null>(null)
 
   useEffect(() => {
     if (settings) {
@@ -165,6 +169,10 @@ export default function AdminSettings() {
         popup_footer_text: settings.popup_footer_text,
         popup_illustration_url: settings.popup_illustration_url,
         popup_product_ids: settings.popup_product_ids,
+        daily_report_enabled: settings.daily_report_enabled,
+        // Backend sends "HH:MM:SS"; <input type="time"> wants "HH:MM".
+        daily_report_closing_time: settings.daily_report_closing_time.slice(0, 5),
+        daily_report_recipient: settings.daily_report_recipient,
       })
     }
   }, [settings])
@@ -179,6 +187,27 @@ export default function AdminSettings() {
       setGeoErr(geoMessage(e))
     } finally {
       setGeoBusy(false)
+    }
+  }
+
+  // Sends to the SAVED recipient, not the unsaved form value — so the test
+  // proves the configuration that the scheduler will actually use tonight.
+  const handleTestReport = async () => {
+    setTestMsg(null)
+    setTestErr(null)
+    try {
+      const res = await sendTestReport().unwrap()
+      if (res.delivered) {
+        setTestMsg(`Test report sent to ${res.sent_to.join(', ')}.`)
+      } else {
+        // The provider is unconfigured — say so rather than claiming success.
+        setTestErr(
+          `Email is not configured on this server, so nothing was actually sent. ` +
+            `The report was written to the server log instead (recipient: ${res.sent_to.join(', ')}).`,
+        )
+      }
+    } catch (e) {
+      setTestErr(errDetail(e, 'Could not send the test report'))
     }
   }
 
@@ -206,6 +235,10 @@ export default function AdminSettings() {
       latitude: form.latitude ?? undefined,
       longitude: form.longitude ?? undefined,
       geofence_radius_meters: form.geofence_radius_meters,
+      daily_report_enabled: form.daily_report_enabled,
+      daily_report_closing_time: form.daily_report_closing_time,
+      // "" is the documented way to clear the override (back to all admins).
+      daily_report_recipient: form.daily_report_recipient ?? '',
     }
     try {
       await update(payload).unwrap()
@@ -348,6 +381,57 @@ export default function AdminSettings() {
               placeholder="Asia/Kathmandu"
             />
           </div>
+        </section>
+
+        {/* Sits directly under Locale on purpose: the closing time below is a
+            LOCAL wall-clock time, read against the Timezone field above. Split
+            across two pages, someone sets 22:00 and gets mail at 16:15. */}
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>Daily report</h2>
+          <p className={styles.hint}>
+            A one-line summary of the day — revenue, orders, best seller — emailed
+            at closing time. Sent to every admin unless you set an address below.
+          </p>
+          <label className={styles.toggle}>
+            <span className={styles.toggleLabel}>Email me a daily summary</span>
+            <input
+              type="checkbox"
+              checked={form.daily_report_enabled}
+              onChange={(e) => setForm({ ...form, daily_report_enabled: e.target.checked })}
+            />
+          </label>
+          <div className={styles.field}>
+            <label className={styles.fieldLabel}>Closing time ({form.timezone || 'local time'})</label>
+            <input
+              className={styles.input}
+              type="time"
+              value={form.daily_report_closing_time}
+              onChange={(e) => setForm({ ...form, daily_report_closing_time: e.target.value })}
+            />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.fieldLabel}>Send to (optional)</label>
+            <input
+              className={styles.input}
+              type="email"
+              value={form.daily_report_recipient ?? ''}
+              onChange={(e) =>
+                setForm({ ...form, daily_report_recipient: e.target.value.slice(0, 255) })
+              }
+              maxLength={255}
+              placeholder="Leave blank to send to all admins"
+            />
+          </div>
+          <button
+            type="button"
+            className={styles.btnSecondary}
+            onClick={() => void handleTestReport()}
+            disabled={testBusy}
+          >
+            {testBusy ? 'Sending…' : 'Send a test report now'}
+          </button>
+          {testMsg && <p className={styles.saved}>{testMsg}</p>}
+          {testErr && <p className={styles.err}>{testErr}</p>}
         </section>
 
         {err && <p className={styles.err}>{err}</p>}

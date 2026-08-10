@@ -119,3 +119,12 @@ class GenerationJobStatus(str, enum.Enum):
     RUNNING = "RUNNING"
     DONE = "DONE"
     FAILED = "FAILED"
+
+
+# ── Nightly One-Liner (daily owner summary email) ──────────────────────────────
+
+class DailyReportStatus(str, enum.Enum):
+    PENDING = "PENDING"                  # row claimed, dispatch not yet confirmed
+    SENT = "SENT"                        # delivered to the provider
+    SKIPPED_NO_SALES = "SKIPPED_NO_SALES"  # zero settled bills — nothing to report
+    FAILED = "FAILED"                    # retries exhausted; see `error`
