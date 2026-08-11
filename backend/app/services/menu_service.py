@@ -12,6 +12,7 @@ financial record); its rows are hard-deleted when a mapping is removed.
 
 import uuid
 from datetime import datetime, timezone
+from typing import TYPE_CHECKING
 
 from fastapi import HTTPException, status
 from sqlalchemy import select, update
@@ -42,6 +43,12 @@ from app.schemas.menu import (
     VariantUpdate,
 )
 from app.services.plan_features import stored_features
+
+if TYPE_CHECKING:
+    # Imported lazily inside get_customer_menu_page: pricing_service imports
+    # daily_report_service, which imports this module. Type-only here keeps the
+    # cycle from forming at import time.
+    from app.services.pricing_service import PriceBook
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -1146,18 +1153,48 @@ def get_public_annotations(p: Product, *, ar_published: bool) -> list[Annotation
     ]
 
 
-def _product_public(p: Product, *, ar_allowed: bool = True) -> ProductPublic:
-    """Customer-facing view of one product, with active variants/addons."""
+def _product_public(
+    p: Product, *, ar_allowed: bool = True, price_book: "PriceBook | None" = None
+) -> ProductPublic:
+    """Customer-facing view of one product, with active variants/addons.
+
+    MONEY PATH. The offer price shown here MUST equal what
+    order_service.place_or_append will charge, which is why both go through the
+    same pricing_service.PriceBook rather than each applying a discount of its
+    own. base_price and each variant's price are the ANCHORS and are never
+    modified — an offer only ever adds the offer_* fields alongside them.
+
+    Addons are deliberately not discounted (see pricing_service).
+    """
+    def offer_for(anchor):
+        return price_book.resolve(p.id, p.category_id, anchor) if price_book else None
+
+    # Variants carry their own anchor, so each is priced separately: a product
+    # with variants is charged by its VARIANT, never by base_price.
+    active_variants = [v for v in p.variants if v.is_active]
+    variant_offers = [offer_for(v.price) for v in active_variants]
     variants = [
-        VariantPublic(id=v.id, name=v.name, price=v.price)
-        for v in p.variants
-        if v.is_active
+        VariantPublic(
+            id=v.id,
+            name=v.name,
+            price=v.price,
+            offer_price=offered.final_price if offered else None,
+        )
+        for v, offered in zip(active_variants, variant_offers)
     ]
     addons = [
         AddonPublic(id=m.addon.id, name=m.addon.name, price=m.addon.price)
         for m in p.addon_mappings
         if m.addon.is_active
     ]
+
+    base_offer = offer_for(p.base_price)
+    # The badge (name + end time) describes the offer, not one anchor. A variant
+    # product may have base_price = 0 (nothing is charged at it), in which case
+    # base_offer is None while the variants are genuinely discounted — fall back
+    # to the first variant that got an offer so the badge still appears.
+    badge = base_offer or next((o for o in variant_offers if o is not None), None)
+
     # Only expose AR model URLs when the STORED restaurant.ar_enabled is on
     # AND the product model is published.
     ar_published = ar_allowed and p.model_published and bool(p.model_glb_url)
@@ -1177,20 +1214,29 @@ def _product_public(p: Product, *, ar_allowed: bool = True) -> ProductPublic:
         model_glb_url=p.model_glb_url if ar_published else None,
         model_usdz_url=p.model_usdz_url if ar_published else None,
         annotations=annotations,
+        offer_price=base_offer.final_price if base_offer else None,
+        offer_name=badge.offer_name if badge else None,
+        offer_ends_at=badge.ends_at if badge else None,
     )
 
 
-def _public_products(cat: Category, *, ar_allowed: bool = True) -> list[ProductPublic]:
+def _public_products(
+    cat: Category, *, ar_allowed: bool = True, price_book: "PriceBook | None" = None
+) -> list[ProductPublic]:
     """Active + available products of a category, with active variants/addons."""
     return [
-        _product_public(p, ar_allowed=ar_allowed)
+        _product_public(p, ar_allowed=ar_allowed, price_book=price_book)
         for p in cat.products
         if p.is_active and p.is_available
     ]
 
 
 def get_todays_specials(
-    db: Session, restaurant_id: uuid.UUID, *, ar_allowed: bool = True
+    db: Session,
+    restaurant_id: uuid.UUID,
+    *,
+    ar_allowed: bool = True,
+    price_book: "PriceBook | None" = None,
 ) -> list[ProductPublic]:
     """Featured products for THIS restaurant only: flagged AND active AND
     available. Deactivated/hidden products never appear even if still flagged."""
@@ -1211,11 +1257,17 @@ def get_todays_specials(
         )
         .order_by(Product.name)
     ).scalars().all()
-    return [_product_public(p, ar_allowed=ar_allowed) for p in rows]
+    return [
+        _product_public(p, ar_allowed=ar_allowed, price_book=price_book) for p in rows
+    ]
 
 
 def get_customer_menu(
-    db: Session, restaurant_id: uuid.UUID, *, ar_allowed: bool = True
+    db: Session,
+    restaurant_id: uuid.UUID,
+    *,
+    ar_allowed: bool = True,
+    price_book: "PriceBook | None" = None,
 ) -> list[CategoryPublic]:
     """
     Returns the menu as a nested tree of active + available categories, each carrying
@@ -1263,7 +1315,7 @@ def get_customer_menu(
             key=lambda c: (c.display_order, c.name.lower()),
         )
         child_nodes = [n for c in kids if (n := build(c)) is not None]
-        products = _public_products(cat, ar_allowed=ar_allowed)
+        products = _public_products(cat, ar_allowed=ar_allowed, price_book=price_book)
         # Prune: a category with no products anywhere in its subtree doesn't render.
         if not products and not child_nodes:
             return None
@@ -1281,15 +1333,25 @@ def get_customer_menu(
 
 def get_customer_menu_page(db: Session, restaurant_id: uuid.UUID) -> MenuPublic:
     """The whole GET /menu payload: hero banner + today's specials + category tree."""
+    from app.services.pricing_service import build_price_book
+
     settings = get_or_create_settings(db, restaurant_id)
     restaurant = db.get(Restaurant, restaurant_id)
     if restaurant is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Restaurant not found")
     flags = stored_features(restaurant)
+    # ONE price book for the whole payload, so the specials carousel and the
+    # category tree cannot disagree about whether a window is live — and so a
+    # 200-product menu costs two offer queries, not four hundred.
+    price_book = build_price_book(db, restaurant_id)
     return MenuPublic(
         banner_image_url=settings.banner_image_url,
-        specials=get_todays_specials(db, restaurant_id, ar_allowed=flags.ar_enabled),
-        categories=get_customer_menu(db, restaurant_id, ar_allowed=flags.ar_enabled),
+        specials=get_todays_specials(
+            db, restaurant_id, ar_allowed=flags.ar_enabled, price_book=price_book
+        ),
+        categories=get_customer_menu(
+            db, restaurant_id, ar_allowed=flags.ar_enabled, price_book=price_book
+        ),
         order_enabled=flags.order_enabled,
         call_waiter_enabled=flags.call_waiter_enabled,
         ar_enabled=flags.ar_enabled,

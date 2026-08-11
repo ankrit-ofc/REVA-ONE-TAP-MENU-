@@ -128,3 +128,15 @@ class DailyReportStatus(str, enum.Enum):
     SENT = "SENT"                        # delivered to the provider
     SKIPPED_NO_SALES = "SKIPPED_NO_SALES"  # zero settled bills — nothing to report
     FAILED = "FAILED"                    # retries exhausted; see `error`
+
+
+# ── Dead Hours Engine (time-boxed named offers) ───────────────────────────────
+
+class OfferDiscountType(str, enum.Enum):
+    PERCENT = "PERCENT"  # discount_value is a percentage, capped at 100 by CHECK
+    FIXED = "FIXED"      # discount_value is an absolute amount off the anchor
+
+
+class OfferAppliesTo(str, enum.Enum):
+    CATEGORY = "CATEGORY"  # every product directly in offer_windows.category_id
+    PRODUCTS = "PRODUCTS"  # the explicit offer_window_products list

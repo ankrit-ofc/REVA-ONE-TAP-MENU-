@@ -16,3 +16,4 @@ from app.models.refresh_token import RefreshToken  # noqa: F401
 from app.models.kot_print_job import KotPrintJob  # noqa: F401
 from app.models.device_token import DeviceToken  # noqa: F401
 from app.models.daily_report_send import DailyReportSend  # noqa: F401
+from app.models.offer import OfferWindow, OfferWindowProduct  # noqa: F401

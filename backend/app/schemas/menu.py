@@ -368,7 +368,13 @@ class AddonPublic(BaseModel):
 class VariantPublic(BaseModel):
     id: uuid.UUID
     name: str
+    # The ANCHOR. Never changed by an offer — a variant product is priced by its
+    # variant, so this is the number an offer discounts from and the number the
+    # menu keeps showing struck through while a window is live.
     price: Decimal
+    # Set only while a Dead Hours offer is live for this variant. None means the
+    # customer pays `price`.
+    offer_price: Decimal | None = None
 
 
 class AnnotationPublic(BaseModel):
@@ -398,6 +404,11 @@ class ProductPublic(BaseModel):
     id: uuid.UUID
     name: str
     description: str | None
+    # The ANCHOR — the normal price, ALWAYS present and never altered by an
+    # offer. A live offer adds the three offer_* fields below alongside it; it
+    # never overwrites this. That is the whole trust guarantee of the feature:
+    # a diner paying full price at 8pm can see what the afternoon deal was
+    # rather than discovering a silently different number.
     base_price: Decimal
     tax_rate: Decimal
     food_type: FoodType
@@ -415,6 +426,18 @@ class ProductPublic(BaseModel):
     # published model (same gate as model_glb_url above); optional/None everywhere else
     # so older cached responses and non-AR products are unaffected.
     annotations: list[AnnotationPublic] | None = None
+
+    # ── Dead Hours offer (all three set together, or all None) ────────────────
+    # offer_price is what a customer ordering RIGHT NOW pays for the base item;
+    # for a variant product the per-variant offer_price is what is charged and
+    # this one is only a "from" indicator. offer_name and offer_ends_at are the
+    # badge: "🕒 Afternoon Special — till 17:00". Present only while the window
+    # is live, and only when the price is strictly below base_price — an offer
+    # whose floor absorbs the whole discount shows no badge rather than
+    # advertising a saving of zero.
+    offer_price: Decimal | None = None
+    offer_name: str | None = None
+    offer_ends_at: str | None = None  # "17:00", restaurant-local wall clock
 
 
 class CategoryPublic(BaseModel):

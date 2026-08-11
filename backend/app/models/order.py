@@ -82,6 +82,16 @@ class OrderItem(Base, TimestampMixin, TenantMixin):
         CheckConstraint("quantity > 0", name="ck_order_items_quantity_positive"),
         CheckConstraint("unit_price >= 0", name="ck_order_items_unit_price_non_negative"),
         CheckConstraint("tax_rate >= 0", name="ck_order_items_tax_rate_non_negative"),
+        CheckConstraint(
+            "list_unit_price IS NULL OR list_unit_price >= 0",
+            name="ck_order_items_list_price_non_negative",
+        ),
+        # Provenance is a pair or it is nothing, so `offer_name IS NOT NULL` is a
+        # reliable "this line was discounted" test for every consumer.
+        CheckConstraint(
+            "(offer_name IS NULL) = (list_unit_price IS NULL)",
+            name="ck_order_items_offer_provenance",
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -105,6 +115,16 @@ class OrderItem(Base, TimestampMixin, TenantMixin):
     variant_name: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     unit_price: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     tax_rate: Mapped[Decimal] = mapped_column(Numeric(5, 2), nullable=False)
+
+    # Offer provenance — set together, only when a Dead Hours offer priced this
+    # line. unit_price already records WHAT was charged; these record WHY, so a
+    # receipt reprinted months later can show "Rs 150 (Afternoon Special, was
+    # Rs 200)" rather than a bare number that reads as a mispriced item.
+    # NULL on every line that paid the normal price, and never backfilled: rows
+    # written before offers existed had no offer, and copying unit_price into
+    # list_unit_price would fabricate an anchor that was never quoted.
+    offer_name: Mapped[Optional[str]] = mapped_column(String(60), nullable=True)
+    list_unit_price: Mapped[Optional[Decimal]] = mapped_column(Numeric(12, 2), nullable=True)
 
     # State-transition timestamps
     preparing_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
