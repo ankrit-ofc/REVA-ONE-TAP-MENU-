@@ -41,7 +41,7 @@ from app.realtime.events import (
     OrderStatusChangedEvent,
 )
 from app.realtime.manager import _fire, manager as rt_manager
-from app.services import kot_print_service, numbering_service, push_service
+from app.services import kot_print_service, numbering_service, pricing_service, push_service
 from app.services.order_state import (
     OrderError,
     assert_valid_item_transition,
@@ -145,6 +145,11 @@ def place_or_append(
     # the kitchen and unprinted until a waiter approves them (approve_pending_items).
     require_approval = bool(_settings is not None and _settings.require_order_approval)
 
+    # Live Dead Hours offers, resolved ONCE for this whole batch. Building it per
+    # item would let a window expire midway through a multi-item order and price
+    # two lines of one basket on different sides of 5pm.
+    price_book = pricing_service.build_price_book(db, restaurant_id)
+
     # Compact snapshot of the items added in THIS call, for the KOT that rides the
     # order.created event (kitchen ticket printing). Money accumulates in Decimal and
     # is serialised to strings on the event.
@@ -182,6 +187,7 @@ def place_or_append(
                 status_code=400,
             )
 
+        # The ANCHOR — the normal price, before any offer.
         unit_price = product.base_price
         variant_name = None
         if item_data.variant_id is not None:
@@ -201,6 +207,22 @@ def place_or_append(
             unit_price = variant.price
             variant_name = variant.name
 
+        # MONEY PATH. The SAME resolver the customer menu used, against the same
+        # price book — that is what guarantees the price on the menu equals the
+        # price on the bill. Never re-derive a discount here.
+        #
+        # The clamp to min_resulting_price happens SILENTLY inside the resolver:
+        # a customer's order must never fail because of the restaurant's pricing
+        # config. The admin editor warns about a binding floor at configuration
+        # time, which is the place it can still be changed.
+        list_unit_price = None
+        offer_name = None
+        offered = price_book.resolve(product.id, product.category_id, unit_price)
+        if offered is not None:
+            list_unit_price = offered.anchor_price
+            offer_name = offered.offer_name
+            unit_price = offered.final_price
+
         order_item = OrderItem(
             id=uuid.uuid4(),
             restaurant_id=restaurant_id,
@@ -213,6 +235,10 @@ def place_or_append(
             variant_name=variant_name,
             unit_price=unit_price,
             tax_rate=product.tax_rate,
+            # Provenance: what the item would have cost and which offer reduced
+            # it. NULL together when no offer applied.
+            offer_name=offer_name,
+            list_unit_price=list_unit_price,
             status=(
                 OrderItemStatus.PENDING_APPROVAL
                 if require_approval
