@@ -33,6 +33,7 @@ from app.api.ws import router as ws_router
 from app.api.superadmin import router as superadmin_router
 from app.api.printworker import router as printworker_router
 from app.api.push import router as push_router
+from app.api.offers import router as offers_router
 
 from app.core.config import settings
 from app.core.limiter import limiter
@@ -136,3 +137,4 @@ app.include_router(ws_router)
 app.include_router(superadmin_router)
 app.include_router(printworker_router)
 app.include_router(push_router)
+app.include_router(offers_router)
